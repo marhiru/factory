@@ -4,7 +4,7 @@
 # motores: cutout-2d (padrão: animação de personagens/props) | estatico (yt-long com tema: imagens caprichadas + zoom leve)
 #          | remotion-2d | ia-video | kenburns (só fotos, a pedido) | remotion-three | mapas-3d
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"  # readlink: funciona também via link em ~/.local/bin
 [ $# -ge 1 ] || { sed -n 2,3p "$0"; exit 2; }
 DEST="$1"; shift
 FORMATOS="yt-short"; MOTOR="cutout-2d"; IDIOMA="pt"; DURACAO=""; INSTALL=0; CANAL=""

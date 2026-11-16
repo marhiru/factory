@@ -3,7 +3,7 @@
 # uso: render-hf.sh <formato> <saida.mp4> [--draft] [--scale 1.3333] [--from s --to s] [--workers N]
 # O som entra depois no `vf export --audio public/audio/mix.wav` (igual ao mygo).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+ROOT="$(cd "$(dirname "$(readlink -f "$0")")/../../.." && pwd)"
 [ $# -ge 2 ] || { sed -n 3,4p "$0"; exit 2; }
 FMT="$1"; OUT="$2"; shift 2
 Q=high; SCALE=1; EXTRA=()

@@ -20,7 +20,7 @@ Você é o diretor de produção. Esta skill abre o projeto, decide qual skill d
 | 3c. Animação | `video-factory:animacao` | `data/edl.json` com cenas `scene` (ou perfil `estatico`), aprovado pelo `edl-check` |
 | 4. Edição, export e QA | `video-factory:edicao` | `out/final_<formato>.mp4`, `out/qa_<formato>/qa.md` |
 
-Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e node.
+Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Para usar fora do plugin (terminal do usuário), `${CLAUDE_PLUGIN_ROOT}/scripts/install.sh` põe `vf`, `vf-mygo`, `vf-novo` e `vf-render-hf` no PATH (`~/.local/bin`). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e node.
 
 ## Comandos
 

@@ -8,6 +8,8 @@ Plugin do Claude Code para uma fábrica de vídeo com IA: **YouTube longo, YouTu
 - **Renderer `vf-mygo` em Go** ([MyGo render](https://mygo.run/docs/plugins/render)): desenha o `data/edl.json` na GPU (Metal), sem navegador, ~5x mais rápido que o Remotion.
 
 ## Instalar
+
+`scripts/install.sh` compila (se preciso) e cria links em `~/.local/bin`: `vf`, `vf-mygo`, `vf-novo` (novo projeto) e `vf-render-hf`. Recompilar com `scripts/build.sh` atualiza os links sozinho.
 ```bash
 # dependências (macOS)
 brew install ffmpeg whisper-cpp yt-dlp     # ffmpeg também pode vir do nix
