@@ -86,6 +86,23 @@ Mesmo `edl.json` (22,2 s, 666 frames, Ken Burns + texto + legenda karaokê), App
 
 O `vf-mygo` cobre os clipes `image`, `video`, `text` e `color`, as transições e as legendas. Componentes React sob medida, three.js e o Studio continuam no Remotion. Use a mesma fonte (`edl.json > font`) nos dois.
 
+## Vídeo longo estático com tema (motor `estatico`, 10-15 min)
+Imagens caprichadas do **Google Flow (Nano Banana) via MCP**, zoom-in leve, cards tipográficos, acabamento de filme e roteiro com esquemática de hook rate.
+
+| Etapa | Ferramenta | Trava |
+|---|---|---|
+| Roteiro | `skills/roteiro/templates/yt-long-estatico.md` | `roteiro-check.mjs` (gancho sem preparação, promessa/loop até 0:40, re-hooks, capítulos com loop, payoff, fecho) |
+| Imagens | MCP `google-flow` (`.mcp.json`) + `flow-lotes.mjs` | 1 prompt = 24 imagens; 20 prompts/dia; cota global em `~/.cache/vf/flow-cota.json` |
+| Curadoria | `vf sheet` + `curadoria.mjs` | upscale abaixo de 2150 px; manifest com origem |
+| Edição | `roteiro/cenas.py` (`estatico.py`) | `edl-check` perfil estático (movimento perceptível, planos 1,5-9 s, interrupção ≤ 40 s, sem repetição em 120 s, grão + vinheta) |
+| Render | HyperFrames (`edl2hf.mjs` + `render-hf.sh`) | `vf qa` estrito |
+
+## Renderer HyperFrames (vídeos longos)
+`skills/animacao/scripts/edl2hf.mjs` compila o mesmo `data/edl.json` numa composição HTML + GSAP (sem CDN, telemetria desligada no `render-hf.sh`). Suporta image (zoom/pan/camadas), video, text, color, `card` (capítulo, dado, citação, mapa, comparação), transições (fade, blur, dip, flash, slide, punch) e `overlays` (grão, vinheta, light leak, graduação). Medido no M4: 60 s de 1080p em 39 s; paridade com o mygo em Ken Burns com SSIM ≥ 0,99. Clipes `scene` (cutout) ficam no mygo.
+
+## QA estrito
+`vf qa` é estrito por padrão: WARN = FAIL, código 1. Limites por formato no bloco `qa:` do `formats.yaml` (duração de entrega, vida mínima de plano, plano máximo, bitrate, abertura do áudio, ar morto, buracos na voz, gancho visual, repetição de imagem, barras pretas, clipping). Exceção só em `factory.yaml > qa_excecoes` com motivo. `--lenient` para rascunho.
+
 ## Testes
 ```bash
 cd tools/vf && cargo test --release     # unitários (cortes, transcrição, align, formats)

@@ -19,7 +19,10 @@ export const TextCard: React.FC<{ text: string; style?: "title" | "lower" | "lab
   const out = interpolate(frame, [dur - 6, dur], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   if (style === "number") {
-    const target = Number(text.replace(/[^\d.-]/g, "")) || 0;
+    // "1.889" e "12.000" têm separador de milhar: tira antes de converter ("3,5" vira 3.5)
+    let raw = text.match(/-?[\d.,]+/)?.[0] ?? "0";
+    if (/\d[.,]\d{3}(?!\d)/.test(raw)) raw = raw.replace(/[.,](?=\d{3}(?!\d))/g, "");
+    const target = Number(raw.replace(",", ".")) || 0;
     const v = interpolate(frame, [0, Math.min(dur, fps * 1.2)], [0, target], { extrapolateRight: "clamp" });
     // mantém o estilo do original: "1889" (ano) sem separador, "12.000" com separador
     const grouped = /\d[.,]\d{3}/.test(text);

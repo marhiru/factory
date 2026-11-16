@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Cria um projeto de vídeo da fábrica.
 # uso: novo.sh <pasta> --formato yt-short[,tiktok] --motor cutout-2d [--idioma pt] [--duracao 60] [--install]
-# motores: cutout-2d (padrão: animação de personagens/props) | remotion-2d | ia-video | kenburns (só fotos, a pedido) | remotion-three | mapas-3d
+# motores: cutout-2d (padrão: animação de personagens/props) | estatico (yt-long com tema: imagens caprichadas + zoom leve)
+#          | remotion-2d | ia-video | kenburns (só fotos, a pedido) | remotion-three | mapas-3d
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ $# -ge 1 ] || { sed -n 2,3p "$0"; exit 2; }
@@ -26,12 +27,15 @@ case "$PRINCIPAL" in
 esac
 IFS=',' read -ra FS <<< "$FORMATOS"
 for f in "${FS[@]}"; do case "$f" in yt-long|yt-short|tiktok) ;; *) echo "formato inválido: $f" >&2; exit 2;; esac; done
-case "$MOTOR" in cutout-2d|remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
+case "$MOTOR" in cutout-2d|estatico|remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
+[ "$MOTOR" = estatico ] && [ "$PRINCIPAL" != yt-long ] && { echo "motor estatico é só para yt-long (shorts são animados)" >&2; exit 2; }
 [ "$MOTOR" = kenburns ] && echo "aviso: kenburns é vídeo de fotos, sem animação; use só se o usuário pediu isso (a trava edl-check reprova)" >&2
 DURACAO="${DURACAO:-$DUR_DEF}"
 # renderer: mygo (GPU nativa) para motores 2D quando o binário existe; senão Remotion
+# hyperframes (HTML + GSAP) para vídeo longo sem clipes `scene`: cartelas, acabamento de filme, tipografia web
 RENDERER="remotion"
 case "$MOTOR" in cutout-2d|remotion-2d|kenburns|ia-video) [ -x "$ROOT/bin/vf-mygo" ] && RENDERER="mygo";; esac
+case "$MOTOR" in estatico) RENDERER="hyperframes";; kenburns|ia-video) [ "$PRINCIPAL" = yt-long ] && RENDERER="hyperframes";; esac
 if [ -e "$DEST" ] && [ -n "$(ls -A "$DEST" 2>/dev/null)" ]; then echo "$DEST já existe e não está vazia" >&2; exit 1; fi
 mkdir -p "$DEST"
 NOME="$(basename "$DEST")"
@@ -46,12 +50,23 @@ case "$MOTOR" in
     cp "$ROOT/skills/animacao/templates/cenas/vfscene.py" "$DEST/roteiro/"
     cp "$ROOT/skills/animacao/templates/cenas/cenas.exemplo.py" "$DEST/roteiro/cenas.py"
     ;;
+  estatico)
+    cp "$ROOT/skills/animacao/templates/hyperframes/package.json" "$DEST/package.json"
+    mkdir -p "$DEST/public/img/planos" "$DEST/assets/flow" "$DEST/assets/ref"
+    cp "$ROOT/skills/animacao/templates/cenas/vfscene.py" "$DEST/roteiro/"
+    cp "$ROOT/skills/animacao/templates/cenas/estatico.py" "$DEST/roteiro/cenas.py"
+    cp "$ROOT/skills/assets/templates/flow-estilo.json" "$DEST/assets/flow/estilo.json"
+    ;;
   remotion-three)
     echo "motor remotion-three: siga a skill cartoon-3d-short (templates em github.com/mromidev/claude-animated-shorts)" ;;
   mapas-3d)
     echo "motor mapas-3d: siga a skill mapas-3d-videos-virais (kit-mapas-3d)" ;;
 esac
-cp "$ROOT/skills/assets/templates/style-bible.md" "$DEST/assets/style-bible.md"
+if [ "$MOTOR" = estatico ]; then
+  cp "$ROOT/skills/assets/templates/style-bible-tema.md" "$DEST/assets/style-bible.md"
+else
+  cp "$ROOT/skills/assets/templates/style-bible.md" "$DEST/assets/style-bible.md"
+fi
 
 LIST="$(printf '%s' "$FORMATOS" | sed 's/,/, /g')"
 find "$DEST" -type f \( -name '*.yaml' -o -name '*.md' -o -name '*.json' \) -not -path '*/node_modules/*' -print0 |

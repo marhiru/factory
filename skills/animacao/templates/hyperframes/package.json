@@ -1,0 +1,12 @@
+{
+  "name": "__NOME__",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "gsap": "^3.14.2",
+    "hyperframes": "0.9.58"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

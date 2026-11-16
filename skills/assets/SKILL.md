@@ -1,6 +1,6 @@
 ---
 name: assets
-description: "Templates para fabricar os assets de um vídeo da fábrica: style bible, inventário com licença (manifest.yaml), narração ElevenLabs com timestamps por palavra (vf transcribe), SFX e trilha (ElevenLabs, procedural local ou CC0) e imagens/clipes de bancos CC0/stock. Use na etapa de assets/voz de um projeto video-factory ou quando precisar gerar voz, efeitos, música ou buscar imagens para um vídeo."
+description: "Templates para fabricar os assets de um vídeo da fábrica: style bible, inventário com licença (manifest.yaml), imagens geradas no Google Flow (Nano Banana) via MCP em lotes de 24 com cota diária global e curadoria por folha de contato, narração ElevenLabs com timestamps por palavra (vf transcribe), SFX e trilha (ElevenLabs, procedural local ou CC0) e imagens/clipes de bancos CC0/stock. Use na etapa de assets/voz de um projeto video-factory ou quando precisar gerar voz, efeitos, música ou buscar imagens para um vídeo."
 ---
 
 # Assets e voz (etapa 2 da fábrica)
@@ -18,6 +18,16 @@ Entrada: `roteiro/beats.json` aprovado e `factory.yaml`. Saída: todo arquivo em
 6. **SFX e música** (`templates/sfx-musica.md`), já sabendo os tempos de cada beat.
 7. **Imagens e clipes** (`templates/fontes-cc0.md`): CC0 primeiro, stock depois, procedural quando não houver nada bom.
 8. Marque `etapas.assets` e `etapas.voz` como `feito`.
+
+## Imagens do Google Flow (motor `estatico`, e qualquer projeto que precise de ilustração)
+`FL=${CLAUDE_PLUGIN_ROOT}/skills/assets/scripts/flow-lotes.mjs` · instalação/login do MCP: `templates/mcp-google-flow.md`
+1. **Style bible do tema** (`templates/style-bible-tema.md`) → `assets/flow/estilo.json` (`sufixo`, `negativos`, `cenarios`, `referencias`). Prompts: `templates/prompt-nano-banana.md`.
+2. **Lote de estilo:** 1 prompt do cenário principal, sem referências. Escolha 3-6 imagens que definem o look → `assets/ref/estilo-NN.jpg` → `estilo.json > referencias`.
+3. `node $FL plan` → `assets/flow/lotes.json`. **1 lote = 1 prompt = 1 cenário = 24 imagens**, com até 8 planos (divididos por igual) e o resto como reserva.
+4. Loop: `node $FL proximo` → chamar `flow_generate_image` do MCP com os `args` exatos (`count` é sempre o máximo) → `node $FL registrar <lote> <output_dir>` → `$VF sheet assets/flow/<lote>`. Repita até `fim`. Com `cota_esgotada` (código 3), marque `etapas.assets: aguardando_cota` e pare.
+5. **Curadoria** (olhe as folhas, não pule): para cada plano, a imagem que melhor mostra o `visual` do beat. Rejeite texto, mãos/rostos deformados, anacronismo e estilo fora da bíblia. Imagem nenhuma serve para dois planos a menos de 2 min de distância. Grave `assets/flow/curadoria.json` (`{"b3-2": "assets/flow/<lote>/<arquivo>", "_rejeitadas": {...}}`). Se faltar plano bom, ele vai para um lote novo com o prompt ajustado.
+6. `node ${CLAUDE_PLUGIN_ROOT}/skills/assets/scripts/curadoria.mjs aplicar` → `public/img/planos/<plano>.jpg` (upscale automático abaixo de 2150 px) + manifest. `curadoria.mjs faltando` precisa sair 0.
+7. Marque `lotes_flow` e `curadoria` como `feito`.
 
 ## Regras
 - **Nada entra no vídeo sem linha no manifest** com `origem`, `licenca`, `url` (se baixado) e `autor` (se a licença exigir atribuição). Atribuições obrigatórias vão para a descrição do vídeo.

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "google-flow": {
+      "command": "npx",
+      "args": ["-y", "@park-sang-gwon/google-flow-mcp@0.3.1"]
+    }
+  }
+}

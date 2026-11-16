@@ -8,7 +8,7 @@ description: "Templates de edição, export e QA da fábrica de vídeo: mix de �
 `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`
 
 ## Pipeline por formato
-Antes de tudo: `node ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` precisa sair com código 0. Se reprovar, volte para a skill `animacao`: não se renderiza nem se entrega vídeo sem animação.
+Antes de tudo: `node ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` precisa sair com código 0 (o perfil, animado ou `estatico`, vem do próprio edl.json). Se reprovar, volte para a skill `animacao`: não se renderiza nem se entrega vídeo sem animação.
 
 Para cada formato em `factory.yaml > formatos`:
 1. **Mix**: `$VF mix data/edl.json -o public/audio/mix.wav` (voz 0 dB, música com ducking de ~10 dB, SFX conforme `gain_db`). Para motores com som próprio (cartoon-3d-short), use o mix deles.
@@ -16,6 +16,8 @@ Para cada formato em `factory.yaml > formatos`:
    ```
    # mygo (padrão para remotion-2d / kenburns / ia-video): GPU nativa, ~5x mais rápido
    ${CLAUDE_PLUGIN_ROOT}/bin/vf-mygo -project . -formato <formato> -o out/video_<formato>.mp4
+   # hyperframes (padrão do vídeo longo): compila o edl.json em HTML/GSAP, lint e render (captura segmentada > 2 min)
+   ${CLAUDE_PLUGIN_ROOT}/skills/edicao/scripts/render-hf.sh <formato> out/video_<formato>.mp4
    # remotion
    npx remotion render src/index.ts <formato> out/video_<formato>.mp4 --codec h264 --crf 16 --muted
    ```

@@ -1,0 +1,11 @@
+{
+  "_doc": "Estilo fixo de TODAS as imagens do vídeo (Google Flow / Nano Banana). Preencha a partir de assets/style-bible.md. Prompts em inglês rendem melhor.",
+  "modelo": "nano-banana-pro",
+  "ratio": "16:9",
+  "sufixo": "Cinematic documentary still, painterly realism, soft volumetric light, rich but restrained palette of deep teal shadows and warm amber highlights, 35mm lens, shallow depth of field, subtle film grain, rule-of-thirds composition with breathing room around the subject for a slow zoom, no text.",
+  "negativos": "text, letters, captions, watermark, logo, signature, extra fingers, deformed hands, distorted faces, modern objects out of period, frame borders",
+  "referencias": ["assets/ref/estilo-01.jpg", "assets/ref/estilo-02.jpg", "assets/ref/estilo-03.jpg"],
+  "cenarios": {
+    "porto-noite": "A crowded 19th-century harbor at night, gas lamps reflecting on wet cobblestones, sailing ships at the docks, dock workers carrying crates."
+  }
+}

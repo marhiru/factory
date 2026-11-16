@@ -16,3 +16,14 @@ Primeira frase, sem preparação. Teste: a frase sozinha, lida por um estranho, 
 - "Neste vídeo eu vou…", "Você sabia que…?" sem dado, "Olá pessoal".
 - Gancho que o vídeo não cumpre (clickbait vazio derruba a retenção no meio).
 - Gancho que depende de contexto que ainda não foi dado.
+
+## Gancho do vídeo longo (0-35 s), em 4 tempos
+1. **Choque (0-5 s):** a afirmação mais improvável do vídeo + a imagem mais forte. "Em 1518, centenas de pessoas dançaram até morrer numa praça da França."
+2. **Prova/aposta (5-20 s):** um dado ou documento que torna aquilo real e próximo. "Os registros da cidade anotaram os nomes, as horas, e até quem pagou os músicos."
+3. **Promessa (20-35 s):** "Até o fim deste vídeo você vai entender o que fez uma cidade inteira não conseguir parar."
+4. **Loop aberto (junto):** "E a explicação mais aceita hoje é mais assustadora que a lenda."
+
+Teste do hook rate: lido em voz alta, os 30 s não têm nenhuma frase que alguém pularia. Se alguma frase só "prepara", corte.
+
+## Frases-ponte (bucket brigades) para loops e re-hooks
+"Mas tem um detalhe." · "E é aqui que tudo muda." · "Só que ninguém percebeu uma coisa." · "Isso ainda não é o mais estranho." · "Guarde esse nome: ele volta." · "E o pior ainda estava por vir." · "Para entender por quê, a gente precisa voltar [X] anos."

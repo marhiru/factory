@@ -2,8 +2,8 @@
 nome: __NOME__
 criado: __DATA__
 formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o principal)
-motor: __MOTOR__                  # cutout-2d (padrão) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
-renderer: __RENDERER__            # mygo | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
+motor: __MOTOR__                  # cutout-2d (padrão) | estatico (yt-long com tema) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
+renderer: __RENDERER__            # mygo | hyperframes | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
 idioma: __IDIOMA__
 estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ken Burns", "motion graphics"
 duracao_alvo: __DURACAO__         # segundos
@@ -20,7 +20,9 @@ etapas:                           # pendente | em_andamento | feito | pulado
   referencia: pendente
   roteiro: pendente
   aprovacao_roteiro: pendente     # único gate humano obrigatório
-  assets: pendente
+  assets: pendente                # motor estatico: aguardando_cota quando a cota diária do Flow acaba
+  lotes_flow: pendente            # motor estatico: lotes de 24 imagens no Google Flow (flow-lotes.mjs)
+  curadoria: pendente             # motor estatico: escolha por plano nas folhas de contato (curadoria.mjs)
   voz: pendente
   elenco: pendente                # sprites dos personagens/props (public/sprites)
   cenarios: pendente              # plates sem personagens (public/img/plates)

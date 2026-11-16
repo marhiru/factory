@@ -160,6 +160,11 @@ def save(path="data/edl.json", tail=0.4, **meta):
     edl["clips"] = sorted(CLIPS, key=lambda c: (c.get("layer", 0), c["start"]))
     end = max(c["end"] for c in CLIPS)
     edl["duration"] = round(max(end, (W[-1]["end"] + tail) if W else 0), 3)
+    # o último plano da base cobre a cauda (senão sobra tela preta depois da última palavra)
+    base = [c for c in CLIPS if c.get("layer", 0) == 0]
+    if base:
+        last = max(base, key=lambda c: c["end"])
+        last["end"] = max(last["end"], edl["duration"])
     if AUDIO:
         edl["audio"] = [x for x in edl.get("audio", []) if x.get("role") != "sfx"] + AUDIO
     if OVERLAYS:

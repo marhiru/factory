@@ -215,6 +215,22 @@ enum Cmd {
         #[arg(long, default_value_t = 10.0)]
         duck: f64,
     },
+    /// Folha de contato de uma pasta de imagens (curadoria de lotes do Google Flow/IA) + sheet.json com tamanhos
+    Sheet {
+        dir: PathBuf,
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+        #[arg(long, default_value_t = 6)]
+        cols: usize,
+        #[arg(long, default_value_t = 4)]
+        rows: usize,
+        /// largura de cada miniatura (px)
+        #[arg(long, default_value_t = 400)]
+        side: u32,
+        /// largura mínima para o zoom do vídeo (px); abaixo disso a imagem é marcada como "upscale"
+        #[arg(long, default_value_t = 2150)]
+        min_w: u32,
+    },
     /// Lista os formatos de entrega
     Formats {
         #[arg(long)]
@@ -222,6 +238,49 @@ enum Cmd {
     },
     /// Verifica dependências externas
     Doctor,
+}
+
+fn sheet_dir(dir: &std::path::Path, out: Option<PathBuf>, cols: usize, rows: usize, side: u32, min_w: u32) -> Result<()> {
+    use rayon::prelude::*;
+    let mut files: Vec<PathBuf> = std::fs::read_dir(dir)?
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| p.extension().and_then(|x| x.to_str()).is_some_and(|x| matches!(x.to_ascii_lowercase().as_str(), "jpg" | "jpeg" | "png" | "webp")))
+        .collect();
+    files.sort();
+    anyhow::ensure!(!files.is_empty(), "nenhuma imagem em {}", dir.display());
+    let loaded: Vec<(PathBuf, image::RgbImage)> = files
+        .par_iter()
+        .filter_map(|p| match image::open(p) {
+            Ok(im) => Some((p.clone(), im.to_rgb8())),
+            Err(e) => {
+                eprintln!("ignorado {}: {e}", p.display());
+                None
+            }
+        })
+        .collect();
+    let out = out.unwrap_or_else(|| dir.join("_sheet"));
+    util::ensure_dir(&out)?;
+    let mut info = Vec::new();
+    let tiles: Vec<sheet::Tile> = loaded
+        .into_iter()
+        .enumerate()
+        .map(|(k, (p, im))| {
+            let (w, h) = (im.width(), im.height());
+            let up = w < min_w;
+            info.push(serde_json::json!({"n": k + 1, "file": p.file_name().unwrap().to_string_lossy(), "w": w, "h": h, "upscale": up}));
+            let thumb = image::imageops::thumbnail(&im, side * 2, (side as u64 * 2 * h as u64 / w.max(1) as u64) as u32);
+            sheet::Tile { img: thumb, label: format!("{}{}", k + 1, if up { " UP" } else { "" }) }
+        })
+        .collect();
+    let n = tiles.len();
+    let sheets = sheet::contact_sheets(tiles, cols, rows, side, &out.join("sheet_"))?;
+    util::write_json(&out.join("sheet.json"), &info)?;
+    let ups = info.iter().filter(|i| i["upscale"].as_bool() == Some(true)).count();
+    eprintln!("{n} imagens -> {} folha(s) em {} ({ups} abaixo de {min_w}px: marcadas UP)", sheets.len(), out.display());
+    for s in sheets {
+        println!("{}", s.display());
+    }
+    Ok(())
 }
 
 fn main() {
@@ -361,6 +420,7 @@ fn real_main() -> Result<()> {
                 );
             }
         }
+        Cmd::Sheet { dir, out, cols, rows, side, min_w } => sheet_dir(&dir, out, cols, rows, side, min_w)?,
         Cmd::Doctor => doctor(),
     }
     Ok(())

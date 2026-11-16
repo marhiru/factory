@@ -4,3 +4,9 @@ out/
 !public/clips/*.mp4
 .DS_Store
 ref/*/source.*
+# composição HyperFrames é gerada do edl.json (edl2hf.mjs)
+hf/
+renders/
+# lotes brutos do Google Flow (24 imagens por prompt): só a curadoria vai para public/img/planos
+assets/flow/*/
+!assets/flow/

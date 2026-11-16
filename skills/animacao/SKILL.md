@@ -1,6 +1,6 @@
 ---
 name: animacao
-description: "Etapa de ANIMAÇÃO da fábrica de vídeo: animação cutout 2D de verdade (personagens e props como sprites PNG com expressões, piscada, ciclos de caminhada/marcha/aceno, entradas, saídas e ações amarradas às palavras, sobre cenários/plates com câmera e parallax), exportação de sprites de qualquer código Canvas2D, clipes `scene` no data/edl.json renderizados pelo mygo (GPU) ou Remotion, mais motion graphics, clipes de vídeo IA e ponte para 3D (cartoon-3d-short) e mapas 3D. Inclui a trava edl-check: Ken Burns e cartelas NÃO contam como animação. Use na etapa de animação de um projeto video-factory ou para animar personagens/cenas de um vídeo."
+description: "Etapa de ANIMAÇÃO da fábrica de vídeo (inclui o motor ESTÁTICO do vídeo longo com tema: zoom leve, cards e acabamento no HyperFrames): animação cutout 2D de verdade (personagens e props como sprites PNG com expressões, piscada, ciclos de caminhada/marcha/aceno, entradas, saídas e ações amarradas às palavras, sobre cenários/plates com câmera e parallax), exportação de sprites de qualquer código Canvas2D, clipes `scene` no data/edl.json renderizados pelo mygo (GPU) ou Remotion, mais motion graphics, clipes de vídeo IA e ponte para 3D (cartoon-3d-short) e mapas 3D. Inclui a trava edl-check: Ken Burns e cartelas NÃO contam como animação. Use na etapa de animação de um projeto video-factory ou para animar personagens/cenas de um vídeo."
 ---
 
 # Animação (etapa 3 da fábrica)
@@ -58,15 +58,20 @@ Lições do primeiro projeto feito assim (short de 110 s, 33 cenas):
 - Balões de pensamento e boato entram em `pop` na palavra e flutuam (`idle: float`).
 - A câmera nunca para: push de 4-15% por plano, ou pan com `scale ≥ 1 + 2|x|`. Plano longo (> 5 s) ou fundo liso pede mais câmera e mais ação.
 
-## Renderer: `mygo` (padrão) ou `remotion`
-| | `mygo` (`bin/vf-mygo`) | `remotion` (template `remotion-2d/`) |
-|---|---|---|
-| Como | Go nativo, GPU (Metal), encoder de hardware, sem navegador | Chrome headless, um screenshot por frame |
-| Velocidade medida (M4) | short animado (110 s, 33 cenas, 141 atores): **30 s em 2K**, 19 s em 1080p | ~4x mais lento |
-| Cobre | `scene` (cutout completo), image, video (frame exato), text, color, transições, legendas | tudo isso + componentes React sob medida, three.js, Studio |
+## Motor `estatico` (yt-long com tema)
+Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py` (cópia de `templates/cenas/estatico.py`) → `data/edl.json` com `perfil: estatico` → `edl-check` no perfil estático → HyperFrames. Regras, cards e técnicas de edição em `templates/estatico.md`.
+
+## Renderer: `mygo`, `hyperframes` ou `remotion`
+| | `mygo` (`bin/vf-mygo`) | `hyperframes` (`scripts/edl2hf.mjs`) | `remotion` (template `remotion-2d/`) |
+|---|---|---|---|
+| Como | Go nativo, GPU (Metal), encoder de hardware, sem navegador | HTML + GSAP compilado do edl.json, Chrome headless com workers | Chrome headless, um screenshot por frame |
+| Velocidade medida (M4) | short animado (110 s, 33 cenas, 141 atores): **30 s em 2K**, 19 s em 1080p | 60 s de 1080p em 39 s (12 min ≈ 8 min) | ~4x mais lento que o mygo |
+| Cobre | `scene` (cutout completo), image, video, text, color, transições, legendas | image (zoom/pan/camadas), video, text, color, **`card`** (capítulo, dado, citação, mapa, comparação), transições (fade, blur, dip, flash, slide, punch), **overlays** (grão, vinheta, light leak, graduação) | tudo do mygo + componentes React, three.js, Studio |
+| Padrão para | shorts/TikTok (cutout) | vídeo longo (`estatico`; `kenburns`/`ia-video` em yt-long) | componente sob medida |
 
 - mygo: `$VFM -project . -formato <f> -o out/video_<f>.mp4` (`-scale 1.3333` para 2K, `-still N -o f.png` para checagem). Sai sem áudio: o som entra no `vf export --audio`.
-- A matemática de animação é a mesma nos dois (`tools/vf-mygo/scene.go` = `src/lib/anim.ts`). Tipo de clipe novo precisa ser implementado nos dois, ou o projeto fica só no Remotion.
+- hyperframes: `${CLAUDE_PLUGIN_ROOT}/skills/edicao/scripts/render-hf.sh <formato> out/video_<f>.mp4` (compila, faz lint e renderiza; `--draft`, `--from/--to`). Sai sem áudio. Paridade com o mygo em clipes de Ken Burns: SSIM ≥ 0,99. Recusa clipes `scene`.
+- A matemática de animação é a mesma nos três (`tools/vf-mygo/scene.go` = `src/lib/anim.ts`). Tipo de clipe novo precisa ser implementado nos dois, ou o projeto fica só no Remotion.
 
 ## Outros motores
 - **`ia-video`:** gere `data/shots.yaml` com `templates/ia-video.md`, produza os clipes (image-to-video a partir do plate e do elenco, para manter consistência) e use clipes `video`. Clipe com defeito (mãos, texto, morph) é cortado, nunca entregue. Clipes de IA contam como animação no `edl-check`.

@@ -1,6 +1,7 @@
 {
   "formato": "__PRINCIPAL__",
   "wpm": __WPM__,
+  "motor": "__MOTOR__",
   "beats": [
     {
       "id": 1,
