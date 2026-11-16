@@ -4,6 +4,7 @@ import type { Clip } from "../lib/edl";
 import type { Safe } from "../lib/formats";
 import { KenBurns } from "./KenBurns";
 import { TextCard } from "./TextCard";
+import { Scene } from "./Scene";
 import { mix, progress } from "../lib/ease";
 
 export const ClipView: React.FC<{ clip: Clip; dur: number; safe: Safe }> = ({ clip, dur, safe }) => {
@@ -32,6 +33,7 @@ export const ClipView: React.FC<{ clip: Clip; dur: number; safe: Safe }> = ({ cl
     );
   } else if (clip.type === "text") body = <TextCard text={clip.text} style={clip.style} color={clip.color} dur={dur} safe={safe} />;
   else if (clip.type === "color") body = <AbsoluteFill style={{ background: clip.color }} />;
+  else if (clip.type === "scene") body = <Scene clip={clip} dur={dur} />;
 
   return (
     <AbsoluteFill style={{ opacity, transform: slide ? `translateX(${slide}px)` : undefined }}>

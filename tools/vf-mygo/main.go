@@ -66,6 +66,7 @@ type Clip struct {
 	Text         string      `json:"text"`
 	Style        string      `json:"style"`
 	Color        string      `json:"color"`
+	Scene        *SceneSpec  `json:"scene"`
 	end          float64     // com extensão para o fade do próximo
 }
 type Captions struct {
@@ -404,6 +405,8 @@ func (k *ctx) clip(c *ui.Context, cl *Clip, frame, dur int) {
 			k.text(c, cl, frame, dur)
 		case "color":
 			render.Layer(c).Background(ui.Hex(cl.Color))
+		case "scene":
+			k.scene(c, cl, frame, dur)
 		}
 		if flash > 0 {
 			render.Layer(c).Background(ui.Hex("#ffffff")).Opacity(flash)
@@ -550,6 +553,8 @@ func main() {
 			for _, l := range cl.Layers {
 				a.bitmap(l.Src)
 			}
+		case "scene":
+			k.prepareScene(cl, words)
 		case "video":
 			if cl.ID == "" {
 				cl.ID = fmt.Sprintf("video-%d", i)

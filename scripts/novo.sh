@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Cria um projeto de vídeo da fábrica.
-# uso: novo.sh <pasta> --formato yt-short[,tiktok] --motor remotion-2d [--idioma pt] [--duracao 60] [--install]
+# uso: novo.sh <pasta> --formato yt-short[,tiktok] --motor cutout-2d [--idioma pt] [--duracao 60] [--install]
+# motores: cutout-2d (padrão: animação de personagens/props) | remotion-2d | ia-video | kenburns (só fotos, a pedido) | remotion-three | mapas-3d
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ $# -ge 1 ] || { sed -n 2,3p "$0"; exit 2; }
 DEST="$1"; shift
-FORMATOS="yt-short"; MOTOR="remotion-2d"; IDIOMA="pt"; DURACAO=""; INSTALL=0
+FORMATOS="yt-short"; MOTOR="cutout-2d"; IDIOMA="pt"; DURACAO=""; INSTALL=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --formato|--formatos) FORMATOS="$2"; shift 2;;
@@ -25,20 +26,25 @@ case "$PRINCIPAL" in
 esac
 IFS=',' read -ra FS <<< "$FORMATOS"
 for f in "${FS[@]}"; do case "$f" in yt-long|yt-short|tiktok) ;; *) echo "formato inválido: $f" >&2; exit 2;; esac; done
-case "$MOTOR" in remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
+case "$MOTOR" in cutout-2d|remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
+[ "$MOTOR" = kenburns ] && echo "aviso: kenburns é vídeo de fotos, sem animação; use só se o usuário pediu isso (a trava edl-check reprova)" >&2
 DURACAO="${DURACAO:-$DUR_DEF}"
 # renderer: mygo (GPU nativa) para motores 2D quando o binário existe; senão Remotion
 RENDERER="remotion"
-case "$MOTOR" in remotion-2d|kenburns|ia-video) [ -x "$ROOT/bin/vf-mygo" ] && RENDERER="mygo";; esac
+case "$MOTOR" in cutout-2d|remotion-2d|kenburns|ia-video) [ -x "$ROOT/bin/vf-mygo" ] && RENDERER="mygo";; esac
 if [ -e "$DEST" ] && [ -n "$(ls -A "$DEST" 2>/dev/null)" ]; then echo "$DEST já existe e não está vazia" >&2; exit 1; fi
 mkdir -p "$DEST"
 NOME="$(basename "$DEST")"
 
 cp -R "$ROOT/templates/projeto/." "$DEST/"
 case "$MOTOR" in
-  remotion-2d|kenburns|ia-video)
-    # os três renderizam pelo mesmo template Remotion orientado a data/edl.json
+  cutout-2d|remotion-2d|kenburns|ia-video)
+    # todos renderizam o mesmo data/edl.json (mygo ou o template Remotion)
     cp -R "$ROOT/skills/animacao/templates/remotion-2d/." "$DEST/"
+    mkdir -p "$DEST/sprites" "$DEST/public/sprites" "$DEST/public/img/plates"
+    cp "$ROOT/skills/animacao/templates/sprites/"*.ts* "$ROOT/skills/animacao/templates/sprites/export-sprites.mjs" "$ROOT/skills/animacao/templates/sprites/README.md" "$DEST/sprites/"
+    cp "$ROOT/skills/animacao/templates/cenas/vfscene.py" "$DEST/roteiro/"
+    cp "$ROOT/skills/animacao/templates/cenas/cenas.exemplo.py" "$DEST/roteiro/cenas.py"
     ;;
   remotion-three)
     echo "motor remotion-three: siga a skill cartoon-3d-short (templates em github.com/mromidev/claude-animated-shorts)" ;;

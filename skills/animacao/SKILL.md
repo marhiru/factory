@@ -1,61 +1,89 @@
 ---
 name: animacao
-description: "Templates de animação da fábrica de vídeo: Remotion 2D orientado a data/edl.json (motion graphics, texto cinético, legendas karaokê), Ken Burns/parallax para stills, planos de geradores de vídeo IA (Veo, Kling, Runway…) e ponte para Remotion+three.js (cartoon-3d-short) e mapas 3D. Use na etapa de animação de um projeto video-factory ou para montar a timeline (edl.json) de um vídeo."
+description: "Etapa de ANIMAÇÃO da fábrica de vídeo: animação cutout 2D de verdade (personagens e props como sprites PNG com expressões, piscada, ciclos de caminhada/marcha/aceno, entradas, saídas e ações amarradas às palavras, sobre cenários/plates com câmera e parallax), exportação de sprites de qualquer código Canvas2D, clipes `scene` no data/edl.json renderizados pelo mygo (GPU) ou Remotion, mais motion graphics, clipes de vídeo IA e ponte para 3D (cartoon-3d-short) e mapas 3D. Inclui a trava edl-check: Ken Burns e cartelas NÃO contam como animação. Use na etapa de animação de um projeto video-factory ou para animar personagens/cenas de um vídeo."
 ---
 
 # Animação (etapa 3 da fábrica)
 
-Entrada: `roteiro/beats.json` com tempos (`vf align`), `data/words.json`, assets em `public/`. Saída: `data/edl.json` revisado e stills de checagem aprovados.
+Entrada: `roteiro/beats.json` com tempos (`vf align`), `data/words.json`, `assets/style-bible.md`. Saída: `data/edl.json` com **cenas animadas**, aprovado pelo `edl-check`, e stills de checagem conferidos.
 
-`VF=${CLAUDE_PLUGIN_ROOT}/bin/vf` · `VFM=${CLAUDE_PLUGIN_ROOT}/bin/vf-mygo` · `B2E=${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/beats2edl.mjs`
+`VF=${CLAUDE_PLUGIN_ROOT}/bin/vf` · `VFM=${CLAUDE_PLUGIN_ROOT}/bin/vf-mygo` · `B2E=${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/beats2edl.mjs` · `CHK=${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs`
+
+## Regra número 1: animar é obrigatório
+Stills com zoom e pan (Ken Burns) e cartelas de texto **não são animação**. Num vídeo animado, alguém ou algo **faz** alguma coisa em cada plano: entra, anda, marcha, acena, muda de expressão na palavra certa, um prop cai, um balão aparece.
+
+- Ken Burns é só respiro: no máximo 30% do tempo, e nunca mais de 6 s seguidos.
+- **Trava:** `node $CHK data/edl.json` precisa sair com código 0 (pelo menos 70% do tempo com animação real, e nenhum trecho sem animação acima de 6 s) antes de marcar `etapas.animacao: feito`. Se reprovar, a etapa continua `em_andamento`, sem exceção.
+- Erro registrado: num projeto anterior (short de história), a fábrica entregou só stills com Ken Burns e marcou `animacao: feito`. Foi por isso que essa trava foi criada.
 
 ## Contrato: `data/edl.json`
-Todos os motores falam a mesma língua: uma timeline em segundos com clipes `image | video | text | color`, faixas de áudio e legendas. Especificação em `templates/edl.schema.md`. Quem renderiza é o `renderer` do `factory.yaml` (hoje Remotion, com o template `templates/remotion-2d/` já copiado para o projeto pelo `novo.sh`).
+Uma timeline em segundos com clipes `scene | image | video | text | color`, faixas de áudio e legendas. A especificação completa, incluindo `scene` e o `sprite.json`, está em `templates/edl.schema.md`. Quem renderiza é o `renderer` do `factory.yaml`.
 
-## Renderer: `remotion` ou `mygo`
-`factory.yaml > renderer` escolhe quem desenha o `edl.json`. Os dois leem o mesmo arquivo e as mesmas fontes.
+## Pipeline cutout 2D (padrão dos motores `cutout-2d` e `remotion-2d`)
+1. **Elenco (sprites).** Cada personagem e prop vira um *pack* em `public/sprites/<nome>/`: PNGs com transparência e um `sprite.json`. Os estados são as expressões (cada uma com o frame de piscada) e os ciclos (marcha, passeio, aceno, dança e efeitos de 8 frames).
+   - Se o projeto desenha personagens em código (Canvas2D), use o exportador `templates/sprites/`. Registre os desenhos em `sprites/registry.ts` (tipo `Pack` de `types.ts`) e rode:
+     `REMOTION_BROWSER=<chrome-headless-shell> node sprites/export-sprites.mjs sprites/index.ts public/sprites`
+     Referência de tempo: 371 PNGs em ~4 min.
+   - Se os personagens vêm de imagem (ilustração, IA, banco), recorte em PNG com alpha, um arquivo por expressão e por frame de ciclo, e escreva o `sprite.json` à mão.
+   - O mínimo por personagem principal: 3 expressões com piscada e 1 ciclo. Coadjuvante: neutro, reação e um ciclo de comemoração.
+2. **Cenários (plates).** Um fundo por plano, **sem personagens**, em `public/img/plates/`.
+   - Se existe um mundo 3D (Remotion + three.js), renderize o mesmo quadro sem o elenco: um interruptor `nocast` no `stage()` e um still por plano (~1,8 s cada, ver `templates/remotion-three.md`).
+   - Se não existe, use ilustração, foto CC0 ou uma pintura gerada, no formato vertical ou horizontal certo.
+3. **Cenas.** Um clipe `scene` por plano: plate, `camera` (push ou pan, com parallax pela `depth`) e `actors`.
+   - Para cada ator: posição (`x`, `y` = ponto dos pés, em fração do quadro), altura `h`, `state` inicial, `keys` (movimento e troca de estado), `enter`/`exit` (`pop`, `slide-left/right`, `drop`, `rise`, `fade`), `idle` (`breathe`, `bob`, `sway`, `float`, `jitter`), `shadow` e `clip_y` (atrás de mesa ou muro).
+   - **Toda ação cai numa palavra:** `at_word: N` (o motor adianta 2 frames) ou o tempo calculado de `data/words.json`.
+   - Escreva as cenas como script com a biblioteca `vfscene.py` (o `novo.sh` copia para `roteiro/`, com o exemplo em `roteiro/cenas.py`: `init()`, `w(i)`, `find("palavra")`, `scene()`, `A()`, `fx()`, `st()`, `push()`, `pan()`, `save()`), não como JSON à mão: refazer depois de mudar a voz vira um comando.
+   - O `beats2edl.mjs` gera só um **animatic** de stills, útil para cronometrar. Ele não substitui as cenas.
+4. **Trava:** `node $CHK data/edl.json` precisa sair com código 0.
+5. **Checagem visual** (abaixo) e render.
 
+### Reaproveitar um projeto 3D ou animado que já existe
+Quando já existe um vídeo (Remotion + three.js, por exemplo) e a ideia é refazer ou derivar em cutout 2D:
+1. **Planos do original:** `$VF frames <video_original.mp4> -o ref/orig` gera `shots.json` com os cortes. Uma cena por plano mantém o ritmo que já funcionava.
+2. **Plates sem elenco:** adicione uma inputProp (`nocast`) que esconde o elenco no `stage()`/world do projeto e rode `templates/plates/plates.mjs --composition <Id> --frames <frame:nome,...> --scale 1.3333` (~1,8 s por plate).
+3. **Sprites dos mesmos desenhos:** importe as funções de desenho do projeto no `sprites/registry.ts` e use os construtores de `templates/sprites/packs.ts` (`front`, `side`, `fx`, `marchFrames`, `strollFrames`, `cheerFrames`, `danceFrames`).
+4. **Cenas:** `roteiro/cenas.py` com `vfscene.py`, posicionando os atores onde estavam no original (stills de `ref/orig` lado a lado com `-still`).
+
+Lições do primeiro projeto feito assim (short de 110 s, 33 cenas):
+- O QA pegou duas cenas sem vida (personagem sozinho sobre fundo desfocado, cenário escuro). Fundo liso ou desfocado pede mais câmera e uma ação a mais.
+- Um personagem sozinho num plano > 3 s precisa de pelo menos 2 ações (troca de expressão + gesto ou deslocamento).
+- Gerar a cena num script (`vfscene.py`) permitiu reajustar 33 cenas em segundos quando os tempos da voz mudaram.
+
+### Direção de animação (o que faz parecer vivo)
+- Personagem parado sempre respira (`idle: breathe`) e pisca sozinho (automático, 0,5-2,3 s). Na troca de expressão o motor fecha os olhos para esconder o corte.
+- **Reação antes da fala:** a expressão muda 0-3 frames antes da palavra (o `at_word` já faz isso).
+- Quem fala do lugar onde está: grupo reagindo em cascata, com 0,06-0,25 s entre cada um.
+- Prop entra com física: `drop` com quique, `pop` com mola. Impacto ganha um efeito de 0,3 s (burst).
+- Andar ou marchar = estado em ciclo + `keys` movendo `x`/`y`. Aproximar da câmera = `y` e `scale` crescendo juntos.
+- Balões de pensamento e boato entram em `pop` na palavra e flutuam (`idle: float`).
+- A câmera nunca para: push de 4-15% por plano, ou pan com `scale ≥ 1 + 2|x|`. Plano longo (> 5 s) ou fundo liso pede mais câmera e mais ação.
+
+## Renderer: `mygo` (padrão) ou `remotion`
 | | `mygo` (`bin/vf-mygo`) | `remotion` (template `remotion-2d/`) |
 |---|---|---|
-| Como | Go nativo, frames desenhados na GPU (Metal) e encoder de hardware, sem navegador | Chrome headless, um screenshot por frame |
-| Velocidade medida (M4) | 22 s vertical 1080p: **3,4 s** (198 fps, 0,9 s de CPU); em 2K: 6,6 s | 16,7 s (53,6 s de CPU); em 2K: 23,4 s |
-| Clipes de vídeo | 150/150 frames exatos (ffmpeg por clipe) | 149/150 |
-| Cobre | image (Ken Burns, parallax), video, text (title/lower/label/number), color, transições, legendas | tudo isso + qualquer componente React, three.js, Remotion Studio |
-| Use para | **produção em escala de `remotion-2d` e `kenburns`/`ia-video`** | componentes sob medida, preview interativo, 3D (`cartoon-3d-short`) |
+| Como | Go nativo, GPU (Metal), encoder de hardware, sem navegador | Chrome headless, um screenshot por frame |
+| Velocidade medida (M4) | short animado (110 s, 33 cenas, 141 atores): **30 s em 2K**, 19 s em 1080p | ~4x mais lento |
+| Cobre | `scene` (cutout completo), image, video (frame exato), text, color, transições, legendas | tudo isso + componentes React sob medida, three.js, Studio |
 
-- mygo: `$VFM -project . -formato <f> -o out/video_<f>.mp4` (`-scale 1.3333` para 2K, `-still N -o f.png` para checagem, `-bitrate`). Ele sai sem áudio, como o Remotion com `--muted`: o som entra no `vf export --audio`.
-- Os dois renderers dão a mesma imagem (SSIM 0,98 no teste, com as fotos a ~41 dB de PSNR). A diferença está na quebra de linha de legendas que ficam no limite da largura, porque os motores de texto medem alguns pixels diferente. Não troque de renderer no meio de um projeto já aprovado.
-- Tipo de clipe novo: no Remotion é um componente React. No mygo, implemente também em `tools/vf-mygo/main.go` (função `clip`), ou use o Remotion só nesse projeto.
+- mygo: `$VFM -project . -formato <f> -o out/video_<f>.mp4` (`-scale 1.3333` para 2K, `-still N -o f.png` para checagem). Sai sem áudio: o som entra no `vf export --audio`.
+- A matemática de animação é a mesma nos dois (`tools/vf-mygo/scene.go` = `src/lib/anim.ts`). Tipo de clipe novo precisa ser implementado nos dois, ou o projeto fica só no Remotion.
 
-## Por motor
-### `remotion-2d` / `kenburns`
-1. Primeiro corte automático: `node $B2E roteiro/beats.json data/edl.json --voice voice/voice.wav` (`--music audio/music.wav` se houver).
-2. Refine o `edl.json` à mão: motion por plano, `texto_tela`, transições e camadas de parallax (`layers` com PNGs recortados, `depth` 0 = fundo, 1 = frente).
-3. Para animação que não cabe no EDL (gráfico animado, mapa, diagrama), crie um componente em `src/components/` e um tipo de clipe novo em `ClipView.tsx`. Mantenha o tempo amarrado a palavras: `wordAt(k)` em `src/lib/edl.ts`.
-4. Guia de movimento em `templates/kenburns.md`.
-
-### `ia-video`
-1. Gere `data/shots.yaml` a partir dos beats com `templates/ia-video.md` (um prompt por plano, com bloco de consistência fixo).
-2. Gere os clipes no provedor escolhido (o usuário ou a API dele). Salve em `public/clips/bNN-k.mp4` e registre no manifest com `origem: ia-video`, provedor, modelo e seed.
-3. Liste os clipes em `assets` de cada beat e rode `beats2edl.mjs`. Os clipes `video` usam `trim` e `playbackRate` para casar com a fala.
-4. Clipes de IA com defeito (mãos, texto ilegível, morph) são cortados ou cobertos por um insert, nunca entregues.
-
-### `remotion-three`
-Delegue à skill **`cartoon-3d-short`** (story.ts, world, cast, ink e pós). O `beats.json` com tempos substitui a etapa de cronometragem manual.
-
-### `mapas-3d`
-Delegue à skill **`mapas-3d-videos-virais`**.
+## Outros motores
+- **`ia-video`:** gere `data/shots.yaml` com `templates/ia-video.md`, produza os clipes (image-to-video a partir do plate e do elenco, para manter consistência) e use clipes `video`. Clipe com defeito (mãos, texto, morph) é cortado, nunca entregue. Clipes de IA contam como animação no `edl-check`.
+- **`remotion-three`:** delegue à skill **`cartoon-3d-short`**. O `beats.json` com tempos substitui a cronometragem manual.
+- **`mapas-3d`:** delegue à skill **`mapas-3d-videos-virais`**.
+- **Motion graphics** (gráfico, mapa 2D, diagrama): componente em `src/components/` + tipo de clipe novo. Cartela parada não conta como animação, o elemento precisa se construir ou se mover.
+- **`kenburns`:** só para trechos de respiro dentro de um vídeo animado, ou quando o usuário pedir explicitamente um vídeo de fotos (documentário de arquivo). Nesse caso, registre o pedido em `factory.yaml > notas` e rode o `edl-check` com `--min 0`.
 
 ## Checagem visual (sempre, antes da edição)
-1. Stills nos momentos-chave (gancho, cada virada, payoff, último frame):
-   `npx remotion still src/index.ts <formato> out/stills/f<frame>.jpg --frame=<frame> --scale=0.5` ou, com mygo, `$VFM -project . -formato <formato> -still <frame> -o out/stills/f<frame>.png` (~0,6 s)
-2. Abra os stills e confira: legível no celular, nada importante fora da safe zone, sem hold estático, o visual bate com a fala daquele instante.
-3. Render de prévia rápido: `$VFM -project . -formato <formato> -o out/preview.mp4` (o render completo do mygo já é rápido o bastante para prévia) ou `npx remotion render src/index.ts <formato> out/preview.mp4 --scale=0.5 --crf=28`. Depois rode `$VF keyframes out/preview.mp4 -o out/preview_kf` e olhe as sheets: cada plano deve ser distinto, e um corte sobrando denuncia clipe duplicado.
-4. Marque `etapas.animacao: feito`.
+1. Um still por cena, no momento da ação principal (`$VFM ... -still N`, ~3 s por still com sprites), juntado numa folha. Confira posição dos pés no chão do plate, escala coerente com a perspectiva, quem fica atrás de quê (`clip_y`), legibilidade no celular e safe zone.
+2. Render completo com o mygo e `$VF qa`. A folha densa (`out/qa_*/sheets`) mostra a animação quadro a quadro: confirme que as ações acontecem nas palavras certas.
+3. Congelamento no QA = cena sem vida suficiente. Aumente a câmera ou dê uma ação a alguém, não esconda o aviso.
+4. Só então marque `etapas.animacao: feito`, com o resultado do `edl-check` em `notas`.
 
 ## Regras de movimento (padrão da fábrica)
-- Nenhum hold estático ≥ 12 frames: todo still tem push-in ou pan leve. O `vf qa` acusa congelamento.
+- Nenhum hold estático de 12 frames ou mais (o `vf qa` acusa).
 - Corte seco é o padrão. Fade (0,25-0,3 s) só em mudança de tempo ou lugar. Flash branco só logo depois do gancho.
-- O visual reage 0-3 frames **antes** da palavra (o `beats2edl` já adianta 2 frames).
+- O visual reage 0-3 frames **antes** da palavra.
 - Plano médio nos shorts: 1,5-3 s. No longo: 3-6 s, até 8 s com movimento forte.
-- Texto na tela: no máximo 5 palavras, por no mínimo 1 s, e dentro da safe zone (`src/lib/formats.ts`).
+- Texto na tela: no máximo 5 palavras, por no mínimo 1 s, e dentro da safe zone.

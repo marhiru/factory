@@ -68,6 +68,11 @@ Notas de desempenho:
 - O decode sai direto no tamanho de análise (256 px de largura), e toda a estatística é calculada numa passada em inteiros.
 - Vídeos longos são divididos em segmentos paralelos (`-j`) com 2 frames de sobreposição: o resultado é idêntico ao serial (verificado em `tests/synthetic.sh`).
 
+## Animação cutout 2D (padrão)
+Todo vídeo da fábrica é animado. Personagens e props viram sprites (expressões + piscada + ciclos), exportados de desenhos Canvas2D por `skills/animacao/templates/sprites/`. Os cenários são plates sem personagens. Cada plano é um clipe `scene` no `edl.json`, com câmera e parallax, atores com keyframes, estados, `idle`, entrada e saída, e ações em `at_word`. A matemática é idêntica no mygo e no Remotion (SSIM 0,996 no teste).
+
+Trava: `skills/animacao/scripts/edl-check.mjs` reprova um EDL com menos de 70% de animação real ou com um trecho acima de 6 s sem animação. Ken Burns e cartelas não contam. Exemplo de cenas: `skills/animacao/templates/cenas/cenas.exemplo.py`.
+
 ## Renderers do `edl.json`: MyGo × Remotion
 Mesmo `edl.json` (22,2 s, 666 frames, Ken Burns + texto + legenda karaokê), Apple M4:
 

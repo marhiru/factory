@@ -2,7 +2,7 @@
 nome: __NOME__
 criado: __DATA__
 formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o principal)
-motor: __MOTOR__                  # remotion-2d | kenburns | ia-video | remotion-three | mapas-3d
+motor: __MOTOR__                  # cutout-2d (padrão) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
 renderer: __RENDERER__            # mygo | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
 idioma: __IDIOMA__
 estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ken Burns", "motion graphics"
@@ -22,7 +22,9 @@ etapas:                           # pendente | em_andamento | feito | pulado
   aprovacao_roteiro: pendente     # único gate humano obrigatório
   assets: pendente
   voz: pendente
-  animacao: pendente
+  elenco: pendente                # sprites dos personagens/props (public/sprites)
+  cenarios: pendente              # plates sem personagens (public/img/plates)
+  animacao: pendente              # cenas `scene` no edl.json; só "feito" com edl-check aprovado
   edicao: pendente
   qa: pendente
   entrega: pendente

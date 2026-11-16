@@ -7,7 +7,7 @@ $VF mix data/edl.json -o public/audio/mix.wav --duck 10
 Padrão de mix da fábrica: voz inalterada (0 dB), música ~10 LU abaixo da voz com ducking, SFX -6 dB. O master final (-14 LUFS, -1 dBTP) fica a cargo do `vf export`.
 
 ## Fontes, em ordem de preferência
-1. **Procedural local** (custo zero, sem licença, sincronia perfeita): sintetize em Python/numpy (padrão do `audio/sound.py` do projeto republica: tabela de eventos → síntese → stems). Bom para whoosh, pop, tick, impacto grave, riser, sino e drones.
+1. **Procedural local** (custo zero, sem licença, sincronia perfeita): sintetize em Python/numpy (tabela de eventos → síntese → stems). Bom para whoosh, pop, tick, impacto grave, riser, sino e drones.
 2. **ElevenLabs Sound Effects** (`POST /v1/sound-generation` com `text` e `duration_seconds`): para efeitos realistas específicos ("multidão em praça de pedra, 1889"). Gere 2-3 variações e escolha.
 3. **CC0** (Freesound com filtro CC0, Pixabay Sound, Kenney Audio). Registre URL e licença no manifest.
 4. **Música**: trilha original procedural ou biblioteca royalty-free com licença guardada (YouTube Audio Library para YouTube). Nunca música comercial.

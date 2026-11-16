@@ -15,11 +15,11 @@ Use imagem de referência do personagem (image-to-video) sempre que o provedor a
   dur: 4            # s; gere 1-2 s a mais e corte com trim
   aspect: "9:16"
   camera: "slow dolly in, eye level, 35mm"
-  subject: "<CHARACTER Deodoro> getting out of bed, coughing"
+  subject: "<CHARACTER protagonista> getting out of bed, coughing"
   action: "sits up slowly, reaches for military coat"
   setting: "dim 1889 bedroom, oil lamp, Rio de Janeiro"
   light: "warm lamp key light, cold blue window fill"
-  ref_image: assets/ref/deodoro.png
+  ref_image: assets/ref/protagonista.png
   prompt: |
     <STYLE>. <CHARACTER>. Slow dolly in at eye level: an old marshal sits up in bed, coughing, reaches for his coat.
     Dim 1889 bedroom lit by an oil lamp, cold blue light from the window. <NEGATIVE>

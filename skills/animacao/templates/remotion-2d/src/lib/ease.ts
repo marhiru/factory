@@ -8,6 +8,8 @@ const EASE = {
   inOut: Easing.bezier(0.45, 0, 0.55, 1), // smootherstep-like, sem "float"
 };
 
+export const EASE_FNS: Record<Ease, (t: number) => number> = EASE;
+
 export const mix = (p: number, a: Pose = {}, b: Pose = {}): Required<Pose> => ({
   scale: (a.scale ?? 1) + ((b.scale ?? a.scale ?? 1) - (a.scale ?? 1)) * p,
   x: (a.x ?? 0) + ((b.x ?? a.x ?? 0) - (a.x ?? 0)) * p,

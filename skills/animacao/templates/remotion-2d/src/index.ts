@@ -1,5 +1,6 @@
 import { continueRender, delayRender, registerRoot, staticFile } from "remotion";
 import { EDL } from "./lib/edl";
+import "./lib/anim"; // pré-carrega sprite.json das cenas
 import { Root } from "./Root";
 
 // Fonte da marca: carregada antes do primeiro frame, igual em todos os renderers (edl.json > font)

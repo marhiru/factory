@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Primeiro corte automático: roteiro/beats.json (já com start/end do `vf align`) -> data/edl.json.
+// ANIMATIC: roteiro/beats.json (já com start/end do `vf align`) -> data/edl.json só com stills/Ken Burns.
+// Serve para cronometrar e revisar o ritmo. NÃO é a animação: as cenas `scene` substituem esses clipes
+// (ver skills/animacao/SKILL.md), e o edl-check reprova um EDL que só tem isto.
 // uso: node beats2edl.mjs roteiro/beats.json data/edl.json [--fps 30] [--voice voice/voice.wav] [--music audio/music.wav]
 //      [--captions on|off] [--tail 0.4] [--force]
 import fs from "node:fs";

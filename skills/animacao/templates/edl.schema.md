@@ -1,5 +1,7 @@
 # data/edl.json — especificação
 
+Tipos de clipe: **`scene`** (animação cutout: o padrão de um vídeo animado), `image` (still/Ken Burns), `video`, `text`, `color`.
+
 ```jsonc
 {
   "fps": 30,
@@ -36,3 +38,43 @@
 - Caminhos `src` são relativos a `public/`.
 - `font`: sem ela, cada renderer usa a fonte do sistema (Helvetica Neue no Chrome, SF no MyGo) e as legendas mudam de largura e quebra. **Em produção, defina sempre a fonte da marca.**
 - Renderers que implementam este contrato: `remotion` (template `remotion-2d/`) e `mygo` (`bin/vf-mygo`). Um renderer novo precisa implementar só isto.
+
+## Clipe `scene` (animação cutout 2D)
+```jsonc
+{ "id": "s02", "type": "scene", "start": 2.73, "end": 5.73,
+  "transition_in": { "kind": "flash", "dur": 0.2 },
+  "scene": {
+    "bg": { "src": "img/plates/s02.jpg" },                       // plate sem personagens (ou "color")
+    "camera": { "from": { "scale": 1.04 }, "to": { "scale": 1.0 }, "ease": "linear" },  // move o plate e os atores
+    "actors": [
+      { "id": "heroi", "sprite": "sprites/heroi",               // pasta com sprite.json
+        "x": 0.5, "y": 0.86, "h": 0.52,                           // pés em (x, y) do quadro; h = altura do canvas do sprite / altura do quadro
+        "state": "sick", "idle": "breathe", "shadow": true, "depth": 0.15,
+        "enter": { "kind": "rise", "at": 0.05, "dur": 0.5 },      // pop | slide-left | slide-right | drop | rise | fade
+        "exit":  { "kind": "pop", "at_word": 32 },
+        "keys": [                                                  // t relativo ao clipe, OU at_word (2 frames antes da palavra)
+          { "at_word": 14, "state": "dazed" },
+          { "at_word": 17, "state": "shock" },
+          { "t": 1.2, "x": 0.5 }, { "t": 1.9, "x": 0.7, "ease": "inOut" }   // x, y, scale, rot, opacity interpolam; state, flip trocam
+        ],
+        "clip_y": 0.69                                             // opcional: recorta abaixo dessa linha (atrás de mesa/muro)
+      }
+    ]
+  } }
+```
+- **Interpolação:** cada campo (`x`, `y`, `scale`, `rot`, `opacity`) segura o valor base até a primeira key que o define. Entre duas keys, interpola com o `ease` da key de destino (padrão `inOut`). `state` e `flip` trocam na key.
+- **`idle`:** `breathe` (padrão: respira escalando a partir dos pés), `bob`, `sway`, `float`, `jitter` (nervoso) ou `none`. A fase muda por ator.
+- **Piscada automática:** usa o frame `blink` do estado, a cada 0,5-2,3 s por 4 frames, e também em toda troca de estado (esconde o corte). `"blink": false` desliga.
+- **Câmera:** cada camada recebe a câmera com parallax `1 + depth × 0.5` (o plate tem depth 0).
+- **Estado em ciclo:** com vários frames (marcha, aceno), avança a `fps` do estado em loop.
+
+## `sprite.json` (um por pack, em `public/sprites/<nome>/`)
+```json
+{ "w": 1200, "h": 2000, "anchor": [0.5, 0.975],
+  "states": {
+    "sick":  { "frames": ["sick.png"], "blink": "sick_blink.png" },
+    "march": { "frames": ["march_00.png", "march_01.png", "march_02.png", "march_03.png", "march_04.png", "march_05.png", "march_06.png", "march_07.png"], "fps": 8 }
+  } }
+```
+- `w` e `h` são os pixels dos PNGs. `anchor` é o ponto que vai em (`x`, `y`): pés por padrão, centro em efeitos.
+- O exportador `templates/sprites/export-sprites.mjs` gera tudo isso a partir de desenhos Canvas2D.

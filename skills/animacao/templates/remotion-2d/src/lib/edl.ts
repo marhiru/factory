@@ -21,7 +21,25 @@ export type Clip =
   | (Base & { type: "image"; src: string; fit?: "cover" | "contain"; layers?: Layer[] })
   | (Base & { type: "video"; src: string; trim?: number; fit?: "cover" | "contain"; volume?: number; playbackRate?: number })
   | (Base & { type: "text"; text: string; style?: "title" | "lower" | "label" | "number"; color?: string })
-  | (Base & { type: "color"; color: string });
+  | (Base & { type: "color"; color: string })
+  | (Base & { type: "scene"; scene: SceneSpec });
+
+// ---- animação cutout (clip "scene"): ver templates/edl.schema.md ----
+export type AnimKey = {
+  t?: number; at_word?: number; x?: number; y?: number; scale?: number; rot?: number; opacity?: number;
+  state?: string; flip?: boolean; ease?: Ease;
+};
+export type AnimMove = { kind: "pop" | "slide-left" | "slide-right" | "drop" | "rise" | "fade"; at?: number; at_word?: number; dur?: number };
+export type Actor = {
+  id: string; sprite: string; h?: number; depth?: number; x?: number; y?: number; scale?: number; rot?: number; opacity?: number;
+  state?: string; flip?: boolean; keys?: AnimKey[]; idle?: "breathe" | "bob" | "sway" | "float" | "jitter" | "none";
+  blink?: boolean; shadow?: boolean; enter?: AnimMove; exit?: AnimMove;
+  /** recorta o ator abaixo desta linha (fração da altura do quadro): atrás de mesa, muro, janela */
+  clip_y?: number;
+};
+export type SceneSpec = { bg?: { src?: string; color?: string; fit?: "cover" | "contain" }; camera?: Motion; actors: Actor[] };
+export type SpriteState = { frames: string[]; fps?: number; blink?: string };
+export type SpriteDef = { w: number; h: number; anchor?: [number, number]; states: Record<string, SpriteState> };
 
 export type AudioTrack = { src: string; gain_db?: number; start?: number; trim?: number; loop?: boolean };
 export type Captions = { enabled: boolean; words_per_page?: number; style?: "karaoke" | "pop" | "plain" };

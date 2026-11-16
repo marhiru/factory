@@ -8,6 +8,8 @@ description: "Templates de edição, export e QA da fábrica de vídeo: mix de �
 `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`
 
 ## Pipeline por formato
+Antes de tudo: `node ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` precisa sair com código 0. Se reprovar, volte para a skill `animacao`: não se renderiza nem se entrega vídeo sem animação.
+
 Para cada formato em `factory.yaml > formatos`:
 1. **Mix**: `$VF mix data/edl.json -o public/audio/mix.wav` (voz 0 dB, música com ducking de ~10 dB, SFX conforme `gain_db`). Para motores com som próprio (cartoon-3d-short), use o mix deles.
 2. **Render** (pelo `renderer` do `factory.yaml`):
