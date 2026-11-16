@@ -1,0 +1,45 @@
+# Identidade e regras fixas do canal. A `factory` lê este arquivo em todo vídeo novo (novo.sh --canal <pasta>).
+nome: ""
+handle: "@"
+idioma: pt
+publico: ""                 # quem é, o que já sabe, por que assiste (ex.: "18-34, curioso, assiste no celular no intervalo")
+nicho: ""                   # ex.: "histórias reais absurdas com explicação científica"
+promessa: ""                # o que todo vídeo entrega, numa frase (ex.: "uma história absurda que tem uma explicação real")
+formatos:
+  principal: yt-short       # yt-short | tiktok | yt-long
+  motor: cutout-2d          # cutout-2d | estatico | remotion-three | blender-3d (planejado)
+  duracao_alvo: 60
+  derivados: [tiktok]       # outros formatos que saem do mesmo vídeo
+roteiro:
+  template: short-historia-mecanismo   # template da skill roteiro
+  abertura_fixa: ""         # bordão opcional (marca do canal)
+  conector: "Veja,"         # 2ª frase padrão
+  wpm: 218
+  pausa_max_s: 0.25
+voz:
+  provedor: elevenlabs
+  voice_id: ""              # a voz é a marca: nunca troque depois de publicar
+  settings: { stability: 0.45, similarity_boost: 0.8, style: 0.15, speed: 1.0 }
+visual:
+  style_bible: style-bible.md
+  paleta: []                # 3-5 cores
+  luz_padrao: "golden hour, sombras longas, perspectiva aérea"
+  legenda: { estilo: pop, palavras_por_vez: 1, cor: "#ffffff", contorno: "#000000", altura: 0.62 }
+  elenco_fixo: []           # {nome, pack: kit/sprites/<pack>, papel: "protagonista recorrente" | "personagem-piada"}
+  cenarios_recorrentes: []  # sets/plates reaproveitados (kit/)
+marcas_proprias: []         # >= 3 (originalidade): ex. "narrador com bordão X", "mascote Y em todo vídeo", "paleta Z"
+referencias:                # canais estudados: gramática, nunca conteúdo
+  - { canal: "", estudo: "skills/analise/referencias/<arquivo>.md", copiar: "ritmo, estrutura, tipos de FX", nao_copiar: "temas, personagens, voz, visual" }
+cadencia:
+  por_semana: 5
+  horarios: []              # melhores horários do público (Studio > Público)
+  em_producao_max: 3        # vídeos em estágios diferentes na esteira
+metas:
+  viewed_vs_swiped: 0.75
+  apv: 0.9
+  inscritos_por_mil_views: 1.0
+publicacao:
+  titulo_padrao: "4-7 palavras, curiosidade sem spoiler (ver pauta.md)"
+  descricao: "título repetido + fontes"   # fontes sempre na descrição do short
+  hashtags: []
+  playlists: []

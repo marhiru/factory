@@ -55,4 +55,6 @@ ffmpeg -ss <início> -t <dur> -i ref/<slug>/source.mp4 -vf "fps=10,scale=240:-1,
 10 fps pega dissolves de 2-3 frames, holds de impacto e transições de zoom-through. Anote cada FX com **momento do roteiro, por que funciona e a receita na fábrica**, como em `referencias/rickclips.md`.
 
 ## Estudos salvos
-- `referencias/rickclips.md`: shorts "história absurda → mecanismo" (6-34M views): fórmula de roteiro, números de ritmo e catálogo de FX com receitas.
+- `referencias/rickclips.md`: shorts "história absurda → mecanismo" (6-34M views): fórmula de roteiro, números de ritmo e movimento, análise do mundo 3D (cards 2D em PBR), operação do canal, risco de cópia e catálogo de FX com receitas.
+
+Ao estudar um canal novo, cubra as mesmas seções: números (ritmo, fala, movimento, cor), fórmula de roteiro, como o mundo é feito, FX com receita, operação (cadência, títulos, descrição) e o que **não** copiar. Meça o movimento com `vf frames` (campo `slow`) e compare com os nossos vídeos.

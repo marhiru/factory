@@ -63,7 +63,9 @@ pub struct AnalyzeOpts {
 fn download(url: &str, out: &Path) -> Result<(PathBuf, Value)> {
     let bin = which("yt-dlp").context("yt-dlp não encontrado: `brew install yt-dlp`")?;
     run(Command::new(bin)
-        .args(["-f", "bv*[height<=1080]+ba/b[height<=1080]/b", "--merge-output-format", "mp4", "--write-info-json", "--no-playlist", "-o"])
+        // -S res:1080 limita pela MENOR dimensão: vertical sai 1080x1920 (com height<=1080 saía 608x1080).
+        // h264 primeiro: decode por software mais rápido que av1/vp9.
+        .args(["-f", "bv*+ba/b", "-S", "res:1080,vcodec:h264,acodec", "--merge-output-format", "mp4", "--write-info-json", "--no-playlist", "-o"])
         .arg(out.join("source.%(ext)s"))
         .arg(url))?;
     let video = std::fs::read_dir(out)?

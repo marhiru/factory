@@ -45,6 +45,34 @@ Títulos que funcionam (4-7 palavras, curiosidade sem spoiler): "Por que trilhos
 | Fim | plano aberto com o toco + a placa piscando | callback do gancho | último clipe repete o cenário do 1º com o objeto mudado |
 | Legendas | 1 palavra por vez, branca, bold, contorno preto, ~62% da altura | leitura sem som, sem cobrir o rosto | `captions: {words_per_page: 1, style: "pop"}` na safe zone |
 
+## Movimento e cor medidos (3 shorts, `vf frames`)
+| | 6,5M | 29M | 34M | nosso short cutout (referência) |
+|---|---|---|---|---|
+| Frames parados (nada muda em 0,5 s) | **0%** | **0%** | **0%** | 0% |
+| "Vida" mediana (diff de 0,5 s) | 0,125 | 0,151 | 0,120 | ~0,035 |
+| Dissolves detectados | 4 | 11 | 13 | 2 |
+| Saturação média / luma | 0,15 / 0,43 | 0,31 / 0,44 | 0,24 / 0,43 | — |
+
+Leitura: a câmera **nunca** para e se move ~4x mais que o nosso cutout; o dissolve curto é a costura padrão (o corte seco é minoria); a luma fica sempre no meio (0,43: nada estourado, nada escuro demais, mesmo nas cenas de noite).
+
+## Cenários: como o mundo é feito (análise dos frames 1080x1920)
+Evidências vistas em quadros em resolução cheia:
+- **Personagens 2D em cartões dentro de um mundo 3D** ("billboards"/"cards"): bonecos de traço preto, preenchimento chapado, sem sombreamento próprio, mas projetam sombra e ficam atrás/na frente de objetos 3D. É a mesma ideia do nosso cutout, só que o cenário é 3D de verdade e a câmera se move nele.
+- **Mundo PBR estilizado:** grama com lâminas individuais e translucência, árvores com folhagem em tufos (cards de folha agrupados), carros quase fotorreais (modelos de banco), asfalto com rachaduras e faixas gastas, nuvens volumétricas "fofas".
+- **Luz de cinema:** sol baixo com sombras longas, perspectiva aérea (neblina que clareia o fundo), bloom nas luzes, *god rays*, AO nos contatos. À noite: chuva com reflexo vermelho das lanternas no asfalto molhado, neblina volumétrica, faróis com cone de luz.
+- **FX de simulação:** destroços de fratura (chão quebrando em pedaços), partículas de poeira, onda de choque com distorção, motion blur forte nos impactos.
+- **Ferramenta:** o criador não publica o processo. O conjunto (cards 2D + PBR + volumétricos + fratura + render rápido o bastante para ~1 short/dia) aponta para um **motor 3D com render em tempo quase real**: Blender (Eevee) ou Unreal Engine (Lumen). Tutoriais de terceiros reproduzem o estilo com Blender guiado por Claude, ou com Remotion + three.js (como o nosso `cartoon-3d-short`). **Nada confirmado pelo criador.** Plano da fábrica para chegar nesse nível: `skills/animacao/templates/mundo-3d-blender.md`.
+
+## Operação do canal (dados públicos)
+- Cadência no formato novo: ~24 shorts em 26 dias (quase 1/dia), 20 de 24 acima de 1M de views (números citados por terceiros em 2/11/2026).
+- Título = descrição do vídeo (descrição vazia, sem tags, sem hashtags). Tudo aposta no título + primeiro segundo.
+- Voz masculina madura, ritmo de contador de história (~218 wpm), mesma voz em todos os vídeos: a voz é a marca.
+- Terceiros resumem o estilo em 7 regras (contando frames em 25 vídeos): câmera nunca para; movimentos longos e lentos; quase sem cortes secos; cores suaves; o mundo "brilha" (partículas, glints); personagem **entra na pose e congela** (pose-to-pose com hold); **uma ideia por plano**. Nossas medições batem com as 4 primeiras.
+- Estrutura de roteiro citada por terceiros: gancho → "Luckily/Unluckily" (sorte/azar alternando: "Por sorte… Infelizmente…") → "You see" → callback.
+
+## Risco: cópia
+O YouTube agrupa vídeos parecidos por *semantic IDs* e tem política contra conteúdo inautêntico/repetitivo (jul/2025). Vários canais imitadores não decolaram. **Copie a gramática (ritmo, estrutura, FX), nunca o tema, os personagens, a voz ou o visual exato.** Na fábrica: nicho, paleta, personagens e voz próprios (skill `canal`).
+
 ## Regras que entram na fábrica
 - Shorts de história: narração contínua (maior pausa ≤ 0,25 s; o QA estrito já cobra `max_voice_gap_s`).
 - Um FX de exagero por ato: impacto com *hold* no ato 1, fúria/hipérbole no clímax, mudança de clima na explicação.

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Cria um projeto de vídeo da fábrica.
-# uso: novo.sh <pasta> --formato yt-short[,tiktok] --motor cutout-2d [--idioma pt] [--duracao 60] [--install]
+# uso: novo.sh <pasta> --formato yt-short[,tiktok] --motor cutout-2d [--idioma pt] [--duracao 60] [--canal ~/Projects/canais/<c>] [--install]
 # motores: cutout-2d (padrão: animação de personagens/props) | estatico (yt-long com tema: imagens caprichadas + zoom leve)
 #          | remotion-2d | ia-video | kenburns (só fotos, a pedido) | remotion-three | mapas-3d
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ $# -ge 1 ] || { sed -n 2,3p "$0"; exit 2; }
 DEST="$1"; shift
-FORMATOS="yt-short"; MOTOR="cutout-2d"; IDIOMA="pt"; DURACAO=""; INSTALL=0
+FORMATOS="yt-short"; MOTOR="cutout-2d"; IDIOMA="pt"; DURACAO=""; INSTALL=0; CANAL=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --formato|--formatos) FORMATOS="$2"; shift 2;;
@@ -15,6 +15,7 @@ while [ $# -gt 0 ]; do
     --idioma) IDIOMA="$2"; shift 2;;
     --duracao) DURACAO="$2"; shift 2;;
     --install) INSTALL=1; shift;;
+    --canal) CANAL="$(cd "$2" && pwd)"; shift 2;;
     *) echo "opção desconhecida: $1" >&2; exit 2;;
   esac
 done
@@ -68,11 +69,18 @@ else
   cp "$ROOT/skills/assets/templates/style-bible.md" "$DEST/assets/style-bible.md"
 fi
 
+# canal: a style bible e o kit do canal valem para todo vídeo dele
+if [ -n "$CANAL" ]; then
+  [ -f "$CANAL/canal.yaml" ] || { echo "$CANAL/canal.yaml não existe (skill canal: novo)" >&2; exit 1; }
+  [ -f "$CANAL/style-bible.md" ] && cp "$CANAL/style-bible.md" "$DEST/assets/style-bible.md"
+  [ -d "$CANAL/kit/sprites" ] && mkdir -p "$DEST/public/sprites" && cp -R "$CANAL/kit/sprites/." "$DEST/public/sprites/"
+fi
+
 LIST="$(printf '%s' "$FORMATOS" | sed 's/,/, /g')"
 find "$DEST" -type f \( -name '*.yaml' -o -name '*.md' -o -name '*.json' \) -not -path '*/node_modules/*' -print0 |
   xargs -0 sed -i '' -e "s|__NOME__|$NOME|g" -e "s|__DATA__|$(date +%F)|g" -e "s|__FORMATOS__|$LIST|g" \
     -e "s|__PRINCIPAL__|$PRINCIPAL|g" -e "s|__MOTOR__|$MOTOR|g" -e "s|__IDIOMA__|$IDIOMA|g" \
-    -e "s|__DURACAO__|$DURACAO|g" -e "s|__WPM__|$WPM|g" -e "s|__RENDERER__|$RENDERER|g"
+    -e "s|__DURACAO__|$DURACAO|g" -e "s|__WPM__|$WPM|g" -e "s|__RENDERER__|$RENDERER|g" -e "s|__CANAL__|$CANAL|g"
 
 (cd "$DEST" && git init -q 2>/dev/null || true)
 if [ "$INSTALL" = 1 ] && [ -f "$DEST/package.json" ]; then (cd "$DEST" && npm install --silent); fi

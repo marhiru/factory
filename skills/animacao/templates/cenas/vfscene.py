@@ -152,6 +152,17 @@ def sfx(src, T, gain_db=-8):
     AUDIO.append({"src": src, "role": "sfx", "start": round(T, 3), "gain_db": gain_db})
 
 
+def load_parts(folder="roteiro/cenas"):
+    """esteira: cada sub-agente escreve só roteiro/cenas/sNN.py (um por cartão de plano). Este carrega todos em
+    ordem, no mesmo namespace (scene/A/fx/st/w/... já disponíveis dentro de cada parte)."""
+    import glob, runpy
+    g = {k: v for k, v in globals().items() if not k.startswith("__")}
+    parts = sorted(glob.glob(os.path.join(ROOT, folder, "s*.py")))
+    for p in parts:
+        runpy.run_path(p, init_globals=g)
+    return len(parts)
+
+
 def save(path="data/edl.json", tail=0.4, **meta):
     """mescla com o edl existente (mantém audio/font/captions) e grava"""
     p = os.path.join(ROOT, path)

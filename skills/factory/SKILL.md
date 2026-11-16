@@ -10,6 +10,7 @@ Você é o diretor de produção. Esta skill abre o projeto, decide qual skill d
 
 | Etapa | Skill | Saída principal |
 |---|---|---|
+| Canal (uma vez + semanal) | `video-factory:canal` | `canal.yaml`, pauta com nota, kit (voz, elenco, cenários), métricas |
 | 0. Referência (opcional) | `video-factory:analise` | `ref/<slug>/analysis.md` + sheets |
 | 1. Roteiro | `video-factory:roteiro` | `SCRIPT.md`, `roteiro/roteiro.txt`, `roteiro/beats.json` |
 | 2. Assets + voz | `video-factory:assets` | `assets/manifest.yaml`, `public/…`, `data/words.json` |
@@ -24,13 +25,14 @@ Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A 
 ## Comandos
 
 ### `novo <nome>`
+0. Se o vídeo é de um canal da fábrica, leia o `canal.yaml` (formato, motor, voz, template de roteiro, marcas próprias) e use a ideia de maior nota da `pauta.md`. Sem canal definido para uma série, sugira a skill `canal` primeiro.
 1. Pergunte só o que falta, numa única pergunta: **formato(s)** (`yt-long`, `yt-short`, `tiktok`; dá para combinar, ex. `yt-short,tiktok`), **tema** e **motor** (ver tabela abaixo). Se o usuário já disse, não pergunte.
 2. Crie o projeto:
    ```
-   ${CLAUDE_PLUGIN_ROOT}/scripts/novo.sh ~/Projects/<nome> --formato <f1,f2> --motor <motor> --idioma pt --install
+   ${CLAUDE_PLUGIN_ROOT}/scripts/novo.sh ~/Projects/<nome> --formato <f1,f2> --motor <motor> --idioma pt [--canal ~/Projects/canais/<canal>] --install
    ```
    O motor padrão é `cutout-2d`, e o `novo.sh` já copia o exportador de sprites e escolhe `renderer: mygo` quando `bin/vf-mygo` existe. O `--install` (npm) é necessário para exportar sprites (Remotion headless) e para o renderer Remotion.
-3. Preencha `estilo`, `publico` e `canal` no `factory.yaml` com o que souber e siga para a etapa 0 ou 1.
+3. Preencha `estilo`, `publico` e `handle` no `factory.yaml` com o que souber (com canal, venha do `canal.yaml`) e siga para a etapa 0 ou 1.
 
 ### `status`
 Leia `factory.yaml` e mostre numa linha por etapa o estado e o próximo passo concreto.
@@ -40,6 +42,16 @@ Retome da primeira etapa `pendente` ou `em_andamento`, carregando a skill da eta
 
 ### `recorte` (longo → shorts)
 Depois de entregue um `yt-long`, carregue `video-factory:edicao` e siga `templates/recorte.md`. Cada corte entra em `derivados` no `factory.yaml`.
+
+## Modo esteira (sub-agentes)
+Para shorts com 12+ planos, vídeos longos, ou vários vídeos na semana, produza pela esteira de `templates/esteira.md`:
+1. Depois do `vf align`: `node ${CLAUDE_PLUGIN_ROOT}/skills/factory/scripts/planos.mjs --lote 5` gera os **cartões de plano** (`roteiro/planos/sNN.json`: janela de tempo, palavras, visual, cenário, critérios, saída). `etapas.cartoes: feito`.
+2. Passe 0 (animatic) para o vídeo inteiro já renderizar. Depois suba os cartões de passe: layout → animação → fx → som → final.
+3. Em paralelo: sub-agentes de **elenco**, **cenários** e **som**; depois um **animador por lote** de cartões contíguos. Cada um escreve só em `roteiro/cenas/sNN.py` e nos arquivos do seu posto (`load_parts()` no `cenas.py` junta tudo). Use o briefing padrão do template.
+4. Um **revisor** independente (sem acesso ao código) confere stills e folha densa contra os critérios de cada cartão.
+5. Só o orquestrador mexe em `factory.yaml`, `edl.json` final, render e commits. `planos.mjs status` mostra o quadro.
+
+Referências de vocabulário para os briefings: `skills/animacao/templates/glossario-fx.md` e `skills/roteiro/templates/glossario-roteiro.md`.
 
 ## Motores
 

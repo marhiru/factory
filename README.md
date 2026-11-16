@@ -103,6 +103,12 @@ Imagens caprichadas do **Google Flow (Nano Banana) via MCP**, zoom-in leve, card
 ## QA estrito
 `vf qa` é estrito por padrão: WARN = FAIL, código 1. Limites por formato no bloco `qa:` do `formats.yaml` (duração de entrega, vida mínima de plano, plano máximo, bitrate, abertura do áudio, ar morto, buracos na voz, gancho visual, repetição de imagem, barras pretas, clipping). Exceção só em `factory.yaml > qa_excecoes` com motivo. `--lenient` para rascunho.
 
+## Esteira, canal e glossários
+- **Esteira** (`skills/factory/templates/esteira.md`): postos, passes incrementais (animatic → layout → animação → fx → som → final) e sub-agentes por lote de **cartões de plano** (`skills/factory/scripts/planos.mjs`), cada um dono só dos seus arquivos (`roteiro/cenas/sNN.py`, juntados por `load_parts()`).
+- **Canal** (`skills/canal`): `canal.yaml` (nicho, promessa, formato, voz, elenco, marcas próprias), pauta com nota, checklist de criação e revisão semanal de métricas. `novo.sh --canal` aplica o kit do canal no projeto.
+- **Glossários**: `skills/animacao/templates/glossario-fx.md` (animação, câmera, montagem, look, FX, som) e `skills/roteiro/templates/glossario-roteiro.md` (estrutura, engrenagens, retenção, métricas).
+- **Mundo 3D no Blender** (especificação, ainda não implementado): `skills/animacao/templates/mundo-3d-blender.md`.
+
 ## Testes
 ```bash
 cd tools/vf && cargo test --release     # unitários (cortes, transcrição, align, formats)

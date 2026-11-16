@@ -1,5 +1,6 @@
 # Estado do projeto na video-factory. A skill `factory` lê e atualiza este arquivo a cada etapa.
 nome: __NOME__
+canal: "__CANAL__"                # pasta do canal (skill canal): canal.yaml, style bible, kit, voz
 criado: __DATA__
 formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o principal)
 motor: __MOTOR__                  # cutout-2d (padrão) | estatico (yt-long com tema) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
@@ -9,7 +10,7 @@ estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ke
 duracao_alvo: __DURACAO__         # segundos
 wpm_alvo: __WPM__
 publico: ""                       # para quem é o vídeo
-canal: ""                         # @ / nome do canal
+handle: ""                        # @ do canal (se houver canal.yaml, vem de lá)
 voz:
   provedor: elevenlabs
   voice_id: ""
@@ -26,6 +27,7 @@ etapas:                           # pendente | em_andamento | feito | pulado
   voz: pendente
   elenco: pendente                # sprites dos personagens/props (public/sprites)
   cenarios: pendente              # plates sem personagens (public/img/plates)
+  cartoes: pendente               # roteiro/planos/sNN.json (factory/scripts/planos.mjs): unidade de trabalho da esteira
   animacao: pendente              # cenas `scene` no edl.json; só "feito" com edl-check aprovado
   edicao: pendente
   qa: pendente
