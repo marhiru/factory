@@ -10,6 +10,8 @@ Primeira frase, sem preparação. Teste: a frase sozinha, lida por um estranho, 
 | Número concreto | [número específico] + [consequência] | "Trinta e sete segundos: foi o tempo que o foguete durou." |
 | Segunda pessoa | "Imagine que você…" + [situação com aposta] | "Imagine que você acorda e seu país não existe mais." |
 | Pergunta com aposta | pergunta cuja resposta é surpreendente | "Por que os pilotos não podem ter barba?" |
+| Ação estranha afirmada | "[alguém] fez [coisa absurda]" ou "se você [ação comum], [consequência absurda]" | "Ele serrou buracos num trilho a cada doze metros." |
+| Instrução sinistra | [objeto] + "e disse: se [sinal], [ordem urgente]" | "Ele pôs uma bola na boca de um dragão e disse ao imperador: se isso cair, corra." |
 | Proibido/segredo | "[lugar/coisa] onde [regra estranha]" | "Existe uma ilha onde é proibido morrer." |
 
 ## Anti-padrões (nunca)

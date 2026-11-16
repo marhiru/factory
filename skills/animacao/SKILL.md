@@ -49,6 +49,17 @@ Lições do primeiro projeto feito assim (short de 110 s, 33 cenas):
 - Um personagem sozinho num plano > 3 s precisa de pelo menos 2 ações (troca de expressão + gesto ou deslocamento).
 - Gerar a cena num script (`vfscene.py`) permitiu reajustar 33 cenas em segundos quando os tempos da voz mudaram.
 
+### FX de exagero (o que faz o short "explodir")
+Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado num short de 6,5M views com o mesmo estilo de bonecos 2D em mundo 3D:
+- **Um FX de exagero por ato:**
+  - impacto com *hold* no ar: `rot` sobe em 0,15 s, segura ~0,8 s e cai;
+  - fúria/hipérbole no clímax: olhos vermelhos, chão rachando, onda de choque com flash;
+  - **mudança de clima** na explicação: noite, chuva, POV.
+- **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho) ou whip.
+- **Props-piada que contam a história:** placa-contador que vira de 7 para 0 na batida, letreiro com lâmpadas piscando (ciclo de 2 frames).
+- **Termo do fenômeno dentro do mundo:** placa de rodovia ou letreiro, e não cartela.
+- **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,08 s.
+
 ### Direção de animação (o que faz parecer vivo)
 - Personagem parado sempre respira (`idle: breathe`) e pisca sozinho (automático, 0,5-2,3 s). Na troca de expressão o motor fecha os olhos para esconder o corte.
 - **Reação antes da fala:** a expressão muda 0-3 frames antes da palavra (o `at_word` já faz isso).

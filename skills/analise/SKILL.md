@@ -46,3 +46,13 @@ Comparando vários vídeos de um canal: rode `analyze` em 3-5 vídeos e monte um
 ## Notas
 - Downloads ficam em `ref/<slug>/source.*` (já no `.gitignore`). São só para estudo, nunca entram no vídeo.
 - A primeira transcrição baixa o modelo `large-v3-turbo-q5_0` (~550 MB) para `~/.cache/vf/models`.
+
+## Estudar FX e transições (quadro a quadro)
+As sheets por plano mostram composição, mas não os efeitos. Para FX, faça folhas densas nos momentos de ação (picos de `motion` em `frames.jsonl` ou palavras de impacto na transcrição):
+```
+ffmpeg -ss <início> -t <dur> -i ref/<slug>/source.mp4 -vf "fps=10,scale=240:-1,tile=8x4" -frames:v 1 ref/<slug>/fx_<momento>.jpg
+```
+10 fps pega dissolves de 2-3 frames, holds de impacto e transições de zoom-through. Anote cada FX com **momento do roteiro, por que funciona e a receita na fábrica**, como em `referencias/rickclips.md`.
+
+## Estudos salvos
+- `referencias/rickclips.md`: shorts "história absurda → mecanismo" (6-34M views): fórmula de roteiro, números de ritmo e catálogo de FX com receitas.

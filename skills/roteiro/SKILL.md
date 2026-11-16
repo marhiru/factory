@@ -15,6 +15,7 @@ Saídas, sempre as três:
 | Formato | Template | Base |
 |---|---|---|
 | `yt-short` explicativo (história real + causa) | use a skill **`roteiro-short-explicativo`** (fórmula de 9 beats, já validada) | 30-70 s |
+| `yt-short` / `tiktok` história absurda + mecanismo (física, psicologia, história) | `templates/short-historia-mecanismo.md` (fórmula estudada em shorts de 6-34M views) | 45-70 s |
 | `yt-short` / `tiktok` geral (lista, curiosidade, tutorial, opinião) | `templates/short.md` | 15-60 s |
 | `tiktok` nativo (tendência, POV, loop) | `templates/tiktok.md` | 7-45 s |
 | `yt-long` estático com tema (motor `estatico`) | `templates/yt-long-estatico.md`: esquemática de hook rate | 10-15 min |
