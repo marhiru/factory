@@ -1,5 +1,7 @@
 # Mundo 3D de alta qualidade (Blender) com personagens cutout em cards
 
+> **Escopo: só shorts (`yt-short` e `tiktok`).** O motor `blender-3d` nunca é usado em `yt-long`: o vídeo longo da fábrica é o motor `estatico` (imagens + HyperFrames). Motivo: custo de render e de produção de cena por minuto; no short, o mundo 3D é o diferencial que segura o polegar.
+
 Objetivo: o nível de cenário do estilo estudado em `skills/analise/referencias/rickclips.md`: mundo PBR estilizado com luz de cinema, câmera sempre em movimento, personagens 2D de traço preto em cards dentro do 3D. Status: **especificação**. O motor `blender-3d` ainda não foi implementado nem testado na fábrica (o Blender não estava instalado quando isto foi escrito).
 
 ## Por que Blender

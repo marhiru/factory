@@ -7,7 +7,7 @@ nicho: ""                   # ex.: "histórias reais absurdas com explicação c
 promessa: ""                # o que todo vídeo entrega, numa frase (ex.: "uma história absurda que tem uma explicação real")
 formatos:
   principal: yt-short       # yt-short | tiktok | yt-long
-  motor: cutout-2d          # cutout-2d | estatico | remotion-three | blender-3d (planejado)
+  motor: cutout-2d          # cutout-2d | estatico (só yt-long) | remotion-three | blender-3d (planejado; só yt-short/tiktok)
   duracao_alvo: 60
   derivados: [tiktok]       # outros formatos que saem do mesmo vídeo
 roteiro:

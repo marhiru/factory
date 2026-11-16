@@ -63,6 +63,7 @@ Referências de vocabulário para os briefings: `skills/animacao/templates/gloss
 | `ia-video` | planos gerados por Veo/Kling/Runway etc. (image-to-video a partir do elenco e dos plates) | prompts por plano (`data/shots.yaml`) → clipes `video` |
 | `kenburns` | **só** quando o usuário pede um vídeo de fotos (documentário de arquivo) | clipes `image` com `motion`; não é animação |
 | `remotion-three` | personagens 2D cartoon em mundo 3D com nanquim | **delegue à skill `cartoon-3d-short`** |
+| `blender-3d` (planejado) | **só `yt-short`/`tiktok`**: elenco cutout em cards num mundo 3D PBR (estilo de alta qualidade estudado) | especificação em `skills/animacao/templates/mundo-3d-blender.md`; nunca em `yt-long` |
 | `mapas-3d` | curiosidades de geografia/história em mapa de satélite 3D | **delegue à skill `mapas-3d-videos-virais`** |
 
 O renderer é plugável: roteiro, assets e edição só trocam arquivos neutros (`beats.json`, `words.json`, `edl.json`). Há três renderers prontos para o `edl.json`:

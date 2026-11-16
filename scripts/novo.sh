@@ -28,8 +28,10 @@ case "$PRINCIPAL" in
 esac
 IFS=',' read -ra FS <<< "$FORMATOS"
 for f in "${FS[@]}"; do case "$f" in yt-long|yt-short|tiktok) ;; *) echo "formato inválido: $f" >&2; exit 2;; esac; done
-case "$MOTOR" in cutout-2d|estatico|remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
+case "$MOTOR" in cutout-2d|estatico|blender-3d|remotion-2d|kenburns|ia-video|remotion-three|mapas-3d) ;; *) echo "motor inválido: $MOTOR" >&2; exit 2;; esac
 [ "$MOTOR" = estatico ] && [ "$PRINCIPAL" != yt-long ] && { echo "motor estatico é só para yt-long (shorts são animados)" >&2; exit 2; }
+case "$MOTOR" in blender-3d) echo "motor blender-3d ainda não implementado (especificação: skills/animacao/templates/mundo-3d-blender.md); use cutout-2d" >&2; exit 2;; esac
+for f in "${FS[@]}"; do [ "$f" = yt-long ] && [ "$MOTOR" = blender-3d ] && { echo "blender-3d é só para yt-short/tiktok" >&2; exit 2; }; done
 [ "$MOTOR" = kenburns ] && echo "aviso: kenburns é vídeo de fotos, sem animação; use só se o usuário pediu isso (a trava edl-check reprova)" >&2
 DURACAO="${DURACAO:-$DUR_DEF}"
 # renderer: mygo (GPU nativa) para motores 2D quando o binário existe; senão Remotion
