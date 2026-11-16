@@ -12,10 +12,21 @@ yt-long:
   wpm: 160            # narração explicativa longa: 150-170 palavras/min
   lufs: -14
   true_peak: -1.0
-  lufs_tolerance: 1.0
+  lufs_tolerance: 0.5
   video: { codec: h264, crf: 16, preset: slow, pix_fmt: yuv420p }
   audio: { codec: aac, bitrate: 320k, sample_rate: 48000 }
   safe_zone: { top: 0, bottom: 0, left: 0, right: 0 }
+  qa:
+    freeze_frames: 12
+    duration_strict: [480, 1200]   # o vídeo longo da fábrica mira 10-15 min
+    min_life: 0.003                # zoom-in leve (>= 1,05 por plano de 7 s) passa; still parado não
+    max_shot_s: 9
+    max_bitrate_mbps: 16
+    audio_start_s: 0.3
+    hook_s: 3
+    max_silence_s: 1.0
+    max_voice_gap_s: 2.0
+    repeat_window_s: 120
 
 yt-short:
   platform: youtube
@@ -29,10 +40,21 @@ yt-short:
   wpm: 222            # ~3,7 palavras/s (fórmula roteiro-short-explicativo)
   lufs: -14
   true_peak: -1.0
-  lufs_tolerance: 1.0
+  lufs_tolerance: 0.5
   video: { codec: h264, crf: 16, preset: slow, pix_fmt: yuv420p }
   audio: { codec: aac, bitrate: 320k, sample_rate: 48000 }
   safe_zone: { top: 140, bottom: 380, left: 40, right: 120 }
+  qa:
+    freeze_frames: 8
+    duration_strict: [30, 75]      # fórmula de short explicativo: 30-70 s
+    min_life: 0.008
+    max_shot_s: 6
+    max_bitrate_mbps: 24           # 1440x2560 h264 crf 16 fica em ~10-18 Mb/s
+    audio_start_s: 0.2
+    hook_s: 2
+    max_silence_s: 0.6
+    max_voice_gap_s: 1.0
+    repeat_window_s: 0
 
 tiktok:
   platform: tiktok
@@ -46,7 +68,18 @@ tiktok:
   wpm: 222
   lufs: -14
   true_peak: -1.0
-  lufs_tolerance: 1.0
+  lufs_tolerance: 0.5
   video: { codec: h264, crf: 17, preset: slow, pix_fmt: yuv420p }
   audio: { codec: aac, bitrate: 256k, sample_rate: 48000 }
   safe_zone: { top: 160, bottom: 480, left: 60, right: 140 }
+  qa:
+    freeze_frames: 8
+    duration_strict: [21, 60]      # alvo 35 s; acima de 60 s o TikTok perde conclusão
+    min_life: 0.008
+    max_shot_s: 5
+    max_bitrate_mbps: 12
+    audio_start_s: 0.2
+    hook_s: 1.5
+    max_silence_s: 0.6
+    max_voice_gap_s: 1.0
+    repeat_window_s: 0

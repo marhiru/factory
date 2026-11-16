@@ -50,7 +50,13 @@ pub fn export(input: &Path, out: &Path, fmt: &Format, o: &ExportOpts) -> Result<
     });
     let fps_ok = fmt.fps.iter().any(|&x| (x - p.fps).abs() < 0.05);
     let geometry_ok = p.width == tw && p.height == th && fps_ok;
-    let copy_video = geometry_ok && !o.reencode && p.vcodec == fmt.video.codec && p.pix_fmt == fmt.video.pix_fmt;
+    // bitrate do vídeo de entrada (encoder de hardware costuma estourar): acima do teto do QA, reencoda
+    let in_mbps = p.bitrate.map(|b| b as f64 / 1e6).unwrap_or(0.0);
+    let too_big = in_mbps > fmt.qa.max_bitrate_mbps * 0.9;
+    if too_big && !o.reencode {
+        eprintln!("bitrate de entrada {in_mbps:.1} Mb/s acima do teto ({} Mb/s): reencodando com crf {}", fmt.qa.max_bitrate_mbps, fmt.video.crf);
+    }
+    let copy_video = geometry_ok && !o.reencode && !too_big && p.vcodec == fmt.video.codec && p.pix_fmt == fmt.video.pix_fmt;
 
     let (audio_src, audio_map): (&Path, String) = match &o.audio {
         Some(a) => (a.as_path(), "1:a:0".into()),

@@ -29,5 +29,6 @@ etapas:                           # pendente | em_andamento | feito | pulado
   qa: pendente
   entrega: pendente
 derivados: []                     # cortes de um longo: {formato, inicio, fim, arquivo}
-entregas: []                      # {formato, arquivo, qa: OK|WARN|FAIL, data}
+entregas: []                      # {formato, arquivo, qa: OK|FAIL, data}
+qa_excecoes: []                   # {check: "<nome da checagem>", motivo: "<por quê>"}: única forma de aceitar um WARN no QA estrito
 notas: []

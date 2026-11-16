@@ -24,6 +24,15 @@ pub struct FrameStat {
     pub skip2: f32,
     /// distância de histograma RGB 8x8x8 para o frame anterior, 0-1
     pub hdiff: f32,
+    /// diferença para o frame i-15 (~0,5 s): separa hold de verdade de zoom/pan lento
+    #[serde(default)]
+    pub slow: f32,
+    /// average-hash 8x8 da luma (repetição de imagem)
+    #[serde(skip)]
+    pub ahash: u64,
+    /// barra preta uniforme nas bordas [topo, base, esquerda, direita]
+    #[serde(skip)]
+    pub bars: [bool; 4],
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +48,12 @@ pub struct Shot {
     pub luma: f32,
     pub sat: f32,
     pub motion: f32,
+    /// média do `slow` (movimento acumulado em ~0,5 s): "vida" do plano
+    #[serde(default)]
+    pub slow: f32,
+    /// average-hash do frame do meio
+    #[serde(default)]
+    pub ahash: u64,
 }
 
 /// Miniatura capturada durante a mesma passada de decodificação (sem custo extra de decode).
@@ -118,6 +133,49 @@ fn coarse_dist(a: &Coarse, b: &Coarse) -> f32 {
     (s as f64 / (2.0 * n as f64)) as f32
 }
 
+/// janela do `slow` (frames)
+pub const SLOW_K: usize = 15;
+
+fn ahash(g: &[u8], w: usize, h: usize) -> u64 {
+    let mut cells = [0u64; 64];
+    let mut cnt = [0u64; 64];
+    for y in 0..h {
+        let cy = (y * 8 / h).min(7);
+        let row = &g[y * w..(y + 1) * w];
+        for (x, &v) in row.iter().enumerate() {
+            let k = cy * 8 + (x * 8 / w).min(7);
+            cells[k] += v as u64;
+            cnt[k] += 1;
+        }
+    }
+    let avg: Vec<u64> = cells.iter().zip(&cnt).map(|(&s, &c)| s / c.max(1)).collect();
+    let m = avg.iter().sum::<u64>() / 64;
+    avg.iter().enumerate().fold(0u64, |acc, (k, &v)| if v > m { acc | (1 << k) } else { acc })
+}
+
+/// barra preta = faixa de borda (4% da dimensão) escura E uniforme (sem textura/grão, ao contrário de uma vinheta)
+fn bars(g: &[u8], w: usize, h: usize) -> [bool; 4] {
+    let band = |xs: std::ops::Range<usize>, ys: std::ops::Range<usize>| -> bool {
+        let (mut s, mut s2, mut n) = (0f64, 0f64, 0f64);
+        for y in ys {
+            for x in xs.clone() {
+                let v = g[y * w + x] as f64 / 255.0;
+                s += v;
+                s2 += v * v;
+                n += 1.0;
+            }
+        }
+        if n == 0.0 {
+            return false;
+        }
+        let m = s / n;
+        let sd = (s2 / n - m * m).max(0.0).sqrt();
+        m < 0.03 && sd < 0.008
+    };
+    let (bh, bw) = ((h * 4 / 100).max(1), (w * 4 / 100).max(1));
+    [band(0..w, 0..bh), band(0..w, h - bh..h), band(0..bw, 0..h), band(w - bw..w, 0..h)]
+}
+
 struct SegOut {
     coarse: Vec<Coarse>,
     frames: Vec<FrameStat>,
@@ -125,18 +183,19 @@ struct SegOut {
 }
 
 fn segment(input: &Path, o: &DecodeOpts, s: usize, e: Option<usize>, thumb_every: usize) -> Result<SegOut> {
-    let lead = s.min(2);
+    let lead = s.min(SLOW_K);
     let start = s - lead;
     let n = e.map(|e| e - start);
     let npx = o.width * o.height;
-    let mut grays: [Vec<u8>; 3] = [vec![0; npx], vec![0; npx], vec![0; npx]];
+    const RING: usize = SLOW_K + 1;
+    let mut grays: Vec<Vec<u8>> = (0..RING).map(|_| vec![0; npx]).collect();
     let mut hists: [Box<[u32; BINS]>; 2] = [Box::new([0; BINS]), Box::new([0; BINS])];
     let mut frames = Vec::with_capacity(n.unwrap_or(1024));
     let mut thumbs = Vec::new();
     let mut coarse = Vec::with_capacity(n.unwrap_or(1024));
     let mut k = 0usize; // frames lidos neste segmento
     decode::stream(input, start, n, o, |gi, rgb| {
-        let cur = k % 3;
+        let cur = k % RING;
         let (h0, h1) = hists.split_at_mut(1);
         let (hc, hp) = if k % 2 == 0 { (&mut h0[0], &h1[0]) } else { (&mut h1[0], &h0[0]) };
         let (luma, sat) = {
@@ -144,14 +203,14 @@ fn segment(input: &Path, o: &DecodeOpts, s: usize, e: Option<usize>, thumb_every
             stats(rgb, g, hc)
         };
         if k >= lead {
-            let (motion, hdiff) = if k >= 1 {
-                (mad(&grays[cur], &grays[(k + 2) % 3]), hist_dist(hc, hp, npx))
-            } else {
-                (0.0, 0.0)
-            };
-            let skip2 = if k >= 2 { mad(&grays[cur], &grays[(k + 1) % 3]) } else { motion };
+            let back = |d: usize| &grays[(k + RING - d) % RING];
+            let (motion, hdiff) = if k >= 1 { (mad(&grays[cur], back(1)), hist_dist(hc, hp, npx)) } else { (0.0, 0.0) };
+            let skip2 = if k >= 2 { mad(&grays[cur], back(2)) } else { motion };
+            // no começo do vídeo (sem 15 frames atrás) compara com o frame 0
+            let slow = if k >= SLOW_K { mad(&grays[cur], back(SLOW_K)) } else { mad(&grays[cur], &grays[0]) };
+            let (ah, br) = (ahash(&grays[cur], o.width, o.height), bars(&grays[cur], o.width, o.height));
             coarse.push(coarsen(hc));
-            frames.push(FrameStat { i: gi, t: gi as f64 / o.fps, luma, sat, motion, skip2, hdiff });
+            frames.push(FrameStat { i: gi, t: gi as f64 / o.fps, luma, sat, motion, skip2, hdiff, slow, ahash: ah, bars: br });
             if thumb_every > 0 && gi % thumb_every == 0 {
                 thumbs.push(Thumb { i: gi, t: gi as f64 / o.fps, rgb: rgb.to_vec() });
             }
@@ -256,6 +315,8 @@ pub fn build_shots(f: &[FrameStat], cuts: &[usize], fps: f64) -> Vec<Shot> {
             let l: Vec<f32> = s.iter().map(|x| x.luma).collect();
             let c: Vec<f32> = s.iter().map(|x| x.sat).collect();
             let m: Vec<f32> = s.iter().skip(1).map(|x| x.motion).collect();
+            // vida: ignora os primeiros SLOW_K frames (a janela ainda cruza o corte)
+            let sl: Vec<f32> = s.iter().skip(SLOW_K.min(s.len().saturating_sub(1))).map(|x| x.slow).collect();
             Shot {
                 id: k + 1,
                 a: w[0],
@@ -266,6 +327,8 @@ pub fn build_shots(f: &[FrameStat], cuts: &[usize], fps: f64) -> Vec<Shot> {
                 luma: mean(&l),
                 sat: mean(&c),
                 motion: mean(&m),
+                slow: mean(&sl),
+                ahash: s[s.len() / 2].ahash,
             }
         })
         .collect()

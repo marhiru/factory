@@ -144,15 +144,24 @@ enum Cmd {
         /// shots.json/plan.json com flash/xfade/planned para ignorar transições planejadas
         #[arg(long)]
         plan: Option<PathBuf>,
-        /// hold mínimo (frames) para acusar congelamento
-        #[arg(long, default_value_t = 12)]
-        freeze: usize,
+        /// hold mínimo (frames) para acusar congelamento (padrão: qa.freeze_frames do formato)
+        #[arg(long)]
+        freeze: Option<usize>,
         /// miniatura a cada N frames nas sheets
         #[arg(long, default_value_t = 10)]
         sheet_every: usize,
-        /// sai com código 1 se houver FAIL
+        /// rascunho: WARN não reprova. O padrão é ESTRITO (WARN = FAIL, sai com código 1)
         #[arg(long)]
+        lenient: bool,
+        /// aceito por compatibilidade (estrito já é o padrão)
+        #[arg(long, hide = true)]
         strict: bool,
+        /// factory.yaml com `qa_excecoes: [{check, motivo}]` (padrão: ./factory.yaml se existir)
+        #[arg(long)]
+        factory: Option<PathBuf>,
+        /// trilha de voz isolada (ex.: public/voice/voice.wav) para checar buracos na narração
+        #[arg(long)]
+        voice: Option<PathBuf>,
         #[arg(long)]
         formats: Option<PathBuf>,
         #[command(flatten)]
@@ -291,7 +300,7 @@ fn real_main() -> Result<()> {
             let tr = (!no_transcribe).then(|| w.opts());
             analyze::analyze(&input, &out, &analyze::AnalyzeOpts { frames: d.opts(0), transcribe: tr, keyframe_side: side })?;
         }
-        Cmd::Qa { input, formato, out, plan, freeze, sheet_every, strict, formats: fp, d } => {
+        Cmd::Qa { input, formato, out, plan, freeze, sheet_every, lenient, strict: _, factory, voice, formats: fp, d } => {
             util::ensure_dir(&out)?;
             let fmt = formats::get(fp.as_deref(), &formato)?;
             let plan_v = match plan {
@@ -300,8 +309,12 @@ fn real_main() -> Result<()> {
             };
             let fa = frames::analyze(&input, &d.opts(sheet_every))?;
             frames::write_outputs(&fa, &out)?;
-            let worst = qa::run_qa(&fa, &formato, &fmt, plan_v.as_ref(), &out, freeze)?;
-            if strict && worst == qa::Level::FAIL {
+            let factory = factory.or_else(|| Some(PathBuf::from("factory.yaml")).filter(|p| p.exists()));
+            let exceptions = factory.as_deref().map(qa::load_exceptions).unwrap_or_default();
+            let o = qa::QaOpts { plan: plan_v.as_ref(), freeze_frames: freeze, strict: !lenient, exceptions, voice: voice.as_deref() };
+            let worst = qa::run_qa(&fa, &formato, &fmt, &o, &out)?;
+            if worst == qa::Level::FAIL {
+                eprintln!("QA REPROVADO ({}): corrija ou registre a exceção com motivo em factory.yaml > qa_excecoes", if lenient { "leniente" } else { "estrito" });
                 std::process::exit(1);
             }
         }

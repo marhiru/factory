@@ -68,7 +68,7 @@ Comparação e limites na skill `animacao`. Um motor novo só precisa ler o `edl
 3. Depois do roteiro aprovado, **siga sem pedir confirmação** por assets, voz, animação, edição e QA. Só pare para algo que dependa do usuário: gerar a voz no ElevenLabs sem API key, credenciais, ou uma decisão criativa nova.
 4. **Ao fim de cada etapa**: atualize `etapas.<etapa>` em `factory.yaml`, salve tudo em disco e diga numa linha o que ficou pronto.
 5. **Multi-formato**: um roteiro só por formato principal. Shorts e TikTok podem dividir o mesmo vídeo vertical, mas exporte e rode o QA por formato (safe zones e durações diferem). Um yt-long nunca vira short por reenquadramento cego: use `recorte`.
-6. **Entrega**: só com `edl-check` aprovado e `vf qa` sem `FAIL`. Registre em `entregas` o arquivo e o resultado do QA, e entregue o caminho absoluto do MP4 junto do resumo do QA.
+6. **Entrega**: só com `edl-check` aprovado e `vf qa` (estrito, o padrão) saindo com código 0. WARN também reprova; a única saída é uma `qa_excecoes` com motivo concreto. Registre em `entregas` o arquivo e o resultado do QA, e entregue o caminho absoluto do MP4 junto do resumo do QA.
 
 ## Specs por formato (fonte: `${CLAUDE_PLUGIN_ROOT}/formats.yaml`, ou `$VF formats`)
 
