@@ -1,0 +1,12 @@
+# Inventário de assets. Nada entra no vídeo sem estar aqui com origem e licença.
+# origem: elevenlabs | procedural | cc0 | stock | ia-imagem | ia-video | proprio
+# status: pendente | gerado | aprovado | rejeitado
+assets:
+  - id: voz-principal
+    tipo: voz
+    origem: elevenlabs
+    caminho: public/voice/voice.wav
+    parametros: { voice_id: "", modelo: eleven_multilingual_v2 }
+    licenca: "ElevenLabs (plano pago: uso comercial)"
+    beats: [all]
+    status: pendente

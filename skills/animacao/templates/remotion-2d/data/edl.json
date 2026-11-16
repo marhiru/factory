@@ -1,0 +1,53 @@
+{
+  "fps": 30,
+  "duration": 6,
+  "background": "#101014",
+  "audio": [],
+  "clips": [
+    {
+      "id": "abertura",
+      "type": "color",
+      "color": "#1d2b53",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "id": "titulo",
+      "type": "text",
+      "text": "TÍTULO DO GANCHO",
+      "style": "title",
+      "start": 0.2,
+      "end": 3,
+      "layer": 2
+    },
+    {
+      "id": "foto",
+      "type": "image",
+      "src": "img/exemplo.jpg",
+      "start": 3,
+      "end": 6,
+      "transition_in": {
+        "kind": "fade",
+        "dur": 0.3
+      },
+      "motion": {
+        "from": {
+          "scale": 1.0,
+          "x": 0,
+          "y": 0
+        },
+        "to": {
+          "scale": 1.15,
+          "x": -0.04,
+          "y": 0.02
+        },
+        "ease": "inOut"
+      }
+    }
+  ],
+  "captions": {
+    "enabled": true,
+    "words_per_page": 3,
+    "style": "karaoke"
+  }
+}

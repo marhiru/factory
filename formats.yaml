@@ -1,0 +1,52 @@
+# Specs por formato de entrega. Fonte única: lida pelo `vf` (qa, export) e pelas skills.
+# Durações em segundos, safe_zone em px no tamanho nativo (área coberta pela interface do app; aproximada).
+yt-long:
+  platform: youtube
+  label: "YouTube vídeo longo"
+  aspect: "16:9"
+  width: 1920
+  height: 1080
+  alt_sizes: [[3840, 2160], [2560, 1440]]
+  fps: [24, 25, 30, 50, 60]
+  duration: { min: 240, max: 3600, target: 720 }
+  wpm: 160            # narração explicativa longa: 150-170 palavras/min
+  lufs: -14
+  true_peak: -1.0
+  lufs_tolerance: 1.0
+  video: { codec: h264, crf: 16, preset: slow, pix_fmt: yuv420p }
+  audio: { codec: aac, bitrate: 320k, sample_rate: 48000 }
+  safe_zone: { top: 0, bottom: 0, left: 0, right: 0 }
+
+yt-short:
+  platform: youtube
+  label: "YouTube Shorts"
+  aspect: "9:16"
+  width: 1080
+  height: 1920
+  alt_sizes: [[1440, 2560], [2160, 3840]]
+  fps: [24, 25, 30, 60]
+  duration: { min: 15, max: 180, target: 60 }
+  wpm: 222            # ~3,7 palavras/s (fórmula roteiro-short-explicativo)
+  lufs: -14
+  true_peak: -1.0
+  lufs_tolerance: 1.0
+  video: { codec: h264, crf: 16, preset: slow, pix_fmt: yuv420p }
+  audio: { codec: aac, bitrate: 320k, sample_rate: 48000 }
+  safe_zone: { top: 140, bottom: 380, left: 40, right: 120 }
+
+tiktok:
+  platform: tiktok
+  label: "TikTok"
+  aspect: "9:16"
+  width: 1080
+  height: 1920
+  alt_sizes: []
+  fps: [24, 25, 30, 60]
+  duration: { min: 7, max: 600, target: 35 }
+  wpm: 222
+  lufs: -14
+  true_peak: -1.0
+  lufs_tolerance: 1.0
+  video: { codec: h264, crf: 17, preset: slow, pix_fmt: yuv420p }
+  audio: { codec: aac, bitrate: 256k, sample_rate: 48000 }
+  safe_zone: { top: 160, bottom: 480, left: 60, right: 140 }

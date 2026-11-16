@@ -1,0 +1,7 @@
+{
+  "name": "video-factory",
+  "version": "0.1.0",
+  "description": "Fábrica de vídeo com IA para YouTube (longo e Shorts) e TikTok: skill principal, templates de roteiro, assets, animação e edição, e a CLI Rust `vf` para transcrever, analisar frame a frame, fazer QA e exportar.",
+  "author": { "name": "video-factory" },
+  "keywords": ["video", "youtube", "tiktok", "remotion", "shorts"]
+}

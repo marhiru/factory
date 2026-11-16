@@ -1,0 +1,31 @@
+# Estado do projeto na video-factory. A skill `factory` lê e atualiza este arquivo a cada etapa.
+nome: __NOME__
+criado: __DATA__
+formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o principal)
+motor: __MOTOR__                  # remotion-2d | kenburns | ia-video | remotion-three | mapas-3d
+renderer: __RENDERER__            # mygo | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
+idioma: __IDIOMA__
+estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ken Burns", "motion graphics"
+duracao_alvo: __DURACAO__         # segundos
+wpm_alvo: __WPM__
+publico: ""                       # para quem é o vídeo
+canal: ""                         # @ / nome do canal
+voz:
+  provedor: elevenlabs
+  voice_id: ""
+  modelo: eleven_multilingual_v2
+  settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, speed: 1.0 }
+referencias: []                   # URLs/arquivos estudados com `vf analyze` -> ref/<slug>/analysis.md
+etapas:                           # pendente | em_andamento | feito | pulado
+  referencia: pendente
+  roteiro: pendente
+  aprovacao_roteiro: pendente     # único gate humano obrigatório
+  assets: pendente
+  voz: pendente
+  animacao: pendente
+  edicao: pendente
+  qa: pendente
+  entrega: pendente
+derivados: []                     # cortes de um longo: {formato, inicio, fim, arquivo}
+entregas: []                      # {formato, arquivo, qa: OK|WARN|FAIL, data}
+notas: []

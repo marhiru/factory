@@ -1,0 +1,16 @@
+{
+  "formato": "__PRINCIPAL__",
+  "wpm": __WPM__,
+  "beats": [
+    {
+      "id": 1,
+      "tipo": "gancho",
+      "texto": "Frase falada exatamente como vai para a voz.",
+      "visual": "O que aparece na tela, literal e ilustrável (não repetir o que a fala já diz).",
+      "camera": "close | medio | aberto | aereo | insert",
+      "assets": [],
+      "sfx": [],
+      "texto_tela": ""
+    }
+  ]
+}

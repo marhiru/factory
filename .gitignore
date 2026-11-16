@@ -1,0 +1,6 @@
+bin/vf
+tools/vf/target/
+.DS_Store
+*.mp4
+!templates/**/*.mp4
+bin/vf-mygo
