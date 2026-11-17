@@ -1,4 +1,4 @@
-# QA visual em cinco etapas
+# QA visual em cinco etapas (+ luz e FX)
 
 Use para vídeos animados com personagens, props ou cenas 3D compostas. A revisão técnica
 de codec, áudio, freezes e frames pretos continua necessária, mas não aprova modelagem,
@@ -50,6 +50,12 @@ Observe a cena com o elenco e a câmera finais, não apenas o asset isolado.
 - Confira silhueta, oclusão e tangências: fios não cruzam dados, vegetação não esconde
   informação e um segundo prop não parece uma peça solta do primeiro.
 - Um prop posto em foreground deve ser reconhecível, não um recorte sem função narrativa.
+- **Cenário persistente:** props, marcas e manchas de luz fixos no mundo ficam no mesmo lugar em todos os
+  ângulos do mesmo cenário (calendário ao lado da porta, relógio sobre a mesa, sol na parede).
+- **Faixa da legenda (0,66-0,76 da altura) é proibida** para rosto, olhos e ação principal; o assunto fica entre
+  ~0,25 e 0,60. Medido em 3 referências de 19-35M de views: legenda em 0,69-0,72, rostos acima.
+- **Primeiro plano emoldura sem tapar:** nuca, ombro, objeto desfocado só nas bordas; nunca sobre o rosto.
+- O objeto da história aparece em todo plano do seu ato (é a âncora do olhar entre ângulos).
 - Reprova sem exceção: asset mal posicionado (atravessando móvel, parede ou chão, flutuando,
   fora de escala/perspectiva), asset que quebra a harmonia do cenário (orientação, luz, paleta
   ou estilo destoando do conjunto) e asset que atrapalha a visibilidade da cena (cobrindo o
@@ -69,6 +75,10 @@ apenas reposicionado no assento.
   como novo estado do mesmo personagem, não como personagem novo.
 - Antes de aceitar, compare lado a lado antes × depois: rosto, cabelo, roupa, cores, proporção
   e acessórios idênticos. Qualquer divergência de identidade reprova a correção.
+- **Emoção e tempo são estados do mesmo pack:** rosto roxo de raiva, suor, olhos vermelhos, calendário que
+  avança, mesa esvaziada. Nunca um desenho novo do personagem para uma emoção.
+- Trava objetiva: com o elenco aprovado, `bun ${PLUGIN}/skills/animacao/scripts/elenco-lock.mjs snapshot`;
+  em toda correção, `elenco-lock.mjs check --pedido posicao|pose|novo-estado` precisa sair 0.
 - Nada além do pedido muda na cena: demais atores, props, câmera e luz ficam como estavam,
   salvo dependência real (ver "Evidência e encerramento").
 
@@ -99,8 +109,34 @@ Confira início, meio, fim e extremos da ação; para glides/pans, use o clipe i
   não ganham corte seco nem cenário novo: a câmera faz zoom-out do enquadramento atual e
   zoom-in no novo ponto de interesse do mesmo cenário, num movimento único e suave.
   Corte só quando o contexto muda de fato (lugar, tempo ou assunto).
+- Régua medida (3 referências): 75-100 % das transições são **dissolves de 0,2-0,3 s** (6-10 frames) e a
+  câmera **continua andando no mesmo sentido** através do dissolve. Corte seco ≤ 25 % das transições.
+- Trocar de assunto dentro do mesmo lugar: chicote com motion blur, atravessar porta/janela, foco que passa do
+  primeiro plano para o fundo (rack focus) ou FX como cortina (poeira que enche o quadro). Nunca salto seco
+  de ângulo no mesmo cenário.
+- Nenhum quadro parado: até o plano de explicação gira ou avança devagar (referências: 0,05 % de frames parados).
 - Verifique safe zones do formato. Uma versão 16:9 ou uma folha de miniaturas não prova
   enquadramento vertical nem legibilidade sob a interface da plataforma.
+
+## 6. Luz e FX
+
+Confira com o pós ativo, no tamanho do celular, em stills antes/durante/depois de cada cue e FX.
+Receitas em [luz-fx-shaders.md](../../animacao/references/luz-fx-shaders.md).
+
+- **Arco de luz:** a temperatura acompanha a história (ex.: quente → pôr do sol → noite fria → manhã quente na
+  resolução). Meça com `analise/scripts/pontos.py` no render e compare com o plano do iluminador.
+- **Continuidade de luz:** manchas de sol, práticos e direção da chave iguais em todos os ângulos do cenário.
+- **Noite legível:** luma do plano ≥ 0,26; noite é azul e clara, nunca preta.
+- **Harmonia:** uma chave dominante por cenário; todo asset recebe a mesma direção e cor de luz, com
+  sombra de contato. Asset com luz própria ou sombra do lado errado reprova.
+- **Leitura:** o assunto do plano é a área mais contrastada; nenhum prop de fundo mais claro que quem fala.
+- **Ênfase:** cada cue cai na palavra do cartão, entra/sai suave (6-10 frames), destaca o assunto certo e
+  não tapa rosto, legenda ou safe zone. Interno tem fonte motivada (janela, luminária, tela, fogo).
+- **FX no material** quando a história é sobre o objeto (calor, alerta, energia): o próprio asset muda de cor e
+  emite (`fx/heat.ts`), em vez de um sprite por cima. Fumaça/poeira ocupa espaço e tem lado iluminado e sombra
+  (`ShaderFx("dust")`), não é brilho aditivo.
+- **FX:** antecipação → pico → dissipação; núcleo + borda + secundário; ilumina o entorno; casa com o
+  estilo; nenhum quadrado/borda de card visível; nenhuma faixa ou costura. FX de "elipse borrada" reprova.
 
 ## Evidência e encerramento
 
@@ -114,7 +150,7 @@ oclusão e câmera; mudou câmera → reveja contatos aparentes, leitura e marge
 checks independentes que continuam válidos. Uma aprovação fica pendente se o render mudou
 depois da evidência e a área afetada não foi revista.
 
-Antes da entrega, todas as etapas aplicáveis precisam estar aprovadas e o `vf qa` estrito
+Antes da entrega, todas as etapas aplicáveis (1-6, com a 3b quando houve correção) precisam estar aprovadas e o `vf qa` estrito
 também precisa passar. Prévia sem voz pode servir como evidência visual, com áudio/exportação
 pendentes e essa limitação explícita. Nunca troque FAIL de qualidade por uma exceção técnica,
 nem use `--planned` para apagar defeitos visuais ou intervalos inteiros de ação.

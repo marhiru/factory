@@ -10,7 +10,7 @@ import path from "node:path";
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const DIR = "roteiro/planos";
-const PASSES = ["animatic", "layout", "animacao", "fx", "som", "final"];
+const PASSES = ["animatic", "layout", "animacao", "luz", "fx", "som", "final"]; // v2: "luz" entrou antes de "fx"
 
 if (args[0] === "status") {
   const cs = fs.existsSync(DIR) ? fs.readdirSync(DIR).filter((f) => f.endsWith(".json")).sort().map((f) => JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8"))) : [];
@@ -57,11 +57,25 @@ B.beats.forEach((b, i) => {
       visual: vis[j] ?? b.visual ?? "", camera: b.camera ?? "", cenario: b.cenario ?? null, sfx: b.sfx ?? [], card: j === 0 ? b.card ?? null : null,
       saida: { cena: `roteiro/cenas/${id}.py`, still: `out/planos/${id}.png` },
       criterios: CRIT[motor] ?? CRIT["cutout-2d"],
-      passe: o?.passe ?? 0, status: o?.status ?? "pendente", notas: o?.notas ?? [],
+      luz: o?.luz ?? b.luz ?? [],          // cues do iluminador: {at_word, spot|rays|exposure|temp, ...}
+      fx: o?.fx ?? b.fx ?? [],             // FX do artista de FX: {at_word, tipo, fonte: shader|pixelfx, ...}
+      continuo_com: o?.continuo_com ?? null, // diretor de câmera: id do cartão vizinho na mesma scene (zoom-out -> zoom-in)
+      // cartões antigos (v1, sem o passe "luz"): fx/som/final sobem um índice
+      passe: o ? (o.passes_v === 2 ? o.passe : o.passe >= 3 ? o.passe + 1 : o.passe) : 0, passes_v: 2,
+      status: o?.status ?? "pendente", notas: o?.notas ?? [],
     });
   }
+});
+// continuidade de câmera (QA etapa 5): cartões vizinhos no mesmo cenário viram sugestão de junção
+// (sem corte: zoom-out do enquadramento atual -> zoom-in no novo assunto). O diretor de câmera confirma
+// em `continuo_com` ou recusa (motivo em notas) quando muda tempo/assunto.
+let juncoes = 0;
+cards.forEach((c, i) => {
+  const prev = cards[i - 1];
+  c.continuo_sugerido = prev && c.cenario && c.cenario === prev.cenario && c.continuo_com == null ? prev.id : null;
+  if (c.continuo_sugerido) juncoes++;
 });
 for (const c of cards) fs.writeFileSync(path.join(DIR, `${c.id}.json`), JSON.stringify(c, null, 1));
 for (const f of fs.readdirSync(DIR)) if (f.endsWith(".json") && !cards.some((c) => `${c.id}.json` === f)) fs.unlinkSync(path.join(DIR, f));
 const lotes = Math.max(...cards.map((c) => c.lote));
-console.log(`${cards.length} cartões em ${lotes} lote(s) de até ${lote} -> ${DIR}/ (motor ${motor})`);
+console.log(`${cards.length} cartões em ${lotes} lote(s) de até ${lote} -> ${DIR}/ (motor ${motor}) · ${juncoes} junção(ões) de câmera sugerida(s) no mesmo cenário`);

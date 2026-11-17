@@ -15,6 +15,8 @@ Entrada: `roteiro/beats.json` com tempos (`vf align`), `data/words.json`, `asset
 - Desenho Canvas2D, proporções, expressões, piscadas, atuação e exportação: [cartoon 2D](references/cartoon-2d.md).
 - Timeline, mundo, cards iluminados, câmera, ink, DOF e pós: [2D em mundo 3D](references/2d-in-3d-world.md).
 - Template executável local: `templates/remotion-three/`; origem MIT em `ORIGEM.md`. Use `toon.ts` para sprites mesmo quando o renderer final for mygo.
+- **Luz de cenário, FX e shaders:** [luz-fx-shaders.md](references/luz-fx-shaders.md). Rig por cenário (interno e global) para harmonia, cues dinâmicos (`spot`, `rays`, exposição, temperatura) para destacar personagem e exaltar a cena, régua de qualidade de FX e o motor GLSL em `templates/remotion-three/src/fx/` (`ShaderFx`, `LightCueEffect`, composições `FxSheet`/`FxLab`).
+- FX em sprites para o mygo: `bun scripts/fx-pack.mjs <efeito-pixelfx | sheet.json | pasta de PNGs> public/sprites/fx-<nome>` (pixelfx e pixel-splats ficam em `ref/fx/` depois do `vf init`).
 - Neste perfil, atuação pontual e câmera podem sustentar o plano; não imponha idle em figurantes. O movimento precisa existir na imagem, e não só nas flags do EDL.
 
 ## Regra número 1: animar é obrigatório
@@ -66,7 +68,7 @@ Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado nu
 - **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho) ou whip.
 - **Props-piada que contam a história:** placa-contador que vira de 7 para 0 na batida, letreiro com lâmpadas piscando (ciclo de 2 frames).
 - **Termo do fenômeno dentro do mundo:** placa de rodovia ou letreiro, e não cartela.
-- **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,08 s.
+- **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,2-0,3 s (`fade` 0,2-0,3) com a câmera seguindo no mesmo sentido através do dissolve (medido: 75-100 % das transições das referências).
 
 ### Direção de animação (o que faz parecer vivo)
 - Personagem parado sempre respira (`idle: breathe`) e pisca sozinho (automático, 0,5-2,3 s). Na troca de expressão o motor fecha os olhos para esconder o corte.
@@ -76,7 +78,8 @@ Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado nu
 - Andar ou marchar = estado em ciclo + `keys` movendo `x`/`y`. Aproximar da câmera = `y` e `scale` crescendo juntos.
 - Balões de pensamento e boato entram em `pop` na palavra e flutuam (`idle: float`).
 - A câmera nunca para: push de 4-15% por plano, ou pan com `scale ≥ 1 + 2|x|`. Plano longo (> 5 s) ou fundo liso pede mais câmera e mais ação.
-- **Trechos contínuos com contexto semelhante:** mesmo cenário, sem corte. A câmera faz zoom-out do enquadramento atual e zoom-in no novo ponto de interesse (keys de `scale`/`x`/`y` na mesma `scene`). Corte ou transição só quando muda lugar, tempo ou assunto.
+- **Trocar de assunto no mesmo lugar:** chicote (pan rápido de 4-6 frames com `scale` subindo), atravessar porta/janela (push até a moldura encher o quadro), rack focus no 3D, ou FX `dust` como cortina. Corte seco ≤ 25 % das transições.
+- **Trechos contínuos com contexto semelhante:** mesmo cenário, sem corte. A câmera faz zoom-out do enquadramento atual e zoom-in no novo ponto de interesse numa `scene` só: `cam=junta(s_a, foco_a, s_b, foco_b)` do `vfscene.py` (câmera `from → via → to`, mygo e Remotion). O `edl-check` reprova corte seco entre clipes vizinhos com o mesmo plate. Corte ou transição só quando muda lugar, tempo ou assunto.
 
 ## Motor `estatico` (yt-long com tema)
 Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py` (cópia de `templates/cenas/estatico.py`) → `data/edl.json` com `perfil: estatico` → `edl-check` no perfil estático → HyperFrames. Regras, cards e técnicas de edição em `templates/estatico.md`.
@@ -100,6 +103,11 @@ Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py
 - **Motion graphics** (gráfico, mapa 2D, diagrama): componente em `src/components/` + tipo de clipe novo. Cartela parada não conta como animação, o elemento precisa se construir ou se mover.
 - **`kenburns`:** só para trechos de respiro dentro de um vídeo animado, ou quando o usuário pedir explicitamente um vídeo de fotos (documentário de arquivo). Nesse caso, registre o pedido em `factory.yaml > notas` e rode o `edl-check` com `--min 0`.
 
+## Luz e FX (passes 3 e 4 da esteira)
+- Iluminador e artista de FX são agentes próprios (esteira, seção 3b). Nenhum plano fica com luz chapada sem fonte, e nenhum FX entra sem antecipação → pico → dissipação e luz no entorno.
+- Ordem no pós do `remotion-three`: ink → DOF → **LightCue** → bloom → tone mapping → grade. Os FX `ShaderFx` emitem acima de 1 para florescer.
+- Confira no `FxLab` (stills em 3 frames) antes de usar um shader novo; no mygo, confira o pack de FX sobre o plate claro e o escuro do vídeo.
+
 ## Checagem visual (sempre, antes da edição)
 1. Um still por cena, no momento da ação principal (`$VFM ... -still N`, ~3 s por still com sprites), juntado numa folha. Confira posição dos pés no chão do plate, escala coerente com a perspectiva, quem fica atrás de quê (`clip_y`), legibilidade no celular e safe zone.
 2. Render completo com o mygo e `$VF qa`. A folha densa (`out/qa_*/sheets`) mostra a animação quadro a quadro: confirme que as ações acontecem nas palavras certas.
@@ -119,7 +127,8 @@ Antes de aceitar cenas compostas, siga as etapas 2, 3 e 5 do [QA visual em cinco
 Defina contatos de assento/colo/mãos/pés e suportes dos props; confira início, extremos e fim
 em vídeo. Billboards sentados não podem girar para dentro do móvel. Efeitos usam o referencial
 e a fase do objeto. Reveja margens e oclusões depois de qualquer mudança de pose ou câmera.
-Asset mal posicionado, que quebre a harmonia do cenário ou tape a cena reprova. Correção pedida
+Asset mal posicionado, que quebre a harmonia do cenário ou tape a cena reprova. Rosto e ação principal ficam fora da faixa da legenda (0,66-0,76 da altura). Props e luz do cenário ficam no mesmo lugar em todos os ângulos.
+Identidade: com o elenco aprovado, `bun scripts/elenco-lock.mjs snapshot`; toda correção roda `elenco-lock.mjs check --pedido <posicao|pose|novo-estado>` (código 0). Emoção e passagem de tempo são estados do mesmo pack. Correção pedida
 pelo usuário mexe só no layout/pose do mesmo asset (mesmo pack), nunca o troca por outro
 parecido (etapa 3b).
 O `edl-check` mede cobertura de animação e não certifica essas propriedades.

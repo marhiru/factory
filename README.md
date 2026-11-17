@@ -27,6 +27,14 @@ claude --plugin-dir ~/Projects/video-factory
 ```
 Depois, na sessão: `/video-factory:factory novo meu-video --formato yt-short,tiktok --motor kenburns`.
 
+### Fluxo pelo terminal
+```bash
+mkdir meu-video && cd meu-video
+vf init type="short" platform="yt,tiktok"   # short | long | "short,long"
+vf auth platform="yt,tiktok"                # opcional: rascunho + analíticos (credenciais: skills/edicao/references/plataformas.md)
+claude                                      # o plugin já vem habilitado; peça o vídeo
+```
+
 ## Estrutura
 ```
 .claude-plugin/plugin.json
@@ -57,6 +65,10 @@ tests/synthetic.sh               # teste de integração (cortes em frames conhe
 | `vf mix data/edl.json -o public/audio/mix.wav` | voz + música com ducking + SFX numa passada |
 | `vf export <video> -f <formato> -o out.mp4 --audio mix.wav [--fit pad\|crop\|blur] [--fast]` | enquadramento, encode, loudnorm em 2 passadas, mux |
 | `vf qa <final.mp4> -f <formato> -o out/qa [--strict]` | specs, loudness, pretos/brancos/congelados/pops, planos, sheets densas |
+| `vf init type="short,long" platform="yt,tiktok"` | transforma a pasta atual num projeto da fábrica (esqueleto, templates do motor, som procedural, `ref/fx/` com pixelfx e pixel-splats, plugin ligado no `.claude/settings.json`); nunca sobrescreve arquivos |
+| `vf auth platform="yt,tiktok"` · `vf auth status` · `vf auth logout` | OAuth (PKCE, loopback) no YouTube e TikTok; tokens em `~/.config/vf/auth/` |
+| `vf publish <mp4> platform=yt\|tiktok [meta=… thumb=…]` | sobe como **rascunho** (YouTube privado, TikTok caixa de entrada) |
+| `vf analytics platform=yt\|tiktok [video=ID] [dias=28]` | analíticos e retenção → `out/analytics/` |
 | `vf formats` · `vf probe` · `vf doctor` | utilitários |
 
 ### Desempenho (Apple M4, 10 núcleos)

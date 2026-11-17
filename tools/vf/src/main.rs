@@ -1,5 +1,10 @@
 mod align;
 mod analyze;
+mod auth;
+mod init;
+mod kv;
+mod net;
+mod platform;
 mod decode;
 mod export;
 mod formats;
@@ -236,6 +241,27 @@ enum Cmd {
         #[arg(long)]
         formats: Option<PathBuf>,
     },
+    /// Inicializa a pasta atual como projeto da fábrica: vf init type="short,long" platform="yt,tiktok"
+    /// [motor=... idioma=pt duracao=60 canal=<pasta> dir=<pasta> --install --offline]
+    Init {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Autoriza a fábrica nas plataformas (OAuth): vf auth platform="yt,tiktok" | vf auth status | vf auth logout platform=yt
+    Auth {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Envia o vídeo como RASCUNHO: vf publish out/final_yt-short.mp4 platform=yt [title=... meta=out/publicacao.json thumb=capa.jpg]
+    Publish {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "ARQUIVO CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Analíticos: vf analytics platform=yt [video=ID1,ID2] [dias=28] -> out/analytics/<p>-<data>.json
+    Analytics {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
+        args: Vec<String>,
+    },
     /// Verifica dependências externas
     Doctor,
 }
@@ -421,6 +447,10 @@ fn real_main() -> Result<()> {
             }
         }
         Cmd::Sheet { dir, out, cols, rows, side, min_w } => sheet_dir(&dir, out, cols, rows, side, min_w)?,
+        Cmd::Init { args } => init::run(&args)?,
+        Cmd::Auth { args } => auth::run(&args)?,
+        Cmd::Publish { args } => platform::publish(&args)?,
+        Cmd::Analytics { args } => platform::analytics(&args)?,
         Cmd::Doctor => doctor(),
     }
     Ok(())
@@ -433,6 +463,8 @@ fn doctor() {
         ("whisper-cli", std::env::var("VF_WHISPER").unwrap_or("whisper-cli".into()), "transcrição (brew install whisper-cpp)"),
         ("yt-dlp", "yt-dlp".into(), "analyze de URL (brew install yt-dlp)"),
         ("bun", "bun".into(), "scripts JS/TS, dependências e render (bun.sh)"),
+        ("curl", "curl".into(), "vf auth / publish / analytics"),
+        ("git", "git".into(), "vf init (bibliotecas de FX em ref/fx)"),
     ];
     for (label, bin, why) in items {
         match util::which(&bin) {

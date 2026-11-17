@@ -59,7 +59,15 @@ ffmpeg -ss <início> -t <dur> -i ref/<slug>/source.mp4 -vf "fps=10,scale=240:-1,
 ```
 10 fps pega dissolves de 2-3 frames, holds de impacto e transições de zoom-through. Anote cada FX com **momento do roteiro, por que funciona e a receita na fábrica**, como em `referencias/rickclips.md`.
 
+## Medir pelos pontos de qualidade
+Depois do `analyze`, `python3 -I ${CLAUDE_PLUGIN_ROOT}/skills/analise/scripts/pontos.py ref/<slug>` mede transições
+(dissolves × cortes secos, duração), vida (frames parados), arco de luz (temperatura e luma por plano) e a faixa
+da legenda, e grava `ref/<slug>/pontos.json`. Leia então quadro a quadro com folhas densas os trechos de cada
+ponto (cenário persistente, identidade, junções de câmera, luz, FX) e compare com o QA visual (etapas 3, 3b, 5, 6).
+Rode o mesmo script no nosso render para comparar número com número.
+
 ## Estudos salvos
+- `referencias/rickclips-5-pontos.md`: os mesmos shorts (+1) lidos pelos 5 pontos de qualidade (posicionamento, identidade, câmera, luz, FX) com números, comparação com as regras e o que virou ferramenta.
 - `referencias/rickclips.md`: shorts "história absurda → mecanismo" (6-34M views): fórmula de roteiro, números de ritmo e movimento, análise do mundo 3D (cards 2D em PBR), operação do canal, risco de cópia e catálogo de FX com receitas.
 
 Ao estudar um canal novo, cubra as mesmas seções: números (ritmo, fala, movimento, cor), fórmula de roteiro, como o mundo é feito, FX com receita, operação (cadência, títulos, descrição) e o que **não** copiar. Meça o movimento com `vf frames` (campo `slow`) e compare com os nossos vídeos.

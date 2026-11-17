@@ -10,3 +10,4 @@ renders/
 # lotes brutos do Google Flow (24 imagens por prompt): só a curadoria vai para public/img/planos
 assets/flow/*/
 !assets/flow/
+ref/fx/

@@ -5,6 +5,10 @@ criado: __DATA__
 formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o principal)
 motor: __MOTOR__                  # cutout-2d (padrão) | estatico (yt-long com tema) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
 renderer: __RENDERER__            # mygo | hyperframes | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
+plataformas: [__PLATAFORMAS__]   # yt | tiktok: onde o vídeo vai (vf auth platform=... libera rascunho e analíticos)
+publicacao:                       # vf publish <mp4> platform=<p>: sempre RASCUNHO (YouTube privado; TikTok inbox)
+  modo: rascunho
+  enviados: []                    # {plataforma, formato, id, url, data}
 idioma: __IDIOMA__
 estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ken Burns", "motion graphics"
 duracao_alvo: __DURACAO__         # segundos
@@ -29,10 +33,13 @@ etapas:                           # pendente | em_andamento | feito | pulado
   cenarios: pendente              # plates sem personagens (public/img/plates)
   cartoes: pendente               # roteiro/planos/sNN.json (factory/scripts/planos.mjs): unidade de trabalho da esteira
   animacao: pendente              # cenas `scene` no edl.json; só "feito" com edl-check aprovado
+  iluminacao: pendente            # rig de luz por cenário + cues de destaque (animacao/references/luz-fx-shaders.md)
+  fx: pendente                    # FX de alta qualidade (shaders/pixelfx) por cartão
   edicao: pendente
   qa: pendente
   entrega: pendente
 derivados: []                     # cortes de um longo: {formato, inicio, fim, arquivo}
+analiticos: []                    # vf analytics platform=<p> -> out/analytics/*.json (retenção alimenta o próximo roteiro)
 entregas: []                      # {formato, arquivo, qa: OK|FAIL, data}
 qa_excecoes: []                   # {check: "<nome da checagem>", motivo: "<por quê>"}: única forma de aceitar um WARN no QA estrito
 notas: []

@@ -1,0 +1,11 @@
+{
+  "name": "video-factory",
+  "owner": { "name": "video-factory" },
+  "plugins": [
+    {
+      "name": "video-factory",
+      "source": "./",
+      "description": "Fábrica de vídeo com IA para YouTube (longo e Shorts) e TikTok: skills, templates e a CLI vf."
+    }
+  ]
+}

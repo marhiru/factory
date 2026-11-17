@@ -45,6 +45,7 @@ Para cada formato em `factory.yaml > formatos`:
    ```
    O nome em `check` é o da tabela do QA. Exceção sem motivo é ignorada. "Ficou bom assim" não é motivo.
 6. Registre em `entregas` e marque `edicao`, `qa` e `entrega` como `feito`.
+7. **Rascunho na plataforma** (só se `factory.yaml > plataformas` tiver a plataforma, `vf auth status` mostrar autorizado e o usuário der o OK para subir): `$VF publish out/final_<formato>.mp4 platform=yt meta=out/publicacao_<formato>.json` (YouTube privado) ou `platform=tiktok` (caixa de entrada do app). Nunca publica: o usuário posta. Credenciais, limites e analíticos: [plataformas.md](references/plataformas.md). Anote em `publicacao.enviados`.
 
 ## Como ler o QA
 | Item | FAIL quando | Correção típica |
@@ -74,12 +75,12 @@ Limites por formato no bloco `qa:` do `formats.yaml`.
 
 ## Outros templates
 - `templates/recorte.md`: vídeo longo → shorts (seleção por transcrição, reenquadramento, legendas).
-- `templates/publicacao.md`: título, descrição com capítulos e atribuições, tags, thumbnail e checklist por plataforma.
+- `templates/publicacao.md`: título, descrição com capítulos e atribuições, tags, thumbnail e checklist por plataforma. Gere também `out/publicacao_<formato>.json` (`{title, description, tags}`) para o `vf publish meta=`.
 
 ## Cinco etapas de revisão visual
 
-Para animação com elenco/props ou composição 3D, execute o [QA visual em cinco etapas](references/qa-cinco-etapas.md)
-antes da aprovação de entrega: modelagem, animação/contato, posicionamento, integridade dos
-assets e câmera. Gere evidência de modelos e trechos em movimento; confira no celular.
+Para animação com elenco/props ou composição 3D, execute o [QA visual](references/qa-cinco-etapas.md)
+antes da aprovação de entrega: modelagem, animação/contato, posicionamento (e identidade estável após
+correções, 3b), integridade dos assets, câmera e luz/FX (6). Gere evidência de modelos e trechos em movimento; confira no celular.
 Consolide os estados por etapa junto ao QA técnico. Aprovação técnica e visual são distintas;
 uma não substitui a outra. Reabra apenas a etapa afetada e suas dependências após corrigir.

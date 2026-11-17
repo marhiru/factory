@@ -27,7 +27,7 @@ Ao definir elenco e mundo recorrentes, use [cartoon-identidade.md](templates/car
 Mantenha `pauta.md` com 30+ ideias com nota (critérios no template). Produza sempre a de maior nota que ainda não foi feita, alternando subtemas. Ideia com nota < 7 não entra na fila.
 
 ## `revisar` (semanal)
-Puxe as métricas dos últimos vídeos (o usuário exporta do YouTube Studio/TikTok ou cola os números) para `metricas.md` e tire **uma** decisão por semana:
+Puxe as métricas dos últimos vídeos com `vf analytics platform=yt|tiktok` (depois de `vf auth`; retenção por vídeo com `video=ID`, ver `skills/edicao/references/plataformas.md`), ou o usuário exporta do Studio/cola os números, para `metricas.md` e tire **uma** decisão por semana:
 | Sinal | Leitura | Ação |
 |---|---|---|
 | Viewed vs. swiped < 70% | gancho/primeiro frame fracos | reescrever os 3 próximos ganchos; frame 0 = a ação absurda |

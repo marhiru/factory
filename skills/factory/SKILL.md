@@ -20,7 +20,9 @@ Você é o diretor de produção. Esta skill abre o projeto, decide qual skill d
 | 3a. Elenco | `video-factory:animacao` | `public/sprites/<pack>/` (expressões + piscada + ciclos) |
 | 3b. Cenários | `video-factory:animacao` | `public/img/plates/` (fundos sem personagens) |
 | 3c. Animação | `video-factory:animacao` | `data/edl.json` com cenas `scene` (ou perfil `estatico`), aprovado pelo `edl-check` |
+| 3d. Câmera, luz e FX | `video-factory:animacao` | câmera contínua, rig de luz + cues, FX de shader/pixelfx (agentes próprios) |
 | 4. Edição, export e QA | `video-factory:edicao` | `out/final_<formato>.mp4`, `out/qa_<formato>/qa.md` |
+| 5. Rascunho e analíticos | `video-factory:edicao` | `vf publish` (rascunho), `vf analytics` → `out/analytics/` |
 
 Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Para usar fora do plugin (terminal do usuário), `${CLAUDE_PLUGIN_ROOT}/scripts/install.sh` põe `vf`, `vf-mygo`, `vf-novo` e `vf-render-hf` no PATH (`~/.local/bin`). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e Bun.
 
@@ -28,6 +30,23 @@ Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A 
 O conteúdo de `cartoon-3d-short` foi integrado às skills da fábrica: análise de look (`analise`), história de causa/efeito (`roteiro`), desenho e som procedural (`assets`), cartoon 2D e cards em mundo 3D (`animacao`), revisão/render/QA (`edicao`) e identidade de canal (`canal`). Cada skill aponta para a referência de sua etapa; não depende de uma skill externa instalada.
 
 O template local é uma demonstração técnica da ponte: reutilize o motor e crie história, layout, elenco e tempos próprios. As preferências daquele exemplo (inglês, ausência de legendas, ganho de música e modelo de revisão) não substituem o `factory.yaml` nem pedidos do usuário. Origem e licença: `skills/animacao/templates/remotion-three/ORIGEM.md`.
+
+## Entrada pelo terminal: `vf init` (fluxo do usuário)
+
+O usuário pode começar sem a sessão: dentro da pasta do projeto,
+```
+vf init type="short" platform="yt,tiktok"      # ou type=long, ou type="short,long" (longo + cortes)
+vf auth platform="yt,tiktok"                   # opcional: rascunho na plataforma e analíticos
+claude                                         # e pede o vídeo; esta skill assume daqui
+```
+- `type` × `platform` → `formatos`: long+yt = `yt-long`; short+yt = `yt-short`; short+tiktok = `tiktok`.
+  Longo só no YouTube; com tiktok, o TikTok recebe cortes. Motor padrão: `estatico` com longo, `cutout-2d` sem.
+  Opções: `motor=`, `idioma=`, `duracao=`, `canal=`, `dir=`, `--install`, `--offline`.
+- O `vf init` roda o `novo.sh --existente` (nunca sobrescreve arquivos do usuário), grava `plataformas` no
+  `factory.yaml`, copia o som procedural para `audio/procedural/`, liga `ref/fx/pixelfx` e `ref/fx/pixel-splats`
+  e cria `.claude/settings.json` (plugin habilitado) e um `CLAUDE.md` curto.
+- Se o projeto já tem `factory.yaml`, siga direto para `continuar`. Plataforma sem `vf auth` não bloqueia
+  nada: só o rascunho e os analíticos ficam indisponíveis (`vf auth status`).
 
 ## Comandos
 
@@ -53,8 +72,8 @@ Depois de entregue um `yt-long`, carregue `video-factory:edicao` e siga `templat
 ## Modo esteira (sub-agentes)
 Para shorts com 12+ planos, vídeos longos, ou vários vídeos na semana, produza pela esteira de `templates/esteira.md`:
 1. Depois do `vf align`: `bun ${CLAUDE_PLUGIN_ROOT}/skills/factory/scripts/planos.mjs --lote 5` gera os **cartões de plano** (`roteiro/planos/sNN.json`: janela de tempo, palavras, visual, cenário, critérios, saída). `etapas.cartoes: feito`.
-2. Passe 0 (animatic) para o vídeo inteiro já renderizar. Depois suba os cartões de passe: layout → animação → fx → som → final.
-3. Em paralelo: sub-agentes de **elenco**, **cenários** e **som**; depois um **animador por lote** de cartões contíguos. Cada um escreve só em `roteiro/cenas/sNN.py` e nos arquivos do seu posto (`load_parts()` no `cenas.py` junta tudo). Use o briefing padrão do template.
+2. Passe 0 (animatic) para o vídeo inteiro já renderizar. Depois suba os cartões de passe: layout → animação → luz → fx → som → final.
+3. Em paralelo: sub-agentes de **elenco**, **cenários** e **som**; depois um **animador por lote** de cartões contíguos, o **diretor de câmera** (vídeo inteiro), o **iluminador** e o **artista de FX**. Toda correção pedida passa pelo **continuísta** (esteira, seção 3b: um agente dono por responsabilidade de qualidade). Cada um escreve só em `roteiro/cenas/sNN.py` e nos arquivos do seu posto (`load_parts()` no `cenas.py` junta tudo). Use o briefing padrão do template.
 4. Um **revisor** independente (sem acesso ao código) confere stills e folha densa contra os critérios de cada cartão.
 5. Só o orquestrador mexe em `factory.yaml`, `edl.json` final, render e commits. `planos.mjs status` mostra o quadro.
 
@@ -94,6 +113,7 @@ Comparação e limites na skill `animacao`. Um motor novo só precisa ler o `edl
 3b. **Cota do Google Flow** (motor `estatico`): 20 prompts/dia, **sempre 24 imagens por prompt** (480/dia). Controle global em `~/.cache/vf/flow-cota.json` pelo `flow-lotes.mjs`. Cota esgotada = `etapas.assets: aguardando_cota` + data de retomada em `notas`, e pare. O `continuar` retoma no outro dia.
 4. **Ao fim de cada etapa**: atualize `etapas.<etapa>` em `factory.yaml`, salve tudo em disco, **faça um commit no repositório do projeto** (`git add -A && git commit -m "<etapa>: <o que ficou pronto>"`; o `.gitignore` do projeto já deixa de fora renders e node_modules) e diga numa linha o que ficou pronto.
 5. **Multi-formato**: um roteiro só por formato principal. Shorts e TikTok podem dividir o mesmo vídeo vertical, mas exporte e rode o QA por formato (safe zones e durações diferem). Um yt-long nunca vira short por reenquadramento cego: use `recorte`.
+6b. **Rascunho/analíticos**: com `plataformas` e `vf auth` feitos, pergunte uma vez se pode subir como rascunho (`vf publish`, ver `skills/edicao/references/plataformas.md`). Depois de publicado pelo usuário, `vf analytics` alimenta `analiticos` e a pauta do canal.
 6. **Entrega**: só com `edl-check` aprovado e `vf qa` (estrito, o padrão) saindo com código 0. WARN também reprova; a única saída é uma `qa_excecoes` com motivo concreto. Registre em `entregas` o arquivo e o resultado do QA, e entregue o caminho absoluto do MP4 junto do resumo do QA.
 
 ## MCP
@@ -118,8 +138,8 @@ O plugin declara o servidor MCP `google-flow` (Google Flow / Nano Banana, `.mcp.
 
 ## QA visual por etapa
 
-Para vídeos animados com personagens/props ou composição 3D, conduza as cinco revisões de
+Para vídeos animados com personagens/props ou composição 3D, conduza as revisões de
 [QA visual](../edicao/references/qa-cinco-etapas.md): modelagem, animação/contato, posicionamento,
-integridade dos assets e câmera. Inicie-as na produção e consolide a evidência antes da entrega.
+identidade estável após correções (3b), integridade dos assets, câmera e luz/FX (6). Inicie-as na produção e consolide a evidência antes da entrega.
 Mantenha seus estados separados do QA técnico: ausência de preto/freeze não aprova contato,
 modelo ou enquadramento. Retome defeitos concretos sem exigir nova aprovação do usuário.

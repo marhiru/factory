@@ -46,7 +46,7 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **Match cut** | forma/movimento igual liga dois planos | mesmo `x,y` e tamanho do objeto nos dois clipes |
 | **Zoom-through / portal transition** | entra num objeto (olho, janela, buraco) e sai na cena seguinte | clipe de 0,3 s com `scale` 1,2 → 6 no ponto + `fade` 0,1 s no próximo |
 | **Smash cut** | corte brusco de calma para caos (ou o contrário) | corte seco + SFX alto no frame |
-| **Dissolve / cross-fade** | fusão (a costura padrão no estilo estudado: 2-3 frames) | `transition_in: fade` 0,08-0,1 s |
+| **Dissolve / cross-fade** | fusão (a costura padrão no estilo estudado: 6-10 frames, com a câmera andando no mesmo sentido) | `transition_in: fade` 0,2-0,3 s |
 | **Dip to black/white** | fusão passando por preto/branco | `dip` / `flash` |
 | **J-cut / L-cut** | o som do próximo plano começa antes / o som do anterior continua depois | `sfx` com `start` 0,2-0,3 s antes do corte |
 | **Jump cut** | corte no mesmo enquadramento (pula o tempo) | dois clipes do mesmo plate com atores em posições diferentes |

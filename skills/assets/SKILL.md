@@ -49,6 +49,14 @@ Confira silhueta/volume isolados e detalhes funcionais no tamanho de exibição:
 rótulos, transparência e frente/verso. Assets em 3D precisam de vistas úteis, não apenas
 um hero frame com DOF. Registre a evidência; a integração de posicionamento é revista na animação.
 
+## FX, luz e bibliotecas de referência
+
+- `ref/fx/pixelfx` (MIT) e `ref/fx/pixel-splats` (Apache-2.0) chegam com o `vf init`. Todo FX importado ou
+  gerado (`fx-pack.mjs`, `FxSheet`) entra em `assets/manifest.yaml` com fonte e licença (o pack traz `ORIGEM.json`).
+- A style bible registra o rig de luz de cada cenário (direção/cor da chave, preenchimento, práticos) e a paleta
+  dos FX; o iluminador e o artista de FX leem dali ([luz-fx-shaders.md](../animacao/references/luz-fx-shaders.md)).
+- Sons prontos: `audio/procedural/` (cópia de `templates/audio-procedural/`, MIT) no projeto.
+
 ## Posicionamento e identidade estável
 
 - Todo asset é posto com coesão no cenário construído: apoiado no suporte certo, em escala e

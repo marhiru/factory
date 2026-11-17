@@ -12,7 +12,7 @@ Estudo feito com `vf analyze` em 3 shorts (6,5M, 29M e 34M de views) e nos títu
 | Fala começa em | 0,04 s | 0,07 s | 0,02 s |
 
 - **Não existe silêncio.** A narração é contínua do frame 0 ao fim, sem respiro maior que 0,25 s. O ritmo vem da fala, não do corte.
-- **Planos longos são permitidos quando a câmera trabalha:** o 1º plano do short com FX dura 9,5 s, mas tem 4 enquadramentos dentro dele (push, travelling, aérea, reveal), costurados por dissolves de 2-3 frames.
+- **Planos longos são permitidos quando a câmera trabalha:** o 1º plano do short com FX dura 9,5 s, mas tem 4 enquadramentos dentro dele (push, travelling, aérea, reveal), costurados por dissolves curtos (medidos depois quadro a quadro: 6-10 frames, 0,2-0,3 s; ver `rickclips-5-pontos.md`).
 - **Pivô do canal:** os shorts antigos de meme (títulos com 💀😭, 50k-500k views) perderam para o formato novo de história + explicação (5-34M). O formato é o que escala, não o humor solto.
 
 ## Fórmula do roteiro (os 3 seguem igual)
@@ -32,7 +32,7 @@ Títulos que funcionam (4-7 palavras, curiosidade sem spoiler): "Por que trilhos
 ## Catálogo de FX (short com mais FX), com a receita na fábrica
 | Momento | FX | Por que funciona | Receita (cutout `scene` / mygo ou `cartoon-3d-short`) |
 |---|---|---|---|
-| Abertura | 1 plano longo com vários enquadramentos + dissolves de 2-3 f | o olho nunca descansa, sem corte duro | vários clipes `scene` curtos do mesmo cenário com `transition_in: {kind: fade, dur: 0.08}` e câmeras diferentes |
+| Abertura | 1 plano longo com vários enquadramentos + dissolves de 6-10 f | o olho nunca descansa, sem corte duro | vários clipes `scene` curtos do mesmo cenário com `transition_in: {kind: fade, dur: 0.25}` e a câmera seguindo no mesmo sentido |
 | "toda semana" | **placa-contador** "DIAS SEM ACIDENTE 7 → 0" com flip | piada visual que conta a história sem fala | prop `fx` com estados `n7`/`n0` e key `state` no `at_word` do impacto |
 | Batida | carro sobe na vertical, **fica parado no ar ~0,8 s** e cai; pneu sai rolando | o exagero cômico mora no *hold* | keys `rot` 0 → 85 (0,15 s, `out`), segura, 85 → 0 (0,2 s, `in`); `fx` `burst` + poeira; pneu = ator com `keys x` + `rot` |
 | Placa gigante | letreiro de marquise com lâmpadas piscando ("NÃO BATA NESTA ÁRVORE") | o prop absurdo é a piada da escalada | sprite com ciclo de 2 frames (lâmpadas acesas/apagadas) a 6 fps |
