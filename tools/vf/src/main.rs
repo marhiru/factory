@@ -1,3 +1,4 @@
+mod agenda;
 mod align;
 mod analyze;
 mod auth;
@@ -13,6 +14,7 @@ mod frames;
 mod probe;
 mod qa;
 mod sheet;
+mod tempo;
 mod transcribe;
 mod util;
 
@@ -247,17 +249,27 @@ enum Cmd {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
         args: Vec<String>,
     },
-    /// Autoriza a fábrica nas plataformas (OAuth): vf auth platform="yt,tiktok" | vf auth status | vf auth logout platform=yt
+    /// Contas nas plataformas (OAuth, várias por plataforma): vf auth platform=yt [account=<apelido>] [client=<json baixado>] | vf auth status | vf auth use platform=yt account=<apelido> | vf auth logout platform=yt account=<apelido>
     Auth {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
         args: Vec<String>,
     },
-    /// Envia o vídeo como RASCUNHO: vf publish out/final_yt-short.mp4 platform=yt [title=... meta=out/publicacao.json thumb=capa.jpg]
+    /// Envia/posta vídeo longo ou Short: vf publish <mp4> platform=yt,tiktok [mode=rascunho|privado|nao-listado|amigos|publico] [at="2026-11-20 18:00"|+2h] [meta=out/publicacao.json thumb=capa.jpg account=a,b]
     Publish {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "ARQUIVO CHAVE=VALOR")]
         args: Vec<String>,
     },
-    /// Analíticos: vf analytics platform=yt [video=ID1,ID2] [dias=28] -> out/analytics/<p>-<data>.json
+    /// Corrige título/descrição/tags de vídeo já enviado (YouTube): vf meta <ID> platform=yt meta=<json> [aplicar=1]
+    Meta {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "ID CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Posts agendados localmente (TikTok): vf agenda [list] | run | cancel id=<id> | retry id=<id> | install | uninstall
+    Agenda {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "AÇÃO CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Analíticos: vf analytics platform=yt [account=<apelido>|all] [video=ID1,ID2] [dias=28] [max=50] [comentarios=1] [curva=1] -> out/analytics/<p>-<conta>-<data>.json
     Analytics {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
         args: Vec<String>,
@@ -450,6 +462,8 @@ fn real_main() -> Result<()> {
         Cmd::Init { args } => init::run(&args)?,
         Cmd::Auth { args } => auth::run(&args)?,
         Cmd::Publish { args } => platform::publish(&args)?,
+        Cmd::Meta { args } => platform::meta(&args)?,
+        Cmd::Agenda { args } => agenda::run(&args)?,
         Cmd::Analytics { args } => platform::analytics(&args)?,
         Cmd::Doctor => doctor(),
     }

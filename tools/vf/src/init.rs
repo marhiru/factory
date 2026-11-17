@@ -151,9 +151,9 @@ const CLAUDE_MD: &str = r#"# Projeto video-factory
 Este vídeo é gerenciado pela video-factory (plugin em `__ROOT__`). Estado em `factory.yaml`.
 
 - Comece e continue sempre pela skill `factory`: ela lê `factory.yaml` e conduz as etapas com a esteira de agentes.
-- Plataformas e formatos estão em `factory.yaml > plataformas/formatos`. Publicação é sempre rascunho
-  (`vf publish`), e só depois do QA estrito aprovado e com o OK do usuário.
-- Analíticos: `vf analytics platform=<p>` grava em `out/analytics/`; a retenção alimenta o próximo roteiro.
+- Plataformas e formatos estão em `factory.yaml > plataformas/formatos`. Publicação: rascunho por padrão
+  (`vf publish`), só depois do QA estrito aprovado e com o OK do usuário; postar/agendar só se ele pedir.
+- Analíticos: `vf analytics platform=<p>` grava em `out/analytics/`; a skill `metricas` analisa e sugere metadata.
 - Bibliotecas de FX de referência em `ref/fx/` (pixelfx MIT, pixel-splats Apache-2.0); som procedural em `audio/procedural/`.
 "#;
 

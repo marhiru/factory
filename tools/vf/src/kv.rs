@@ -16,9 +16,9 @@ impl Kv {
             let body = a.trim_start_matches('-');
             if let Some((k, v)) = body.split_once('=') {
                 map.insert(norm(k), v.trim_matches('"').to_string());
-            } else if a.starts_with("--") {
+            } else if a.starts_with('-') && a.len() > 1 {
                 let k = norm(body);
-                if flags.contains(&k.as_str()) || i + 1 >= args.len() || args[i + 1].starts_with("--") {
+                if flags.contains(&k.as_str()) || i + 1 >= args.len() || args[i + 1].starts_with('-') {
                     map.insert(k, "1".into());
                 } else {
                     i += 1;
@@ -42,6 +42,10 @@ impl Kv {
         self.get(k)
             .map(|v| v.split(',').map(|s| s.trim().to_lowercase()).filter(|s| !s.is_empty()).collect())
             .unwrap_or_default()
+    }
+    /// pares na forma normalizada (para regravar os argumentos, ex. na agenda)
+    pub fn pairs(&self) -> impl Iterator<Item = (&String, &String)> {
+        self.map.iter()
     }
     pub fn check_known(&self, known: &[&str]) -> Result<()> {
         for k in self.map.keys() {
