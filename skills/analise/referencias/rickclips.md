@@ -1,80 +1,63 @@
-# Referência: canal de shorts "história absurda → mecanismo" (estudo de 2026-11-16)
+# Evidências: canal de shorts "história absurda → mecanismo"
 
-Estudo feito com `vf analyze` em 3 shorts (6,5M, 29M e 34M de views) e nos títulos/views de 152 shorts do canal. Serve só pela **fórmula**. Nunca copie roteiro, personagens, marca ou planos.
+Registro das medições que sustentam as regras da fábrica. **As regras moram nas skills de etapa** (mapa no
+fim); este arquivo guarda só fontes, números e correções, para reestudar ou contestar uma regra com dados.
+Serve pela **gramática**: nunca copie roteiro, personagens, marca, voz, cenários ou planos.
 
-## O que os números dizem
-| | Short com mais FX (6,5M) | Top 2 (29M) | Top 1 (34M) |
-|---|---|---|---|
-| Duração | 59,4 s | ~70 s | ~65 s |
-| Fala | 220 wpm, ocupa 96% | 197 wpm, 99% | 218 wpm, 95% |
-| Maior pausa | 0,22 s | 0,07 s | 0,24 s |
-| Planos | 20 (19 cortes/min, mediana 2,7 s) | 14 (12/min) | 18 (16/min) |
-| Fala começa em | 0,04 s | 0,07 s | 0,02 s |
+## Vídeos estudados
 
-- **Não existe silêncio.** A narração é contínua do frame 0 ao fim, sem respiro maior que 0,25 s. O ritmo vem da fala, não do corte.
-- **Planos longos são permitidos quando a câmera trabalha:** o 1º plano do short com FX dura 9,5 s, mas tem 4 enquadramentos dentro dele (push, travelling, aérea, reveal), costurados por dissolves curtos (medidos depois quadro a quadro: 6-10 frames, 0,2-0,3 s; ver `rickclips-5-pontos.md`).
-- **Pivô do canal:** os shorts antigos de meme (títulos com 💀😭, 50k-500k views) perderam para o formato novo de história + explicação (5-34M). O formato é o que escala, não o humor solto.
-
-## Fórmula do roteiro (os 3 seguem igual)
-1. **Gancho = a ação estranha ou a consequência absurda, afirmada (nunca perguntada).** Até ~5 s.
-   - "Se você plantar uma árvore do lado de uma estrada vazia, os carros vão virar direto nela."
-   - "Ele colocou uma bola de bronze na boca de um dragão e disse ao imperador: se isso cair, corra."
-   - "Ele serrou buracos num trilho a cada 12 metros."
-2. **"Veja," / "É que…"**: a 2ª frase sempre abre com o mesmo conector e arma o cenário em uma frase.
-3. **Escalada com quem duvida:** a solução óbvia piora tudo (a placa dobra os acidentes), ou alguém ri do protagonista (a corte, o chefe, os jornais). Cada passo aumenta a aposta.
-4. **Personagem-piada recorrente:** alguém que lucra ou comenta o absurdo (o guincho de cadeira de praia, "o cara do brinquedo"). Volta 2-3 vezes e paga uma piada no clímax.
-5. **Virada física no ~55-70%:** o absurdo chega ao máximo (o xerife bate devagar, todas as bolas caem de uma vez, o trilho "pula como cobra").
-6. **Mecanismo no fim (últimos 10-15 s):** a explicação real, curta, com o **nome do fenômeno** dito uma vez ("isso se chama fixação no alvo") ou só mostrado. A explicação reinterpreta tudo o que se viu.
-7. **Última frase = callback visual** ("…mesmo quando é só um toco"). Acaba na palavra, sem conclusão nem CTA.
-
-Títulos que funcionam (4-7 palavras, curiosidade sem spoiler): "Por que trilhos perfeitos não funcionam", "O jarro antigo que avisou um império", "O instinto que faz você bater", "Como X funcionava", "O emprego que ninguém quer no Japão".
-
-## Catálogo de FX (short com mais FX), com a receita na fábrica
-| Momento | FX | Por que funciona | Receita (cutout `scene` / mygo ou `cartoon-3d-short`) |
-|---|---|---|---|
-| Abertura | 1 plano longo com vários enquadramentos + dissolves de 6-10 f | o olho nunca descansa, sem corte duro | vários clipes `scene` curtos do mesmo cenário com `transition_in: {kind: fade, dur: 0.25}` e a câmera seguindo no mesmo sentido |
-| "toda semana" | **placa-contador** "DIAS SEM ACIDENTE 7 → 0" com flip | piada visual que conta a história sem fala | prop `fx` com estados `n7`/`n0` e key `state` no `at_word` do impacto |
-| Batida | carro sobe na vertical, **fica parado no ar ~0,8 s** e cai; pneu sai rolando | o exagero cômico mora no *hold* | keys `rot` 0 → 85 (0,15 s, `out`), segura, 85 → 0 (0,2 s, `in`); `fx` `burst` + poeira; pneu = ator com `keys x` + `rot` |
-| Placa gigante | letreiro de marquise com lâmpadas piscando ("NÃO BATA NESTA ÁRVORE") | o prop absurdo é a piada da escalada | sprite com ciclo de 2 frames (lâmpadas acesas/apagadas) a 6 fps |
-| Fúria | olhos vermelhos brilhando, chão rachando, destroços flutuando | dá peso cômico à raiva | estado `rage` (olhos vermelhos) + `idle: jitter` + `fx` rachadura (`drop`) + detritos com `idle: float` |
-| Clímax (machado) | raio no machado → **onda de choque**: anel branco, céu se abre, god rays, parede de poeira | hipérbole no ponto mais alto da história | `transition_in: flash` + `fx` anel (ciclo de 8 f escalando) + câmera `push` rápido + `burst`; o personagem-piada cai da cadeira em seguida |
-| "como isso continua acontecendo?" | **zoom-through no olho**: a câmera entra na pupila e a próxima cena está dentro dela | transição que vira a chave para a explicação | clipe de 0,3 s: câmera `scale` 1,2 → 6 centrada no olho (`x`/`y`), `ease: in` + `transition_in: fade 0.1` no plano seguinte |
-| Explicação | **muda o clima**: noite, chuva, neblina, faróis, POV do motorista | marca "agora é a ciência" sem dizer | plates noturnos/chuva + overlay de chuva (ciclo `fx`); câmera em primeira pessoa |
-| Nome do fenômeno | aparece **dentro do mundo** (placa verde de rodovia "FIXAÇÃO NO ALVO") | texto sem cartela, sem quebrar a imersão | prop/plate com o termo pintado; câmera passa por ele no `at_word` |
-| "travam nele" | olhos hipnóticos (espiral) | traduz o conceito em imagem | estado `hypno` com ciclo de espiral (8 f) |
-| Fim | plano aberto com o toco + a placa piscando | callback do gancho | último clipe repete o cenário do 1º com o objeto mudado |
-| Legendas | 1 palavra por vez, branca, bold, contorno preto, ~62% da altura | leitura sem som, sem cobrir o rosto | `captions: {words_per_page: 1, style: "pop"}` na safe zone |
-
-## Movimento e cor medidos (3 shorts, `vf frames`)
-| | 6,5M | 29M | 34M | nosso short cutout (referência) |
+| Id | Título | Views (na coleta) | Coleta | Método |
 |---|---|---|---|---|
-| Frames parados (nada muda em 0,5 s) | **0%** | **0%** | **0%** | 0% |
-| "Vida" mediana (diff de 0,5 s) | 0,125 | 0,151 | 0,120 | ~0,035 |
-| Dissolves detectados | 4 | 11 | 13 | 2 |
-| Saturação média / luma | 0,15 / 0,43 | 0,31 / 0,44 | 0,24 / 0,43 | — |
+| A | The Ancient Jar That Warned an Empire (`VS1Z_Q-Klt8`) | 35,0M | 16 e 17/11/2026 | `vf analyze` + `scripts/pontos.py` + folhas densas |
+| B | Why Perfect Railroads Don't Work (`7xS87iActkU`) | 29,9M | 16 e 17/11/2026 | idem |
+| C | The Job Nobody Wants in Japan (`0m6G8pDtzNs`) | 18,6M | 17/11/2026 | idem |
+| D | short "árvore na estrada" (o de mais FX) | 6,5M | 16/11/2026 | `vf analyze` + folhas densas (id não registrado) |
+| — | títulos e views de 152 shorts do canal | — | 16/11/2026 | lista pública |
 
-Leitura: a câmera **nunca** para e se move ~4x mais que o nosso cutout; o dissolve curto é a costura padrão (o corte seco é minoria); a luma fica sempre no meio (0,43: nada estourado, nada escuro demais, mesmo nas cenas de noite).
+## Números (medição de 17/11/2026; a de 16/11 entre parênteses quando diferente)
 
-## Cenários: como o mundo é feito (análise dos frames 1080x1920)
-Evidências vistas em quadros em resolução cheia:
-- **Personagens 2D em cartões dentro de um mundo 3D** ("billboards"/"cards"): bonecos de traço preto, preenchimento chapado, sem sombreamento próprio, mas projetam sombra e ficam atrás/na frente de objetos 3D. É a mesma ideia do nosso cutout, só que o cenário é 3D de verdade e a câmera se move nele.
-- **Mundo PBR estilizado:** grama com lâminas individuais e translucência, árvores com folhagem em tufos (cards de folha agrupados), carros quase fotorreais (modelos de banco), asfalto com rachaduras e faixas gastas, nuvens volumétricas "fofas".
-- **Luz de cinema:** sol baixo com sombras longas, perspectiva aérea (neblina que clareia o fundo), bloom nas luzes, *god rays*, AO nos contatos. À noite: chuva com reflexo vermelho das lanternas no asfalto molhado, neblina volumétrica, faróis com cone de luz.
-- **FX de simulação:** destroços de fratura (chão quebrando em pedaços), partículas de poeira, onda de choque com distorção, motion blur forte nos impactos.
-- **Ferramenta:** o criador não publica o processo. O conjunto (cards 2D + PBR + volumétricos + fratura + render rápido o bastante para ~1 short/dia) aponta para um **motor 3D com render em tempo quase real**: Blender (Eevee) ou Unreal Engine (Lumen). Tutoriais de terceiros reproduzem o estilo com Blender guiado por Claude, ou com Remotion + three.js (como o nosso `cartoon-3d-short`). **Nada confirmado pelo criador.** Plano da fábrica para chegar nesse nível: `skills/animacao/templates/mundo-3d-blender.md`.
+| | A | B | C | D |
+|---|---|---|---|---|
+| Duração | 64,8 s | 65,2 s | 60,5 s | 59,4 s |
+| Palavras / WPM | 235 / 218 | 213 / 197 | 224 / 223 | — / 220 |
+| Fala ocupa / maior pausa | 95 % / 0,24 s | 99 % / 0,07 s | 94 % / 0,42 s | 96 % / 0,22 s |
+| Fala começa em | 0,02 s | 0,07 s | 0,03 s | 0,04 s |
+| Fim do gancho | 5,0 s | ~3,4 s | 4,2 s | — |
+| Planos detectados | 20 (18) | 13 (14) | 27 | 20 |
+| Cortes/min · mediana | 17,6 · 2,8 s | 11,0 · 3,7 s | 25,8 · 2,0 s | 19 · 2,7 s |
+| Transições suaves | 15 de 19 | 12 de 12 | 20 de 26 | — |
+| Dissolve mediano | 7 f (0,23 s) | 9,5 f (0,32 s) | 7 f (0,23 s) | — |
+| Frames parados · vida mediana | 0,05 % · 0,120 | 0,05 % · 0,149 | 0,06 % · 0,137 | 0 % · 0,125 |
+| Luma (média · mín-máx por plano) | 0,43 · 0,30-0,61 | 0,44 · 0,26-0,68 | 0,51 · 0,27-0,70 | 0,43 |
+| Arco de temperatura (Q quente, F frio) | `·Qqq··QQQQQFffFFFqQQ` | `QFq·QqQffQQqq` | `··FQF···Fff·fFFQqQFqFFFF·FF` | — |
+| Faixa da legenda (altura) | 0,70-0,72 | 0,69-0,72 | 0,70-0,72 | — |
 
-## Operação do canal (dados públicos)
-- Cadência no formato novo: ~24 shorts em 26 dias (quase 1/dia), 20 de 24 acima de 1M de views (números citados por terceiros em 2/11/2026).
-- Título = descrição do vídeo (descrição vazia, sem tags, sem hashtags). Tudo aposta no título + primeiro segundo.
-- Voz masculina madura, ritmo de contador de história (~218 wpm), mesma voz em todos os vídeos: a voz é a marca.
-- Terceiros resumem o estilo em 7 regras (contando frames em 25 vídeos): câmera nunca para; movimentos longos e lentos; quase sem cortes secos; cores suaves; o mundo "brilha" (partículas, glints); personagem **entra na pose e congela** (pose-to-pose com hold); **uma ideia por plano**. Nossas medições batem com as 4 primeiras.
-- Estrutura de roteiro citada por terceiros: gancho → "Luckily/Unluckily" (sorte/azar alternando: "Por sorte… Infelizmente…") → "You see" → callback.
+Nosso short cutout de referência, na mesma régua: vida mediana ~0,035 (4x menos movimento).
 
-## Risco: cópia
-O YouTube agrupa vídeos parecidos por *semantic IDs* e tem política contra conteúdo inautêntico/repetitivo (jul/2025). Vários canais imitadores não decolaram. **Copie a gramática (ritmo, estrutura, FX), nunca o tema, os personagens, a voz ou o visual exato.** Na fábrica: nicho, paleta, personagens e voz próprios (skill `canal`).
+## Correções feitas em 17/11/2026 (o que o estudo de 16/11 dizia e estava errado)
 
-## Regras que entram na fábrica
-- Shorts de história: narração contínua (maior pausa ≤ 0,25 s; o QA estrito já cobra `max_voice_gap_s`).
-- Um FX de exagero por ato: impacto com *hold* no ato 1, fúria/hipérbole no clímax, mudança de clima na explicação.
-- Pelo menos 1 transição de assinatura (zoom-through, whip, match cut) na passagem história → explicação.
-- Termos e números aparecem **no mundo** (placa, letreiro, contador) antes de virar cartela.
+| Antes | Medido | Onde foi corrigido |
+|---|---|---|
+| dissolves de 2-3 frames (estimativa visual) | 6-10 frames (0,2-0,3 s), conferido quadro a quadro em C 7,8 s | glossário, `animacao` SKILL, QA etapa 5 |
+| 4 / 11 / 13 dissolves por vídeo | 15 de 19, 12 de 12, 20 de 26 transições suaves (`pontos.py`) | este registro |
+| legenda a ~62 % da altura | 0,69-0,72 nos três vídeos | `edicao` SKILL (legendas), QA etapa 3 |
+| a 2ª frase sempre abre com "Veja," | A e B: sim (3-7 s); C: "Veja" só abre o mecanismo (82 %) | `roteiro/templates/short-historia-mecanismo.md` |
+| beat de pergunta antes do payoff | presente em D; A, B e C vão direto | idem (beat opcional) |
+| golden hour é a luz padrão | a temperatura muda por ato; golden é um dos climas | glossário (seção 4), `mundo-3d-blender.md` |
+| luma ~0,43 em todas as cenas | média 0,43-0,51; por plano 0,26-0,70; noite ≥ 0,26 | `mundo-3d-blender.md`, QA etapa 6 |
+| A tinha 18 planos, B 14 | 20 e 13: o detector junta enquadramentos costurados por movimento | este registro (planos ≠ enquadramentos) |
+
+## Mapa: onde cada parte do estudo virou regra
+
+| Tema | Skill / arquivo |
+|---|---|
+| Fórmula do roteiro, ritmo de fala, variações A/B/C, visual por beat | `roteiro/templates/short-historia-mecanismo.md` |
+| Catálogo de FX com receitas (D + A/B/C) e vocabulário | `animacao/templates/glossario-fx.md` (seção 7) |
+| Luz: arco de temperatura, ênfase quente, gobo, poça, contraluz, noite legível | `animacao/references/luz-fx-shaders.md` |
+| Câmera: junções, dissolve andando, chicote, porta, cortina de FX, rack focus | `animacao/SKILL.md` + QA etapa 5 |
+| Direção: câmera nunca para, pose-to-pose com hold, uma ideia por plano | `animacao/SKILL.md` (direção de animação) |
+| Como o mundo é feito (cards 2D em PBR, luz de cinema, fratura, ferramenta) | `animacao/templates/mundo-3d-blender.md` |
+| Posicionamento, identidade, cenário persistente, faixa da legenda | `edicao/references/qa-cinco-etapas.md` (3, 3b) |
+| Legendas e títulos | `edicao/SKILL.md` (legendas) e `edicao/templates/publicacao.md` |
+| Operação do canal, voz como marca, pivô de formato, risco de cópia | `canal/SKILL.md` |
+| Método de medição (pontos.py, folhas densas, quadro a quadro) | `analise/SKILL.md` |

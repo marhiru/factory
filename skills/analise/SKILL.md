@@ -57,7 +57,20 @@ As sheets por plano mostram composição, mas não os efeitos. Para FX, faça fo
 ```
 ffmpeg -ss <início> -t <dur> -i ref/<slug>/source.mp4 -vf "fps=10,scale=240:-1,tile=8x4" -frames:v 1 ref/<slug>/fx_<momento>.jpg
 ```
-10 fps pega dissolves de 2-3 frames, holds de impacto e transições de zoom-through. Anote cada FX com **momento do roteiro, por que funciona e a receita na fábrica**, como em `referencias/rickclips.md`.
+10 fps pega holds de impacto e transições de zoom-through. Para dissolves e chicotes, extraia **todos os frames** do trecho (`select='between(n\,A\,B)'` + `tile`): os dissolves do estilo estudado duram 6-10 frames e a câmera continua andando através deles; estimativa a olho a 4-10 fps erra para menos (já erramos: "2-3 frames"). Anote cada FX com **momento do roteiro, por que funciona e a receita na fábrica**.
+
+### Onde gravar o que se aprendeu
+O estudo não fica numa nota solta: cada achado vira regra na skill da etapa, e `referencias/<canal>.md` guarda só
+fontes, números, correções e o mapa de onde cada regra foi parar.
+
+| Achado | Vai para |
+|---|---|
+| fórmula de roteiro, ritmo de fala | `roteiro/templates/` |
+| FX com receita, câmera, direção | `animacao/templates/glossario-fx.md`, `animacao/SKILL.md` |
+| luz | `animacao/references/luz-fx-shaders.md` |
+| posicionamento, identidade, câmera, luz/FX como critério de aceite | `edicao/references/qa-cinco-etapas.md` |
+| legendas, títulos | `edicao/SKILL.md`, `edicao/templates/publicacao.md` |
+| operação do canal, originalidade | `canal/SKILL.md` |
 
 ## Medir pelos pontos de qualidade
 Depois do `analyze`, `python3 -I ${CLAUDE_PLUGIN_ROOT}/skills/analise/scripts/pontos.py ref/<slug>` mede transições
@@ -67,7 +80,6 @@ ponto (cenário persistente, identidade, junções de câmera, luz, FX) e compar
 Rode o mesmo script no nosso render para comparar número com número.
 
 ## Estudos salvos
-- `referencias/rickclips-5-pontos.md`: os mesmos shorts (+1) lidos pelos 5 pontos de qualidade (posicionamento, identidade, câmera, luz, FX) com números, comparação com as regras e o que virou ferramenta.
-- `referencias/rickclips.md`: shorts "história absurda → mecanismo" (6-34M views): fórmula de roteiro, números de ritmo e movimento, análise do mundo 3D (cards 2D em PBR), operação do canal, risco de cópia e catálogo de FX com receitas.
+- `referencias/rickclips.md`: evidências de 4 shorts "história absurda → mecanismo" (6,5-35M views): vídeos, números medidos, correções do estudo e o mapa de onde cada regra mora nas skills.
 
-Ao estudar um canal novo, cubra as mesmas seções: números (ritmo, fala, movimento, cor), fórmula de roteiro, como o mundo é feito, FX com receita, operação (cadência, títulos, descrição) e o que **não** copiar. Meça o movimento com `vf frames` (campo `slow`) e compare com os nossos vídeos.
+Ao estudar um canal novo, cubra as mesmas dimensões: números (ritmo, fala, movimento, cor, `pontos.py`), fórmula de roteiro, como o mundo é feito, FX com receita, os 5 pontos de qualidade (posicionamento, identidade, câmera, luz, FX), operação (cadência, títulos, descrição) e o que **não** copiar; depois distribua pela tabela acima. Meça o movimento com `vf frames` (campo `slow`) e compare com os nossos vídeos.

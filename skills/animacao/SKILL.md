@@ -60,17 +60,22 @@ Lições do primeiro projeto feito assim (short de 110 s, 33 cenas):
 - Gerar a cena num script (`vfscene.py`) permitiu reajustar 33 cenas em segundos quando os tempos da voz mudaram.
 
 ### FX de exagero (o que faz o short "explodir")
-Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado num short de 6,5M views com o mesmo estilo de bonecos 2D em mundo 3D:
+Catálogo com receitas no [glossário de FX, seção 7](templates/glossario-fx.md) (4 shorts de 6,5-35M views no estilo bonecos 2D em mundo 3D):
 - **Um FX de exagero por ato:**
   - impacto com *hold* no ar: `rot` sobe em 0,15 s, segura ~0,8 s e cai;
   - fúria/hipérbole no clímax: olhos vermelhos, chão rachando, onda de choque com flash;
   - **mudança de clima** na explicação: noite, chuva, POV.
-- **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho) ou whip.
+- **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho), whip ou cortina de poeira (`ShaderFx("dust")`).
+- **Props que contam o tempo:** calendário que avança, termômetro, relógio; estados de um mesmo prop trocados na palavra.
 - **Props-piada que contam a história:** placa-contador que vira de 7 para 0 na batida, letreiro com lâmpadas piscando (ciclo de 2 frames).
 - **Termo do fenômeno dentro do mundo:** placa de rodovia ou letreiro, e não cartela.
 - **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,2-0,3 s (`fade` 0,2-0,3) com a câmera seguindo no mesmo sentido através do dissolve (medido: 75-100 % das transições das referências).
 
 ### Direção de animação (o que faz parecer vivo)
+Régua medida: vida mediana 0,12-0,15 no `vf frames` (nosso cutout: ~0,035) e 0,05 % de frames parados. Sete regras
+do estilo (contadas por terceiros em 25 vídeos; as 4 primeiras confirmadas pelas nossas medições): câmera nunca
+para; movimentos longos e lentos; quase sem cortes secos; cores suaves; o mundo "brilha" (partículas, glints);
+personagem **entra na pose e congela** (pose-to-pose com hold que respira); **uma ideia por plano**.
 - Personagem parado sempre respira (`idle: breathe`) e pisca sozinho (automático, 0,5-2,3 s). Na troca de expressão o motor fecha os olhos para esconder o corte.
 - **Reação antes da fala:** a expressão muda 0-3 frames antes da palavra (o `at_word` já faz isso).
 - Quem fala do lugar onde está: grupo reagindo em cascata, com 0,06-0,25 s entre cada um.

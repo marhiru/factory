@@ -47,6 +47,12 @@ Para cada formato em `factory.yaml > formatos`:
 6. Registre em `entregas` e marque `edicao`, `qa` e `entrega` como `feito`.
 7. **Rascunho na plataforma** (só se `factory.yaml > plataformas` tiver a plataforma, `vf auth status` mostrar autorizado e o usuário der o OK para subir): `$VF publish out/final_<formato>.mp4 platform=yt meta=out/publicacao_<formato>.json` (YouTube privado) ou `platform=tiktok` (caixa de entrada do app). Nunca publica: o usuário posta. Credenciais, limites e analíticos: [plataformas.md](references/plataformas.md). Anote em `publicacao.enviados`.
 
+## Legendas (shorts verticais)
+Medido em 3 shorts de 19-35M de views: **uma palavra por vez**, branca, bold, contorno preto, presa à fala, na
+faixa de **0,69-0,72 da altura** (dentro da safe zone de `yt-short`/`tiktok`). No `edl.json`:
+`"captions": {"enabled": true, "words_per_page": 1, "style": "pop"}`. A faixa de 0,66-0,76 é proibida para rosto e
+ação principal (QA visual etapa 3). Vídeo longo: 2-3 palavras (`karaoke`) no terço inferior.
+
 ## Como ler o QA
 | Item | FAIL quando | Correção típica |
 |---|---|---|

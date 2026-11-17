@@ -5,6 +5,11 @@ Gere `out/publicacao_<formato>.md` com:
 ## Título
 - YouTube longo: ≤ 60 caracteres visíveis; promessa ou curiosidade + termo buscável. Gere 5 opções e recomende 1.
 - Shorts: ≤ 40 caracteres, complementa o gancho (não repete).
+- **Short de história/mecanismo** (medido no canal de referência, 152 títulos): 4-7 palavras, curiosidade sem
+  entregar o mecanismo. Formas: "Por que X não funciona", "O X que Y", "Como X funcionava", "O instinto que faz
+  você Y", "O emprego que ninguém quer no Z". O canal estudado usa o título como descrição inteira (sem tags nem
+  hashtags) e aposta tudo no título + primeiro segundo; na fábrica a descrição curta continua valendo para
+  fontes e créditos (abaixo).
 - TikTok: a legenda é o "título"; primeira linha ≤ 80 caracteres + 3-5 hashtags específicas.
 
 ## Descrição (YouTube)

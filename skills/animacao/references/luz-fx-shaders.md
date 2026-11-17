@@ -16,7 +16,7 @@ A luz tem três funções ao mesmo tempo:
 3. **Emoção e ênfase (dinâmica).** A luz muda com a história: destacar um personagem, abrir a cena numa
    revelação, fechar na tensão. É uma ação do plano, cai numa palavra como qualquer ação.
 
-### Medido nas referências (`analise/referencias/rickclips-5-pontos.md`)
+### Medido nas referências (3 shorts de 19-35M; evidências em `analise/referencias/rickclips.md`)
 
 | Receita | Como aparece | Na fábrica |
 |---|---|---|

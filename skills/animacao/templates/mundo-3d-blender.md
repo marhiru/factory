@@ -2,7 +2,20 @@
 
 > **Escopo: só shorts (`yt-short` e `tiktok`).** O motor `blender-3d` nunca é usado em `yt-long`: o vídeo longo da fábrica é o motor `estatico` (imagens + HyperFrames). Motivo: custo de render e de produção de cena por minuto; no short, o mundo 3D é o diferencial que segura o polegar.
 
-Objetivo: o nível de cenário do estilo estudado em `skills/analise/referencias/rickclips.md`: mundo PBR estilizado com luz de cinema, câmera sempre em movimento, personagens 2D de traço preto em cards dentro do 3D. Status: **especificação**. O motor `blender-3d` ainda não foi implementado nem testado na fábrica (o Blender não estava instalado quando isto foi escrito).
+Objetivo: o nível de cenário do estilo estudado (evidências em `skills/analise/referencias/rickclips.md`): mundo PBR estilizado com luz de cinema, câmera sempre em movimento, personagens 2D de traço preto em cards dentro do 3D. Status: **especificação**. O motor `blender-3d` ainda não foi implementado nem testado na fábrica (o Blender não estava instalado quando isto foi escrito).
+
+## Como o estilo de referência é feito (leitura de quadros 1080x1920)
+- **Personagens 2D em cards dentro de um mundo 3D:** traço preto, preenchimento chapado, sem sombreamento próprio,
+  mas projetam sombra e ficam atrás/na frente de objetos 3D. É o nosso cutout, com cenário 3D e câmera que anda nele.
+- **Mundo PBR estilizado:** grama com lâminas e translucência, folhagem em tufos, veículos quase fotorreais,
+  asfalto/pedra com desgaste, nuvens volumétricas.
+- **Luz de cinema:** sol baixo com sombras longas, perspectiva aérea, bloom, god rays, AO nos contatos; noite com
+  reflexos no molhado, neblina volumétrica e cones de faróis; interiores com práticos (arandelas, janelas).
+- **FX de simulação:** fratura (chão/palácio quebrando), poeira volumétrica, onda de choque com distorção,
+  motion blur nos impactos, material que muda de cor e emite (trilho em brasa).
+- **Ferramenta:** não divulgada pelo criador. O conjunto (cards 2D + PBR + volumétricos + fratura, ~1 short/dia)
+  aponta para render em tempo quase real (Blender Eevee ou Unreal Lumen). Terceiros reproduzem o estilo com Blender
+  guiado por Claude ou com Remotion + three.js (o nosso `remotion-three`). **Nada confirmado.**
 
 ## Por que Blender
 - Gratuito, roda **headless** (`blender -b arquivo.blend -P script.py -- args`) e é 100% scriptável em Python (`bpy`): o Claude monta a cena por código, como já fazemos com three.js.
@@ -23,8 +36,8 @@ Objetivo: o nível de cenário do estilo estudado em `skills/analise/referencias
 
 ## Regras de look (medidas no estilo estudado)
 - Câmera **sempre** em movimento: vida mediana ~0,12 no `vf frames` (4x o nosso cutout). Glides longos e lentos; 1 plano pode ter 3-4 enquadramentos por movimento de câmera.
-- Luma média ~0,43 em todas as cenas, inclusive à noite (noite = azul-acinzentado com luzes quentes, nunca preto).
-- Sol baixo (golden hour) por padrão, perspectiva aérea forte, céu com nuvens volumétricas.
+- Luma média 0,43-0,51 por vídeo; por plano 0,26-0,70. Noite ≥ 0,26 (azul-acinzentado com luzes quentes, nunca preto).
+- **Arco de temperatura por ato** (ex.: dia quente → pôr do sol → noite fria → manhã quente na resolução); golden hour é um dos climas, não o padrão. Perspectiva aérea forte, céu com nuvens volumétricas. Receitas em `references/luz-fx-shaders.md`.
 - Personagens sem sombreamento próprio, com **rim light** do mundo e sombra de contato: leitura imediata no celular.
 - O mundo "brilha": glints, partículas no ar, lâmpadas e reflexos.
 
