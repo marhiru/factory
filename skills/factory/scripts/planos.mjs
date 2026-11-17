@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Cartões de plano: a unidade de trabalho da esteira. Um cartão por item de `visual` de cada beat, com a janela
 // de tempo cortada em início de palavra, o texto falado nessa janela e os critérios de aceite do motor.
 // Cada sub-agente recebe um LOTE de cartões contíguos e só escreve nos arquivos que o cartão lista em `saida`.
-// uso: node planos.mjs [roteiro/beats.json] [--lote 5]   (precisa do `vf align` antes)
-//      node planos.mjs status                           (passe/estado de cada cartão)
+// uso: bun planos.mjs [roteiro/beats.json] [--lote 5]   (precisa do `vf align` antes)
+//      bun planos.mjs status                           (passe/estado de cada cartão)
 import fs from "node:fs";
 import path from "node:path";
 

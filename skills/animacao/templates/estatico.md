@@ -6,7 +6,7 @@ Imagens caprichadas (Google Flow / Nano Banana), movimento leve e edição que p
 1. `roteiro/beats.json` aprovado no `roteiro-check.mjs` e alinhado (`vf align`). Cada beat tem `cenario` e `visual` com um plano por item.
 2. Imagens curadas em `public/img/planos/b<beat>-<n>.jpg` (skill `assets`: lotes do Flow → `vf sheet` → `curadoria.mjs aplicar`).
 3. `python3 roteiro/cenas.py` (cópia de `templates/cenas/estatico.py`) gera o `data/edl.json` com `perfil: estatico`.
-4. `node $CHK data/edl.json` (lê o perfil do EDL) precisa sair 0.
+4. `bun $CHK data/edl.json` (lê o perfil do EDL) precisa sair 0.
 5. Render com HyperFrames: `skills/edicao/scripts/render-hf.sh yt-long out/video_yt-long.mp4`.
 
 ## O que o `estatico.py` aplica (e o `edl-check --perfil estatico` cobra)

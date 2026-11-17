@@ -6,6 +6,8 @@ argument-hint: "novo <nome> --formato yt-long|yt-short|tiktok[,...] --motor <mot
 
 # Video Factory — skill principal
 
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
+
 Você é o diretor de produção. Esta skill abre o projeto, decide qual skill de etapa usar e mantém `factory.yaml` em dia. As etapas vivem em skills irmãs do plugin, e você as carrega quando chegar a vez delas:
 
 | Etapa | Skill | Saída principal |
@@ -20,7 +22,12 @@ Você é o diretor de produção. Esta skill abre o projeto, decide qual skill d
 | 3c. Animação | `video-factory:animacao` | `data/edl.json` com cenas `scene` (ou perfil `estatico`), aprovado pelo `edl-check` |
 | 4. Edição, export e QA | `video-factory:edicao` | `out/final_<formato>.mp4`, `out/qa_<formato>/qa.md` |
 
-Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Para usar fora do plugin (terminal do usuário), `${CLAUDE_PLUGIN_ROOT}/scripts/install.sh` põe `vf`, `vf-mygo`, `vf-novo` e `vf-render-hf` no PATH (`~/.local/bin`). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e node.
+Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Para usar fora do plugin (terminal do usuário), `${CLAUDE_PLUGIN_ROOT}/scripts/install.sh` põe `vf`, `vf-mygo`, `vf-novo` e `vf-render-hf` no PATH (`~/.local/bin`). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e Bun.
+
+## Conceitos cartoon distribuídos por etapa
+O conteúdo de `cartoon-3d-short` foi integrado às skills da fábrica: análise de look (`analise`), história de causa/efeito (`roteiro`), desenho e som procedural (`assets`), cartoon 2D e cards em mundo 3D (`animacao`), revisão/render/QA (`edicao`) e identidade de canal (`canal`). Cada skill aponta para a referência de sua etapa; não depende de uma skill externa instalada.
+
+O template local é uma demonstração técnica da ponte: reutilize o motor e crie história, layout, elenco e tempos próprios. As preferências daquele exemplo (inglês, ausência de legendas, ganho de música e modelo de revisão) não substituem o `factory.yaml` nem pedidos do usuário. Origem e licença: `skills/animacao/templates/remotion-three/ORIGEM.md`.
 
 ## Comandos
 
@@ -31,7 +38,7 @@ Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A 
    ```
    ${CLAUDE_PLUGIN_ROOT}/scripts/novo.sh ~/Projects/<nome> --formato <f1,f2> --motor <motor> --idioma pt [--canal ~/Projects/canais/<canal>] --install
    ```
-   O motor padrão é `cutout-2d`, e o `novo.sh` já copia o exportador de sprites e escolhe `renderer: mygo` quando `bin/vf-mygo` existe. O `--install` (npm) é necessário para exportar sprites (Remotion headless) e para o renderer Remotion.
+   O motor padrão é `cutout-2d`, e o `novo.sh` já copia o exportador de sprites e escolhe `renderer: mygo` quando `bin/vf-mygo` existe. O `--install` (Bun) é necessário para exportar sprites (Remotion headless) e para o renderer Remotion.
 3. Preencha `estilo`, `publico` e `handle` no `factory.yaml` com o que souber (com canal, venha do `canal.yaml`) e siga para a etapa 0 ou 1.
 
 ### `status`
@@ -45,7 +52,7 @@ Depois de entregue um `yt-long`, carregue `video-factory:edicao` e siga `templat
 
 ## Modo esteira (sub-agentes)
 Para shorts com 12+ planos, vídeos longos, ou vários vídeos na semana, produza pela esteira de `templates/esteira.md`:
-1. Depois do `vf align`: `node ${CLAUDE_PLUGIN_ROOT}/skills/factory/scripts/planos.mjs --lote 5` gera os **cartões de plano** (`roteiro/planos/sNN.json`: janela de tempo, palavras, visual, cenário, critérios, saída). `etapas.cartoes: feito`.
+1. Depois do `vf align`: `bun ${CLAUDE_PLUGIN_ROOT}/skills/factory/scripts/planos.mjs --lote 5` gera os **cartões de plano** (`roteiro/planos/sNN.json`: janela de tempo, palavras, visual, cenário, critérios, saída). `etapas.cartoes: feito`.
 2. Passe 0 (animatic) para o vídeo inteiro já renderizar. Depois suba os cartões de passe: layout → animação → fx → som → final.
 3. Em paralelo: sub-agentes de **elenco**, **cenários** e **som**; depois um **animador por lote** de cartões contíguos. Cada um escreve só em `roteiro/cenas/sNN.py` e nos arquivos do seu posto (`load_parts()` no `cenas.py` junta tudo). Use o briefing padrão do template.
 4. Um **revisor** independente (sem acesso ao código) confere stills e folha densa contra os critérios de cada cartão.
@@ -62,7 +69,7 @@ Referências de vocabulário para os briefings: `skills/animacao/templates/gloss
 | `remotion-2d` | motion graphics, texto cinético, infográficos, combinado com cutout | template Remotion/mygo orientado a `data/edl.json` |
 | `ia-video` | planos gerados por Veo/Kling/Runway etc. (image-to-video a partir do elenco e dos plates) | prompts por plano (`data/shots.yaml`) → clipes `video` |
 | `kenburns` | **só** quando o usuário pede um vídeo de fotos (documentário de arquivo) | clipes `image` com `motion`; não é animação |
-| `remotion-three` | personagens 2D cartoon em mundo 3D com nanquim | **delegue à skill `cartoon-3d-short`** |
+| `remotion-three` | personagens 2D cartoon em mundo 3D com nanquim | template local `skills/animacao/templates/remotion-three/`, Remotion + three.js; guia `skills/animacao/references/2d-in-3d-world.md` |
 | `blender-3d` (planejado) | **só `yt-short`/`tiktok`**: elenco cutout em cards num mundo 3D PBR (estilo de alta qualidade estudado) | especificação em `skills/animacao/templates/mundo-3d-blender.md`; nunca em `yt-long` |
 | `mapas-3d` | curiosidades de geografia/história em mapa de satélite 3D | **delegue à skill `mapas-3d-videos-virais`** |
 
@@ -77,7 +84,7 @@ Comparação e limites na skill `animacao`. Um motor novo só precisa ler o `edl
 1. **Referência** (se o usuário mandou links ou citou um canal): rode `video-factory:analise` em 1-3 vídeos e anote em `factory.yaml > referencias` o que copiar de **fórmula** (ritmo, gancho, estrutura). Nunca copie roteiro, personagens, marca ou planos.
 2. **Roteiro**: gere com `video-factory:roteiro`. No `yt-long`, o `roteiro-check.mjs` precisa sair 0 **antes** de mostrar ao usuário (esquemática de hook rate). Depois **pare para aprovação**. É o único gate humano obrigatório (`etapas.aprovacao_roteiro`).
 2b. **Animação de verdade (trava obrigatória):** o vídeo precisa ser animado. Elenco em sprites, cenários e cenas `scene` com ações amarradas às palavras, pela skill `animacao`. `etapas.animacao` só vira `feito` quando:
-   - `node ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` sai com código 0 (≥ 70% do tempo com animação real, nenhum trecho > 6 s sem);
+   - `bun ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` sai com código 0 (≥ 70% do tempo com animação real, nenhum trecho > 6 s sem);
    - a folha de stills de todas as cenas foi conferida.
 
    Stills com Ken Burns, cartelas e o animatic do `beats2edl` **não** são animação. Erro já cometido e que não pode se repetir: um short de história saiu só com Ken Burns e foi marcado `animacao: feito`.
@@ -90,7 +97,7 @@ Comparação e limites na skill `animacao`. Um motor novo só precisa ler o `edl
 6. **Entrega**: só com `edl-check` aprovado e `vf qa` (estrito, o padrão) saindo com código 0. WARN também reprova; a única saída é uma `qa_excecoes` com motivo concreto. Registre em `entregas` o arquivo e o resultado do QA, e entregue o caminho absoluto do MP4 junto do resumo do QA.
 
 ## MCP
-O plugin declara o servidor MCP `google-flow` (Google Flow / Nano Banana, `.mcp.json`). Instalação, login e loop de geração: `skills/assets/templates/mcp-google-flow.md`. Se as ferramentas `flow_*` não estiverem disponíveis, peça ao usuário para rodar o login (`! npx -y @park-sang-gwon/google-flow-mcp@0.3.1 doctor`) e recarregar a sessão. Não troque para outro gerador sem perguntar.
+O plugin declara o servidor MCP `google-flow` (Google Flow / Nano Banana, `.mcp.json`). Instalação, login e loop de geração: `skills/assets/templates/mcp-google-flow.md`. Se as ferramentas `flow_*` não estiverem disponíveis, peça ao usuário para rodar o login (`! bunx --bun @park-sang-gwon/google-flow-mcp@0.3.1 doctor`) e recarregar a sessão. Não troque para outro gerador sem perguntar.
 
 ## Specs por formato (fonte: `${CLAUDE_PLUGIN_ROOT}/formats.yaml`, ou `$VF formats`)
 
@@ -108,3 +115,11 @@ O plugin declara o servidor MCP `google-flow` (Google Flow / Nano Banana, `.mcp.
 - O decode por software já é o mais rápido no Apple Silicon. `--hw` (VideoToolbox) só compensa em codecs pesados.
 - Render: `vf-mygo` faz 22 s de vertical 1080p em 3,4 s, contra 16,7 s do Remotion. No Remotion, use `--concurrency` conforme os núcleos e JPEG como intermediário (já é o padrão do template). Para iterar, renderize stills em vez do vídeo inteiro.
 - Cada render do Remotion copia `public/` para a pasta temp: mantenha `public/` enxuto (só o que o vídeo usa) e aponte `TMPDIR` para um disco com espaço.
+
+## QA visual por etapa
+
+Para vídeos animados com personagens/props ou composição 3D, conduza as cinco revisões de
+[QA visual](../edicao/references/qa-cinco-etapas.md): modelagem, animação/contato, posicionamento,
+integridade dos assets e câmera. Inicie-as na produção e consolide a evidência antes da entrega.
+Mantenha seus estados separados do QA técnico: ausência de preto/freeze não aprova contato,
+modelo ou enquadramento. Retome defeitos concretos sem exigir nova aprovação do usuário.

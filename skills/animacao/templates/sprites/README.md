@@ -6,7 +6,7 @@ Transforma qualquer desenho Canvas2D em packs de sprites (`public/sprites/<pack>
 2. Escreva `registry.ts`: um `Pack` por personagem ou prop. Cada `SpriteItem` desenha um PNG: um frame de um estado, ou o frame `blink` desse estado.
 3. Rode (precisa de `remotion`, `@remotion/bundler` e `@remotion/renderer` instalados):
    ```
-   REMOTION_BROWSER=<caminho do chrome-headless-shell> node sprites/export-sprites.mjs sprites/index.ts public/sprites [pack1,pack2]
+   REMOTION_BROWSER=<caminho do chrome-headless-shell> bun sprites/export-sprites.mjs sprites/index.ts public/sprites [pack1,pack2]
    ```
    `REMOTION_BROWSER` reaproveita o navegador que o CLI do Remotion já baixou (`node_modules/.remotion/chrome-headless-shell/...`). Sem ele, o Remotion baixa um.
 

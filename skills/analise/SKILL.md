@@ -5,7 +5,12 @@ description: "Estuda vídeos de referência (arquivo ou URL do YouTube/TikTok) f
 
 # Análise de referência (etapa 0 da fábrica)
 
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
+
 `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf` (se não existir: `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh`)
+
+## Referência cartoon 2D/3D
+Para medir desenho, atuação, câmera, luz, textura, contorno, grade e profundidade, leia [cartoon-look.md](referencias/cartoon-look.md). Registre resolução, FPS, máscara de legendas e método; use os relatórios corrigidos de movimento, não a hipótese inicial de câmera em bursts.
 
 ## Rodar
 ```

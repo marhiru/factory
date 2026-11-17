@@ -36,7 +36,7 @@ Tensão contínua: nenhum trecho de 90 s sem `pergunta`, `virada`, `loop`, `rega
 - `sfx`: `whoosh` nas viradas, `riser` antes de revelação, `impacto` no punch.
 
 ## Checklist antes de mostrar ao usuário
-- [ ] `node ${CLAUDE_PLUGIN_ROOT}/skills/roteiro/scripts/roteiro-check.mjs` sai 0.
+- [ ] `bun ${CLAUDE_PLUGIN_ROOT}/skills/roteiro/scripts/roteiro-check.mjs` sai 0.
 - [ ] Título, thumbnail e frame 0 contam a mesma promessa (rascunho em `SCRIPT.md > publicação`).
 - [ ] Toda afirmação factual tem fonte no topo do `SCRIPT.md`.
 - [ ] Lendo só as frases de `tipo: loop`, dá vontade de saber a resposta.

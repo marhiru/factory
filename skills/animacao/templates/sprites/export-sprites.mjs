@@ -1,6 +1,6 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Exporta os packs de sprites (registry Canvas2D) para public/sprites/<pack>/*.png + sprite.json.
-// uso: node export-sprites.mjs <entry: sprites/index.ts> <saida: public/sprites> [pack1,pack2...]
+// uso: bun export-sprites.mjs <entry: sprites/index.ts> <saida: public/sprites> [pack1,pack2...]
 // O entry registra <SpritesRoot packs={PACKS} /> (templates/sprites/SpriteExport.tsx); metadados vêm da composição.
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";

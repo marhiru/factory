@@ -6,9 +6,14 @@ argument-hint: "novo <nome> | pauta | revisar"
 
 # Canal (antes do primeiro vídeo, e toda semana)
 
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
+
 Um canal da fábrica é um **formato repetível**: o mesmo tipo de história, a mesma voz, o mesmo mundo visual e a mesma estrutura de roteiro, com temas sempre novos. O vídeo é feito pela `factory`; esta skill decide **o quê** e **para quem**, e mede o resultado.
 
 Pasta do canal: `~/Projects/canais/<canal>/` com `canal.yaml`, `pauta.md`, `style-bible.md`, `metricas.md` e `kit/` (sprites do elenco fixo, plates/sets recorrentes, voz, logo). Os projetos de vídeo apontam para ela (`novo.sh --canal <pasta>`).
+
+## Canal cartoon
+Ao definir elenco e mundo recorrentes, use [cartoon-identidade.md](templates/cartoon-identidade.md): fontes dos desenhos, kit visual/sonoro, marcas próprias e decisões de idioma/legenda/mix. O exemplo da ponte é referência técnica, não identidade de canal.
 
 ## `novo <nome>`
 1. Pergunte, numa pergunta só, o que faltar: **nicho/tema**, **idioma/público**, **formato** (short animado, longo estático ou os dois).

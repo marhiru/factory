@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Curadoria dos lotes do Flow -> imagens finais por plano.
 // assets/flow/curadoria.json: { "b1-1": "assets/flow/porto-noite-1/porto-noite-1_07.png", ... , "_rejeitadas": {"<arquivo>": "motivo"} }
 // aplica: copia cada escolha para public/img/planos/<plano>.jpg, com upscale (lanczos + nitidez leve) quando a

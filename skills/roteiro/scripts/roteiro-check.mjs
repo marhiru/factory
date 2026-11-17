@@ -1,7 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Trava do roteiro do vídeo longo (esquemática de hook rate da fábrica). Roda ANTES da aprovação humana
 // (tempos estimados pelo wpm) e de novo depois do `vf align` (tempos reais da voz).
-// uso: node roteiro-check.mjs [roteiro/beats.json] [--min 600 --max 900] [--wpm 160] [--piloto]
+// uso: bun roteiro-check.mjs [roteiro/beats.json] [--min 600 --max 900] [--wpm 160] [--piloto]
 //   --piloto: trecho de 2-4 min (gancho + capítulo 1 + loop final): só as regras que cabem no trecho
 // sai com código 1 se reprovar.
 import fs from "node:fs";

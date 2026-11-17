@@ -1,10 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Trava da etapa de animação: mede quanto do vídeo tem animação de verdade no data/edl.json.
 // "Animado" = clipe `scene` com pelo menos um ator que FAZ algo (entra/sai, se move por keys, troca de estado,
 // ou tem estado em ciclo), ou um clipe `video` (clipe de IA/stock já é movimento). Ken Burns (`image` com zoom)
 // e cartelas (`text`/`color`) contam como "estático com câmera".
-// uso: node edl-check.mjs data/edl.json [--min 0.7] [--max-gap 6] [--sprites public]
-//      node edl-check.mjs data/edl.json --perfil estatico [--beats roteiro/beats.json]   (vídeo longo estático com tema)
+// uso: bun edl-check.mjs data/edl.json [--min 0.7] [--max-gap 6] [--sprites public]
+//      bun edl-check.mjs data/edl.json --perfil estatico [--beats roteiro/beats.json]   (vídeo longo estático com tema)
 // sai com código 1 se reprovar: a skill factory não pode marcar `animacao: feito` sem passar aqui.
 import fs from "node:fs";
 import path from "node:path";

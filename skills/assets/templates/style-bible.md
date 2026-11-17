@@ -27,5 +27,16 @@
 - Descrição fixa (para prompts):
 - Referências aprovadas: `assets/ref/…`
 
+## Cartoon 2D / mundo 3D (se aplicável)
+- Proporções e silhuetas próprias (cabeça/corpo/membros):
+- Tinta do elenco (cor, variação de espessura) / tinta do mundo (px na resolução de referência):
+- Expressões, piscada, ciclos, apoio do pé e idle permitido:
+- Presets de dia/golden, sombra de contato e rim:
+- Materiais pintados, escala de textura e kits externos com licença:
+- Câmera (glides, push, roll, impactos) e foreground:
+- Fog, foco/DOF, bloom e grade por luz; grão conforme o look:
+- Frames próprios aprovados e medidas do estudo (resolução/FPS):
+- Decisão do projeto sobre idioma, legendas e textos em props:
+
 ## Nunca
 - 

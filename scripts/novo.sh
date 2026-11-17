@@ -61,7 +61,11 @@ case "$MOTOR" in
     cp "$ROOT/skills/assets/templates/flow-estilo.json" "$DEST/assets/flow/estilo.json"
     ;;
   remotion-three)
-    echo "motor remotion-three: siga a skill cartoon-3d-short (templates em github.com/mromidev/claude-animated-shorts)" ;;
+    cp -R "$ROOT/skills/animacao/templates/remotion-three/." "$DEST/"
+    mkdir -p "$DEST/scripts" "$DEST/public/clips" "$DEST/public/bridge/kenney"
+    cp "$ROOT/skills/edicao/templates/cartoon/cartoon-stills.mjs" "$ROOT/skills/edicao/templates/cartoon/cartoon-plan.mjs" "$ROOT/skills/edicao/templates/cartoon/sbs_sheet.py" "$DEST/scripts/"
+    cp "$ROOT/skills/edicao/templates/cartoon/LICENSE" "$DEST/scripts/LICENSE-cartoon"
+    ;;
   mapas-3d)
     echo "motor mapas-3d: siga a skill mapas-3d-videos-virais (kit-mapas-3d)" ;;
 esac
@@ -85,5 +89,5 @@ find "$DEST" -type f \( -name '*.yaml' -o -name '*.md' -o -name '*.json' \) -not
     -e "s|__DURACAO__|$DURACAO|g" -e "s|__WPM__|$WPM|g" -e "s|__RENDERER__|$RENDERER|g" -e "s|__CANAL__|$CANAL|g"
 
 (cd "$DEST" && git init -q 2>/dev/null || true)
-if [ "$INSTALL" = 1 ] && [ -f "$DEST/package.json" ]; then (cd "$DEST" && npm install --silent); fi
+if [ "$INSTALL" = 1 ] && [ -f "$DEST/package.json" ]; then (cd "$DEST" && bun install --silent); fi
 echo "projeto criado: $DEST  (formatos: $LIST · motor: $MOTOR · duração alvo: ${DURACAO}s · ${WPM} wpm · renderer: $RENDERER)"

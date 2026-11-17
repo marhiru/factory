@@ -1,9 +1,10 @@
-# Remotion + three.js (cartoon 2D em mundo 3D)
+# Remotion + three.js: cartoon 2D em mundo 3D
 
-Este motor tem skill própria: **`cartoon-3d-short`**. Ela traz o pipeline completo (story.ts, world, cast, ink, lente, grade), os valores de look medidos e as armadilhas. Templates: https://github.com/mromidev/claude-animated-shorts (`templates/bridge/`).
+O motor agora está incluído na fábrica: [template local](remotion-three/) e [guia completo](../references/2d-in-3d-world.md). Não é necessário instalar `cartoon-3d-short` separadamente.
 
-Integração com a fábrica:
-- O `roteiro/beats.json` com tempos (`vf align`) é a fonte para `SHOTS`, `CAMS` e reações em `story.ts`: cada beat vira 1-3 planos, e as reações caem 0-3 frames antes de `w0`.
-- O `data/words.json` substitui o `words.json`/`gen_words.py` da skill.
-- Som: `vf mix` com as faixas geradas, ou o `audio/sound.py` da skill.
-- Export e QA: `vf export` + `vf qa` (que substitui o `short_qa.py`, mais rápido e com detecção automática de crossfades).
+- `scripts/novo.sh <pasta> --motor remotion-three --formato yt-short --install` cria o projeto com Bun, tsgo, composição `CartoonShort` e helpers de stills/comparação.
+- Fonte dos desenhos, materiais, mundo, timeline e pós em `src/videos/cartoon/`. O template da ponte é demonstração técnica; refaça história, cenário e elenco.
+- `beats.json` alinhado + `data/words.json` alimentam `SHOTS`, `CAMS`, tempo físico e reações; uma única régua de voz.
+- Áudio procedural opcional: `skills/assets/templates/audio-procedural/`; QA visual e operação: `skills/edicao/references/cartoon-qa.md`.
+- Clipes 3D renderizados reais entram como `video` no EDL; `edl-check` + `vf export` + `vf qa` continuam obrigatórios. Não use `short_qa.py` como substituto do QA estrito.
+- Kit Kenney opcional não incluído: ver `remotion-three/ORIGEM.md`, que também registra o commit de origem e licença MIT.

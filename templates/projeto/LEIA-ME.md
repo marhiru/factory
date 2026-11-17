@@ -17,8 +17,12 @@ Comandos (VF = caminho do binário `vf` do plugin):
 ```
 $VF transcribe public/voice/voice.wav -o data --lang pt
 $VF align roteiro/beats.json data/words.json
-npx remotion studio src/index.ts
-npx remotion render src/index.ts yt-short out/video.mp4 --codec h264 --crf 16
+bunx --bun remotion studio src/index.ts
+bunx --bun remotion render src/index.ts yt-short out/video.mp4 --codec h264 --crf 16
 $VF export out/video.mp4 -f yt-short -o out/final_yt-short.mp4 --audio public/audio/mix.wav
 $VF qa out/final_yt-short.mp4 -f yt-short -o out/qa_yt-short
 ```
+
+## Ferramental
+
+Use Bun para JS/TS e dependências (`bun install`). Para verificar TypeScript no template Remotion: `bun run --bun typecheck` (tsgo). Projetos que já usam tsrs podem mantê-lo. Versione `bun.lock`.

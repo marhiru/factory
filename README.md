@@ -7,6 +7,10 @@ Plugin do Claude Code para uma fábrica de vídeo com IA: **YouTube longo, YouTu
 - **CLI `vf` em Rust**: análise frame a frame, transcrição, alinhamento, mix, export e QA, todos rápidos.
 - **Renderer `vf-mygo` em Go** ([MyGo render](https://mygo.run/docs/plugins/render)): desenha o `data/edl.json` na GPU (Metal), sem navegador, ~5x mais rápido que o Remotion.
 
+## Ferramental
+
+JavaScript/TypeScript usa **Bun** para execução, dependências e CLIs. TypeScript usa **tsgo ou tsrs**; o template Remotion inclui tsgo (`bun run --bun typecheck`). Instruções: [ferramental](skills/factory/references/ferramental.md).
+
 ## Instalar
 
 `scripts/install.sh` compila (se preciso) e cria links em `~/.local/bin`: `vf`, `vf-mygo`, `vf-novo` (novo projeto) e `vf-render-hf`. Recompilar com `scripts/build.sh` atualiza os links sozinho.
@@ -116,3 +120,11 @@ Imagens caprichadas do **Google Flow (Nano Banana) via MCP**, zoom-in leve, card
 cd tools/vf && cargo test --release     # unitários (cortes, transcrição, align, formats)
 tests/synthetic.sh                       # integração: cortes exatos em 60/150/240, paralelo == serial, qa, export
 ```
+
+## Cartoon 2D em mundo 3D
+
+Os conceitos do [claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) estão distribuídos nas sete skills: desenho/atuação 2D, mundo 3D, luz, materiais, câmera, pós, roteiro, som e QA. Origem fixada e licença MIT em [ORIGEM.md](skills/animacao/templates/remotion-three/ORIGEM.md).
+
+`./scripts/novo.sh <pasta> --motor remotion-three --formato yt-short --install` cria uma demonstração técnica executável com Bun/tsgo, fonte do mundo e composição `CartoonShort`. O desenho Canvas2D também pode ser exportado como sprites para mygo. Crie história, elenco e layout próprios antes de produzir.
+
+Templates incorporados: [mundo e elenco](skills/animacao/templates/remotion-three/), [áudio procedural](skills/assets/templates/audio-procedural/), [stills e comparação](skills/edicao/templates/cartoon/). GLBs Kenney e frames privados de referência não estão incluídos.

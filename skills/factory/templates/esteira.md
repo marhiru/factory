@@ -47,7 +47,7 @@ ${PLUGIN}/skills/animacao/templates/edl.schema.md, <referência de estilo, se ho
 Disponível: sprites em public/sprites/ (estados em cada sprite.json), plates em public/img/plates/.
 Escreva SÓ: <caminhos de saída>. Não edite nenhum outro arquivo.
 Para cada cartão: <o que fazer no passe N>. Toda ação cai numa palavra (w(i) com os índices de `palavras`).
-Confira: python3 roteiro/cenas.py && node ${PLUGIN}/skills/animacao/scripts/edl-check.mjs data/edl.json
+Confira: python3 roteiro/cenas.py && bun ${PLUGIN}/skills/animacao/scripts/edl-check.mjs data/edl.json
 e um still por cartão (${PLUGIN}/bin/vf-mygo -project . -formato <f> -still <frame> -o out/planos/sNN.png).
 Responda: arquivos escritos, saída das checagens, caminho dos stills e o que ficou em `notas`.
 ```

@@ -432,8 +432,7 @@ fn doctor() {
         ("ffprobe", util::ffprobe(), "obrigatório"),
         ("whisper-cli", std::env::var("VF_WHISPER").unwrap_or("whisper-cli".into()), "transcrição (brew install whisper-cpp)"),
         ("yt-dlp", "yt-dlp".into(), "analyze de URL (brew install yt-dlp)"),
-        ("node", "node".into(), "Remotion"),
-        ("npx", "npx".into(), "Remotion"),
+        ("bun", "bun".into(), "scripts JS/TS, dependências e render (bun.sh)"),
     ];
     for (label, bin, why) in items {
         match util::which(&bin) {

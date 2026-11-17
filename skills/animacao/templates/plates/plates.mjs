@@ -1,6 +1,6 @@
 // Renderiza plates (cenários sem elenco) de um projeto Remotion existente: um still por plano.
 // O projeto precisa aceitar uma inputProp que esconde o elenco (ex.: `nocast`) no stage/world.
-// uso: node plates.mjs --out public/img/plates --composition <Id> --frames 12:s01,80:s02,... [--prop nocast] [--scale 1.3333] [--entry src/index.ts]
+// uso: bun plates.mjs --out public/img/plates --composition <Id> --frames 12:s01,80:s02,... [--prop nocast] [--scale 1.3333] [--entry src/index.ts]
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import path from "node:path";
@@ -11,7 +11,7 @@ const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i
 const outDir = opt("out", "public/img/plates");
 const id = opt("composition");
 const list = opt("frames");
-if (!id || !list) { console.error("uso: node plates.mjs --composition <Id> --frames f:nome,... [--out dir] [--prop nocast] [--scale 1.3333]"); process.exit(2); }
+if (!id || !list) { console.error("uso: bun plates.mjs --composition <Id> --frames f:nome,... [--out dir] [--prop nocast] [--scale 1.3333]"); process.exit(2); }
 const inputProps = { [opt("prop", "nocast")]: true };
 const scale = Number(opt("scale", "1"));
 const browserExecutable = process.env.REMOTION_BROWSER || undefined;
