@@ -21,22 +21,22 @@ use std::collections::{BTreeMap, HashSet};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
-fn bearer(t: &auth::Token) -> String {
+pub(crate) fn bearer(t: &auth::Token) -> String {
     format!("Bearer {}", t.access_token)
 }
 
 /// data local de hoje (nome dos arquivos)
-fn today() -> String {
+pub(crate) fn today() -> String {
     std::process::Command::new("date").arg("+%F").output().ok().map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string()).unwrap_or_else(|| tempo::date(tempo::now()))
 }
 
-fn out_dir(kv: &Kv, sub: &str) -> Result<PathBuf> {
+pub(crate) fn out_dir(kv: &Kv, sub: &str) -> Result<PathBuf> {
     let d = kv.get("o").or(kv.get("out")).map(PathBuf::from).unwrap_or_else(|| if Path::new("out").is_dir() { PathBuf::from("out").join(sub) } else { PathBuf::from(sub) });
     std::fs::create_dir_all(&d)?;
     Ok(d)
 }
 
-fn tt_check(v: &Value) -> Result<()> {
+pub(crate) fn tt_check(v: &Value) -> Result<()> {
     let code = v.pointer("/error/code").and_then(|c| c.as_str()).unwrap_or("ok");
     if code != "ok" {
         bail!("TikTok: {code}: {}", v.pointer("/error/message").and_then(|m| m.as_str()).unwrap_or(""));
@@ -45,7 +45,7 @@ fn tt_check(v: &Value) -> Result<()> {
 }
 
 /// contas pedidas: account=a,b (lista), account=all (todas; só analytics) ou nenhuma (resolve: projeto > padrão)
-fn contas_de(kv: &Kv, p: &str, allow_all: bool) -> Vec<Option<String>> {
+pub(crate) fn contas_de(kv: &Kv, p: &str, allow_all: bool) -> Vec<Option<String>> {
     let raw = kv.get("account").or(kv.get("conta"));
     match raw {
         Some("all" | "todas") if allow_all => auth::accounts(p).into_iter().map(Some).collect(),
@@ -65,7 +65,7 @@ fn project_platforms() -> Option<Vec<&'static str>> {
     (!v.is_empty()).then_some(v)
 }
 
-fn split_list(s: &str) -> Vec<String> {
+pub(crate) fn split_list(s: &str) -> Vec<String> {
     s.split(',').map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect()
 }
 
@@ -240,6 +240,9 @@ pub fn publish_run(args: &[String], da_agenda: bool) -> Result<Vec<Value>> {
     let fallback = file.file_stem().map(|s| s.to_string_lossy().into_owned());
     let mut resultados = Vec::new();
 
+    if plats.contains(&"ttb") {
+        bail!("tiktok-biz é só para métricas (vf relatorio platform=tiktok); para subir use platform=tiktok");
+    }
     for p in plats {
         let mut m = meta_de(&kv, fallback.clone())?;
         for acct in contas_de(&kv, p, false) {
@@ -659,7 +662,11 @@ pub fn analytics(args: &[String]) -> Result<()> {
     for p in plats {
         for acct in contas_de(&kv, p, true) {
             let a = acct.as_deref();
-            let r = if p == "yt" { yt_analytics(a, &o) } else { tt_analytics(a, &o) };
+            let r = match p {
+                "yt" => yt_analytics(a, &o),
+                "ttb" => Err(anyhow::anyhow!("métricas de TikTok Business entram no vf relatorio platform=tiktok")),
+                _ => tt_analytics(a, &o),
+            };
             match r {
                 Ok(v) => {
                     let conta = v.get("conta").and_then(|c| c.as_str()).unwrap_or("conta");
@@ -683,18 +690,18 @@ pub fn analytics(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn yt_report(b: &str, params: &[(&str, &str)]) -> Result<Value> {
+pub(crate) fn yt_report(b: &str, params: &[(&str, &str)]) -> Result<Value> {
     let url = format!("https://youtubeanalytics.googleapis.com/v2/reports?{}", net::query(params));
     net::get(&url, &[("Authorization", b)])?.ok()?.json()
 }
 
 /// linhas de um relatório como objetos {coluna: valor}
-fn rows(v: &Value) -> Vec<Value> {
+pub(crate) fn rows(v: &Value) -> Vec<Value> {
     let cols: Vec<String> = v.get("columnHeaders").and_then(|c| c.as_array()).map(|a| a.iter().filter_map(|h| h.get("name").and_then(|n| n.as_str()).map(String::from)).collect()).unwrap_or_default();
     v.get("rows").and_then(|r| r.as_array()).map(|rs| rs.iter().filter_map(|r| r.as_array()).map(|r| Value::Object(cols.iter().cloned().zip(r.iter().cloned()).collect())).collect()).unwrap_or_default()
 }
 
-fn num(v: &Value, k: &str) -> f64 {
+pub(crate) fn num(v: &Value, k: &str) -> f64 {
     match v.get(k) {
         Some(Value::Number(n)) => n.as_f64().unwrap_or(0.0),
         Some(Value::String(s)) => s.parse().unwrap_or(0.0),
@@ -702,22 +709,22 @@ fn num(v: &Value, k: &str) -> f64 {
     }
 }
 
-fn median(mut v: Vec<f64>) -> Option<f64> {
+pub(crate) fn median(mut v: Vec<f64>) -> Option<f64> {
     if v.is_empty() {
         return None;
     }
     Some(crate::util::median(&mut v))
 }
 
-const YT_METRICS: &str = "views,engagedViews,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,likes,comments,shares,subscribersGained";
+pub(crate) const YT_METRICS: &str = "views,engagedViews,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,likes,comments,shares,subscribersGained";
 
-fn yt_get(b: &str, path: &str, q: &[(&str, &str)]) -> Result<Value> {
+pub(crate) fn yt_get(b: &str, path: &str, q: &[(&str, &str)]) -> Result<Value> {
     let url = format!("https://www.googleapis.com/youtube/v3/{path}?{}", net::query(q));
     net::get(&url, &[("Authorization", b)])?.ok()?.json()
 }
 
 /// detalhes (Data API) normalizados: metadata + estado + views em tempo real
-fn yt_videos(b: &str, ids: &[String]) -> Result<Vec<Value>> {
+pub(crate) fn yt_videos(b: &str, ids: &[String]) -> Result<Vec<Value>> {
     let mut out = Vec::new();
     for chunk in ids.chunks(50) {
         let v = yt_get(b, "videos", &[("part", "snippet,status,statistics,contentDetails"), ("id", &chunk.join(","))])?;
@@ -913,7 +920,8 @@ fn yt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
             medianas[tipo][format!("views_{d}")] = json!(median(vids.iter().filter(|v| v["tipo"].as_str().unwrap_or("").starts_with(tipo)).filter_map(|v| v["idade"].get(d).and_then(|x| x.as_f64())).collect()));
         }
     }
-    if num(&st, "viewCount") == 0.0 {
+    // a estatística do canal também atrasa: só avisa se nem os vídeos (tempo real) têm views
+    if num(&st, "viewCount") == 0.0 && vids.iter().all(|v| num(&v["total"], "views") == 0.0) {
         avisos.push("o canal tem 0 views no total: nada a analisar ainda (vídeos privados/rascunho não contam)".into());
     }
     let privados = vids.iter().filter(|v| v["privacidade"] == "private" && !v["agendado_para"].is_string()).count();
@@ -936,32 +944,7 @@ fn tt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
     tt_check(&user)?;
     let u = user.pointer("/data/user").cloned().unwrap_or(Value::Null);
     println!("== TikTok · {conta} ({}) · {} seguidores · {} curtidas · {} vídeos", u["display_name"].as_str().unwrap_or(""), num(&u, "follower_count"), num(&u, "likes_count"), num(&u, "video_count"));
-    let fields = "id,title,video_description,create_time,duration,cover_image_url,share_url,view_count,like_count,comment_count,share_count";
-    let mut vids: Vec<Value> = Vec::new();
-    if o.videos.is_empty() {
-        // Display API: páginas de até 20; só posts públicos
-        let mut cursor: Option<i64> = None;
-        while vids.len() < o.max {
-            let mut body = json!({ "max_count": 20 });
-            if let Some(c) = cursor {
-                body["cursor"] = json!(c);
-            }
-            let v = net::request("POST", &format!("https://open.tiktokapis.com/v2/video/list/?fields={fields}"), &[("Authorization", &b)], Body::Json(&body))?.json()?;
-            tt_check(&v)?;
-            vids.extend(v.pointer("/data/videos").and_then(|x| x.as_array()).cloned().unwrap_or_default());
-            match (v.pointer("/data/has_more").and_then(|x| x.as_bool()), v.pointer("/data/cursor").and_then(|x| x.as_i64())) {
-                (Some(true), Some(c)) => cursor = Some(c),
-                _ => break,
-            }
-        }
-        vids.truncate(o.max);
-    } else {
-        for chunk in o.videos.chunks(20) {
-            let v = net::request("POST", &format!("https://open.tiktokapis.com/v2/video/query/?fields={fields}"), &[("Authorization", &b)], Body::Json(&json!({ "filters": { "video_ids": chunk } })))?.json()?;
-            tt_check(&v)?;
-            vids.extend(v.pointer("/data/videos").and_then(|x| x.as_array()).cloned().unwrap_or_default());
-        }
-    }
+    let mut vids = tt_list(&b, &o.videos, o.max)?;
     let now = tempo::now();
     for v in vids.iter_mut() {
         let views = num(v, "view_count");
@@ -990,6 +973,37 @@ fn tt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
         "duracao": median(vids.iter().map(|v| num(v, "duration")).collect()),
     });
     Ok(json!({ "plataforma": "tiktok", "conta": conta, "gerado": tempo::rfc3339(now), "perfil": u, "medianas": medianas, "videos": vids, "avisos": avisos }))
+}
+
+/// posts públicos pela Display API (lista paginada ou ids explícitos), com engajamento calculado
+pub(crate) fn tt_list(b: &str, videos: &[String], max: usize) -> Result<Vec<Value>> {
+    let fields = "id,title,video_description,create_time,duration,cover_image_url,share_url,view_count,like_count,comment_count,share_count";
+    let mut vids: Vec<Value> = Vec::new();
+    if videos.is_empty() {
+        // Display API: páginas de até 20; só posts públicos
+        let mut cursor: Option<i64> = None;
+        while vids.len() < max {
+            let mut body = json!({ "max_count": 20 });
+            if let Some(c) = cursor {
+                body["cursor"] = json!(c);
+            }
+            let v = net::request("POST", &format!("https://open.tiktokapis.com/v2/video/list/?fields={fields}"), &[("Authorization", b)], Body::Json(&body))?.json()?;
+            tt_check(&v)?;
+            vids.extend(v.pointer("/data/videos").and_then(|x| x.as_array()).cloned().unwrap_or_default());
+            match (v.pointer("/data/has_more").and_then(|x| x.as_bool()), v.pointer("/data/cursor").and_then(|x| x.as_i64())) {
+                (Some(true), Some(c)) => cursor = Some(c),
+                _ => break,
+            }
+        }
+        vids.truncate(max);
+    } else {
+        for chunk in videos.chunks(20) {
+            let v = net::request("POST", &format!("https://open.tiktokapis.com/v2/video/query/?fields={fields}"), &[("Authorization", b)], Body::Json(&json!({ "filters": { "video_ids": chunk } })))?.json()?;
+            tt_check(&v)?;
+            vids.extend(v.pointer("/data/videos").and_then(|x| x.as_array()).cloned().unwrap_or_default());
+        }
+    }
+    Ok(vids)
 }
 
 #[cfg(test)]

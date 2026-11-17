@@ -6,8 +6,10 @@ formatos: [__FORMATOS__]          # yt-long | yt-short | tiktok (o primeiro é o
 motor: __MOTOR__                  # cutout-2d (padrão) | estatico (yt-long com tema) | remotion-2d | ia-video | remotion-three | mapas-3d | kenburns (só fotos)
 renderer: __RENDERER__            # mygo | hyperframes | remotion: quem desenha data/edl.json (trocável sem mexer no resto)
 plataformas: [__PLATAFORMAS__]   # yt | tiktok: onde o vídeo vai (vf auth platform=... libera rascunho e analíticos)
-publicacao:                       # vf publish <mp4> platform=<p>: sempre RASCUNHO (YouTube privado; TikTok inbox)
-  modo: rascunho
+contas: {}                        # conta de cada plataforma para este vídeo, ex.: { yt: meu-canal, tiktok: meu-canal } (apelidos do `vf auth status`); vazio = conta padrão
+publicacao:                       # vf publish <mp4> platform=<p> [mode=... at=...]: padrão RASCUNHO; postar/agendar só com pedido do usuário
+  modo: rascunho                  # rascunho | privado | nao-listado | publico (o que o usuário autorizou para este vídeo)
+  agendado: null                  # "2026-11-20 18:00" quando o usuário pedir agendamento (YT publishAt; TikTok vf agenda)
   enviados: []                    # {plataforma, formato, id, url, data}
 idioma: __IDIOMA__
 estilo: ""                        # ex.: "cartoon 3D nanquim", "documentário Ken Burns", "motion graphics"
@@ -16,10 +18,11 @@ wpm_alvo: __WPM__
 publico: ""                       # para quem é o vídeo
 handle: ""                        # @ do canal (se houver canal.yaml, vem de lá)
 voz:
-  provedor: elevenlabs
+  provedor: elevenlabs            # elevenlabs (API) | chatterbox (local: vf voz, ver skills/assets/templates/voz-chatterbox.md)
   voice_id: ""
   modelo: eleven_multilingual_v2
   settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, speed: 1.0 }
+  chatterbox: { ref: "", modelo: pt-br, exaggeration: 0.5, cfg_weight: 0.5, temperature: 0.8, seed: 42, tempo: 1.0 }   # ref = WAV 10-20 s pt-BR do kit do canal
 referencias: []                   # URLs/arquivos estudados com `vf analyze` -> ref/<slug>/analysis.md
 etapas:                           # pendente | em_andamento | feito | pulado
   referencia: pendente
@@ -39,7 +42,7 @@ etapas:                           # pendente | em_andamento | feito | pulado
   qa: pendente
   entrega: pendente
 derivados: []                     # cortes de um longo: {formato, inicio, fim, arquivo}
-analiticos: []                    # vf analytics platform=<p> -> out/analytics/*.json (retenção alimenta o próximo roteiro)
+analiticos: []                    # skill metricas: vf analytics -> out/analytics/*.json; {data, conta, video, achado, acao}
 entregas: []                      # {formato, arquivo, qa: OK|FAIL, data}
 qa_excecoes: []                   # {check: "<nome da checagem>", motivo: "<por quê>"}: única forma de aceitar um WARN no QA estrito
 notas: []

@@ -66,7 +66,8 @@ pub fn platform(p: &str) -> Result<&'static str> {
     Ok(match p {
         "yt" | "youtube" => "yt",
         "tiktok" | "tt" => "tiktok",
-        _ => bail!("plataforma inválida: {p} (yt | tiktok)"),
+        "tiktok-biz" | "tiktok_biz" | "ttb" | "tiktok-business" => "ttb",
+        _ => bail!("plataforma inválida: {p} (yt | tiktok | tiktok-biz)"),
     })
 }
 

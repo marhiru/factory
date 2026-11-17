@@ -1,6 +1,6 @@
 ---
 name: assets
-description: "Templates para fabricar os assets de um vídeo da fábrica: style bible, inventário com licença (manifest.yaml), imagens geradas no Google Flow (Nano Banana) via MCP em lotes de 24 com cota diária global e curadoria por folha de contato, narração ElevenLabs com timestamps por palavra (vf transcribe), SFX e trilha (ElevenLabs, procedural local ou CC0) e imagens/clipes de bancos CC0/stock. Use na etapa de assets/voz de um projeto video-factory ou quando precisar gerar voz, efeitos, música ou buscar imagens para um vídeo."
+description: "Templates para fabricar os assets de um vídeo da fábrica: style bible, inventário com licença (manifest.yaml), imagens geradas no Google Flow (Nano Banana) via MCP em lotes de 24 com cota diária global e curadoria por folha de contato, narração local com Chatterbox (vf voz, pt-BR, sem custo) ou ElevenLabs, com timestamps por palavra (vf transcribe), SFX e trilha (ElevenLabs, procedural local ou CC0) e imagens/clipes de bancos CC0/stock. Use na etapa de assets/voz de um projeto video-factory ou quando precisar gerar voz, efeitos, música ou buscar imagens para um vídeo."
 ---
 
 # Assets e voz (etapa 2 da fábrica)
@@ -17,7 +17,10 @@ Para elenco, texturas, voz alinhada e trilha sintetizada, leia [assets e som car
 ## Ordem
 1. **Style bible** (`assets/style-bible.md`, template em `templates/style-bible.md`): paleta, tipografia, tratamento de imagem, personagens e o que nunca fazer. Escreva uma vez por canal e reaproveite entre vídeos.
 2. **Lista de assets a partir dos beats**: para cada beat, o que o `visual` exige. Registre cada item no `manifest.yaml` com `status: pendente` **antes** de buscar ou gerar.
-3. **Voz** (`templates/voz-elevenlabs.md`): é a régua de tempo de todo o resto, então vem antes de animar.
+3. **Voz**: é a régua de tempo de todo o resto, então vem antes de animar. O provedor vem de `factory.yaml > voz.provedor`:
+   - `chatterbox` (local, sem custo, pt-BR, voz do canal clonada de um WAV de referência): `$VF voz voice/texto.txt -o public/voice/voice.wav` → [templates/voz-chatterbox.md](templates/voz-chatterbox.md);
+   - `elevenlabs` (API): [templates/voz-elevenlabs.md](templates/voz-elevenlabs.md).
+   Clonagem só da própria voz ou com autorização por escrito do dono da voz.
 4. **Timestamps**: `$VF transcribe public/voice/voice.wav -o data --lang pt` gera `data/words.json`, `transcript.srt` e `transcript.txt`. Para nomes próprios difíceis, passe `--prompt "<nomes próprios>, Ouro Preto, Ilha Fiscal"`. Para precisão máxima, use `--dtw`. Se você já tem o JSON do Speech-to-Text do ElevenLabs (Scribe), use `$VF transcribe alinhamento.json -o data --elevenlabs`.
 5. **Amarrar o roteiro**: `$VF align roteiro/beats.json data/words.json`.
 6. **SFX e música** (`templates/sfx-musica.md`), já sabendo os tempos de cada beat.

@@ -22,7 +22,8 @@ Você é o diretor de produção. Esta skill abre o projeto, decide qual skill d
 | 3c. Animação | `video-factory:animacao` | `data/edl.json` com cenas `scene` (ou perfil `estatico`), aprovado pelo `edl-check` |
 | 3d. Câmera, luz e FX | `video-factory:animacao` | câmera contínua, rig de luz + cues, FX de shader/pixelfx (agentes próprios) |
 | 4. Edição, export e QA | `video-factory:edicao` | `out/final_<formato>.mp4`, `out/qa_<formato>/qa.md` |
-| 5. Rascunho e analíticos | `video-factory:edicao` | `vf publish` (rascunho), `vf analytics` → `out/analytics/` |
+| 5. Rascunho, postagem e agenda | `video-factory:edicao` | `vf publish` (rascunho; posta/agenda só se o usuário pedir) |
+| 6. Métricas e metadata | `video-factory:metricas` | `vf analytics` → relatório, `meta_<ID>.json`, lições para o roteiro |
 
 Caminhos do plugin: `${CLAUDE_PLUGIN_ROOT}` (no shell, use o valor absoluto). A CLI fica em `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`. Se ela não existir, compile com `${CLAUDE_PLUGIN_ROOT}/scripts/build.sh` (precisa de Rust/cargo). Para usar fora do plugin (terminal do usuário), `${CLAUDE_PLUGIN_ROOT}/scripts/install.sh` põe `vf`, `vf-mygo`, `vf-novo` e `vf-render-hf` no PATH (`~/.local/bin`). Rode `$VF doctor` uma vez por sessão para checar ffmpeg, whisper-cli, yt-dlp e Bun.
 
@@ -113,7 +114,7 @@ Comparação e limites na skill `animacao`. Um motor novo só precisa ler o `edl
 3b. **Cota do Google Flow** (motor `estatico`): 20 prompts/dia, **sempre 24 imagens por prompt** (480/dia). Controle global em `~/.cache/vf/flow-cota.json` pelo `flow-lotes.mjs`. Cota esgotada = `etapas.assets: aguardando_cota` + data de retomada em `notas`, e pare. O `continuar` retoma no outro dia.
 4. **Ao fim de cada etapa**: atualize `etapas.<etapa>` em `factory.yaml`, salve tudo em disco, **faça um commit no repositório do projeto** (`git add -A && git commit -m "<etapa>: <o que ficou pronto>"`; o `.gitignore` do projeto já deixa de fora renders e node_modules) e diga numa linha o que ficou pronto.
 5. **Multi-formato**: um roteiro só por formato principal. Shorts e TikTok podem dividir o mesmo vídeo vertical, mas exporte e rode o QA por formato (safe zones e durações diferem). Um yt-long nunca vira short por reenquadramento cego: use `recorte`.
-6b. **Rascunho/analíticos**: com `plataformas` e `vf auth` feitos, pergunte uma vez se pode subir como rascunho (`vf publish`, ver `skills/edicao/references/plataformas.md`). Depois de publicado pelo usuário, `vf analytics` alimenta `analiticos` e a pauta do canal.
+6b. **Publicação/analíticos**: com `plataformas` e `vf auth` feitos, pergunte uma vez **como** subir: rascunho (padrão), postar agora ou agendar (data/hora), e em qual conta (`vf publish`, ver `skills/edicao/references/plataformas.md`). Postar ou agendar só com resposta explícita do usuário. Antes de subir, a skill `metricas` (fluxo `metadata`) pode revisar título/descrição/tags. Depois de publicado, a skill `metricas` (fluxos `upload` e `retencao`) alimenta `analiticos`, o próximo roteiro e a pauta do canal.
 6. **Entrega**: só com `edl-check` aprovado e `vf qa` (estrito, o padrão) saindo com código 0. WARN também reprova; a única saída é uma `qa_excecoes` com motivo concreto. Registre em `entregas` o arquivo e o resultado do QA, e entregue o caminho absoluto do MP4 junto do resumo do QA.
 
 ## MCP

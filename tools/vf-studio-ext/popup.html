@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { color-scheme: light dark; --fg: #0b0b0b; --muted: #52514e; --bg: #fcfcfb; --line: #e4e3de; --acc: #2a78d6; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #f0efec; --muted: #c3c2b7; --bg: #1a1a19; --line: #33332f; --acc: #3987e5; } }
+  body { width: 340px; margin: 0; padding: 14px; font: 13px/1.45 system-ui, -apple-system, sans-serif; color: var(--fg); background: var(--bg); }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  p, label { color: var(--muted); margin: 6px 0; }
+  .linha { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+  select, input, textarea, button { font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+  textarea { width: 100%; box-sizing: border-box; height: 52px; resize: vertical; }
+  button { cursor: pointer; } button.prim { background: var(--acc); color: #fff; border-color: var(--acc); }
+  .estado { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+  b { color: var(--fg); }
+  .erro { color: #e34948; }
+</style>
+</head>
+<body>
+  <h1>vf studio</h1>
+  <p id="host">Conectando ao vf…</p>
+  <p id="aqui"></p>
+
+  <div class="estado">
+    <b>Coleta ativa (gentil)</b>
+    <p>Abre as análises de cada vídeo numa aba em segundo plano, uma página a cada 35-75 s, como você navegaria. Máximo de 30 vídeos por dia; não recoleta o que foi capturado nas últimas 24 h; para se a sessão cair.</p>
+    <div class="linha"><label for="conta">Conta do vf</label><select id="conta"></select></div>
+    <div class="linha"><label for="max">Vídeos nesta rodada</label><input id="max" type="number" min="1" max="30" value="10" style="width:56px"></div>
+    <div class="linha"><label for="perfil">Páginas por vídeo</label>
+      <select id="perfil"><option value="geral">só visão geral (1)</option><option value="completo">geral + alcance + engajamento (3)</option></select></div>
+    <label for="ids">IDs (opcional; vazio = vídeos públicos mais recentes do canal, pelo vf)</label>
+    <textarea id="ids" placeholder="wuXBs0A6-14, rGHJYQ4cTNs"></textarea>
+    <div class="linha"><button id="iniciar" class="prim">Coletar</button><button id="parar">Parar</button></div>
+    <p id="rodada"></p>
+  </div>
+
+<script src="popup.js"></script>
+</body>
+</html>

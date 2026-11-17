@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "vf studio — métricas do YouTube Studio",
+  "version": "0.1.0",
+  "description": "Captura as métricas que o próprio YouTube Studio carrega (ex.: Continuaram assistindo) e entrega ao vf, sem tirar cookies do navegador.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoyyDSAi5gCZQTyoCqHMfTXlZUk06FOFedYO55+D+pVM8hn5xetD/GJsTj0MNeV9l1onGVAFC6zH6KMAJkKBeMUpTAck6t+HQFbjb7C0nFvsXaIvmAFslG2klGERu94mJzqHWq89Elw+OYfMCAytHrEpK9z7ICv9jO8DHbLY7vQZ0YE2wwLoVE1n/mYE4Z1v2GJ5/Gb7xWQBOukxPwsDwYIYK4+qIIXmUaRPE5lY6EnBAcjKXuUFv0cPZkwIDOVw7gusbIRdngpgSVC5sSGFzabZctN03vlQiclZEDbSr1JHQ2stAY2+6EjxLCXYQE400k9sOcDfje7sFJAPYZh3ccQIDAQAB",
+  "permissions": ["storage", "alarms", "nativeMessaging", "tabs"],
+  "host_permissions": ["https://studio.youtube.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    { "matches": ["https://studio.youtube.com/*"], "js": ["inject.js"], "run_at": "document_start", "world": "MAIN" },
+    { "matches": ["https://studio.youtube.com/*"], "js": ["bridge.js"], "run_at": "document_start" }
+  ],
+  "action": { "default_popup": "popup.html", "default_title": "vf studio" }
+}

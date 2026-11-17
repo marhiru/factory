@@ -23,6 +23,10 @@ $VF export out/video.mp4 -f yt-short -o out/final_yt-short.mp4 --audio public/au
 $VF qa out/final_yt-short.mp4 -f yt-short -o out/qa_yt-short
 ```
 
+## Plataformas
+`vf auth platform=yt account=<apelido>` (uma vez por conta) · `vf auth status` · conta deste vídeo em `factory.yaml > contas`.
+Rascunho: `vf publish out/final_<formato>.mp4 platform=yt` · postar/agendar: `mode=publico` / `at="2026-11-20 18:00"` · analíticos: `vf analytics platform=yt` (a skill `metricas` analisa e sugere metadata).
+
 ## Ferramental
 
 Use Bun para JS/TS e dependências (`bun install`). Para verificar TypeScript no template Remotion: `bun run --bun typecheck` (tsgo). Projetos que já usam tsrs podem mantê-lo. Versione `bun.lock`.

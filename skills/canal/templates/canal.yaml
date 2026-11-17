@@ -1,6 +1,7 @@
 # Identidade e regras fixas do canal. A `factory` lê este arquivo em todo vídeo novo (novo.sh --canal <pasta>).
 nome: ""
 handle: "@"
+contas: {}                 # apelidos do `vf auth status` deste canal, ex.: { yt: meu-canal, tiktok: meu-canal } (uma linha; o novo.sh copia para o projeto)
 idioma: pt
 publico: ""                 # quem é, o que já sabe, por que assiste (ex.: "18-34, curioso, assiste no celular no intervalo")
 nicho: ""                   # ex.: "histórias reais absurdas com explicação científica"
@@ -17,8 +18,9 @@ roteiro:
   wpm: 218
   pausa_max_s: 0.25
 voz:
-  provedor: elevenlabs
+  provedor: elevenlabs      # elevenlabs | chatterbox (local; clona kit/voz-ref.wav)
   voice_id: ""              # a voz é a marca: nunca troque depois de publicar
+  chatterbox: { ref: kit/voz-ref.wav, modelo: pt-br, exaggeration: 0.5, cfg_weight: 0.5, temperature: 0.8, seed: 42 }  # ref: própria voz ou com autorização
   settings: { stability: 0.45, similarity_boost: 0.8, style: 0.15, speed: 1.0 }
 visual:
   style_bible: style-bible.md

@@ -45,7 +45,7 @@ Para cada formato em `factory.yaml > formatos`:
    ```
    O nome em `check` é o da tabela do QA. Exceção sem motivo é ignorada. "Ficou bom assim" não é motivo.
 6. Registre em `entregas` e marque `edicao`, `qa` e `entrega` como `feito`.
-7. **Rascunho na plataforma** (só se `factory.yaml > plataformas` tiver a plataforma, `vf auth status` mostrar autorizado e o usuário der o OK para subir): `$VF publish out/final_<formato>.mp4 platform=yt meta=out/publicacao_<formato>.json` (YouTube privado) ou `platform=tiktok` (caixa de entrada do app). Nunca publica: o usuário posta. Credenciais, limites e analíticos: [plataformas.md](references/plataformas.md). Anote em `publicacao.enviados`.
+7. **Subir na plataforma** (só se `factory.yaml > plataformas` tiver a plataforma, `vf auth status` mostrar autorizado e o usuário der o OK para subir): `$VF publish out/final_<formato>.mp4 platform=yt meta=out/publicacao_<formato>.json` (rascunho = YouTube privado) ou `platform=tiktok` (caixa de entrada do app). Vale para longo e Short. **Postar** (`mode=publico|nao-listado|privado`) ou **agendar** (`at="AAAA-MM-DD HH:MM"`; YouTube publishAt nativo, TikTok pela `vf agenda`) só quando o usuário pedir explicitamente, para aquele vídeo, conta e horário; registre em `publicacao.modo`/`agendado`. A conta vem de `factory.yaml > contas` (ou `account=`); confira com `vf auth status` antes de subir, para não publicar no canal errado. Credenciais, modos, agenda e limites: [plataformas.md](references/plataformas.md). Anote em `publicacao.enviados`. Análise posterior e correção de metadata: skill `metricas`.
 
 ## Legendas (shorts verticais)
 Medido em 3 shorts de 19-35M de views: **uma palavra por vez**, branca, bold, contorno preto, presa à fala, na

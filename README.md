@@ -3,7 +3,7 @@
 Plugin do Claude Code para uma fábrica de vídeo com IA: **YouTube longo, YouTube Shorts e TikTok**.
 
 - **Skill principal** `factory`: cria o projeto e conduz as etapas (referência → roteiro → assets/voz → animação → edição/QA → entrega), com estado em `factory.yaml`.
-- **Skills de etapa** com templates: `roteiro`, `assets`, `animacao`, `edicao`, `analise`.
+- **Skills de etapa** com templates: `roteiro`, `assets`, `animacao`, `edicao`, `analise`, `canal` e `metricas` (analista de métricas e metadata YouTube/TikTok).
 - **CLI `vf` em Rust**: análise frame a frame, transcrição, alinhamento, mix, export e QA, todos rápidos.
 - **Renderer `vf-mygo` em Go** ([MyGo render](https://mygo.run/docs/plugins/render)): desenha o `data/edl.json` na GPU (Metal), sem navegador, ~5x mais rápido que o Remotion.
 
@@ -17,6 +17,7 @@ JavaScript/TypeScript usa **Bun** para execução, dependências e CLIs. TypeScr
 ```bash
 # dependências (macOS)
 brew install ffmpeg whisper-cpp yt-dlp     # ffmpeg também pode vir do nix
+brew install uv                             # opcional: vf voz (narração local com Chatterbox)
 # Rust (cargo) para compilar o vf
 ./scripts/build.sh                          # gera bin/vf (Rust) e bin/vf-mygo (Go 1.27+, baixado sozinho)
 bin/vf doctor                               # confere dependências
@@ -31,7 +32,7 @@ Depois, na sessão: `/video-factory:factory novo meu-video --formato yt-short,ti
 ```bash
 mkdir meu-video && cd meu-video
 vf init type="short" platform="yt,tiktok"   # short | long | "short,long"
-vf auth platform="yt,tiktok"                # opcional: rascunho + analíticos (credenciais: skills/edicao/references/plataformas.md)
+vf auth platform="yt,tiktok"                # opcional: rascunho/postagem/agenda + analíticos (credenciais: skills/edicao/references/plataformas.md)
 claude                                      # o plugin já vem habilitado; peça o vídeo
 ```
 
@@ -47,10 +48,12 @@ skills/
   animacao/scripts/beats2edl.mjs # beats com tempo -> primeiro corte (edl.json)
   edicao/templates/              # recorte (longo -> shorts), publicacao
   analise/                       # estudo de referências com vf analyze
+  metricas/                      # analista de métricas YT/TikTok: auditoria, retenção × roteiro, correção de metadata (vf analytics / vf meta)
 templates/projeto/               # esqueleto de cada projeto
 scripts/novo.sh                  # cria projeto
 scripts/build.sh                 # compila vf
 tools/vf/                        # código Rust
+tools/vf-studio-ext/             # extensão do Chrome: métricas do Studio para o vf (native messaging)
 tests/synthetic.sh               # teste de integração (cortes em frames conhecidos)
 ```
 
@@ -66,10 +69,118 @@ tests/synthetic.sh               # teste de integração (cortes em frames conhe
 | `vf export <video> -f <formato> -o out.mp4 --audio mix.wav [--fit pad\|crop\|blur] [--fast]` | enquadramento, encode, loudnorm em 2 passadas, mux |
 | `vf qa <final.mp4> -f <formato> -o out/qa [--strict]` | specs, loudness, pretos/brancos/congelados/pops, planos, sheets densas |
 | `vf init type="short,long" platform="yt,tiktok"` | transforma a pasta atual num projeto da fábrica (esqueleto, templates do motor, som procedural, `ref/fx/` com pixelfx e pixel-splats, plugin ligado no `.claude/settings.json`); nunca sobrescreve arquivos |
-| `vf auth platform="yt,tiktok"` · `vf auth status` · `vf auth logout` | OAuth (PKCE, loopback) no YouTube e TikTok; tokens em `~/.config/vf/auth/` |
-| `vf publish <mp4> platform=yt\|tiktok [meta=… thumb=…]` | sobe como **rascunho** (YouTube privado, TikTok caixa de entrada) |
-| `vf analytics platform=yt\|tiktok [video=ID] [dias=28]` | analíticos e retenção → `out/analytics/` |
+| `vf auth platform="yt,tiktok" [account=…] [direct=1]` · `vf auth status` · `vf auth use` · `vf auth logout` | OAuth (PKCE, loopback) no YouTube e TikTok; tokens em `~/.config/vf/auth/` |
+| `vf publish <mp4> platform=yt\|tiktok [mode=rascunho\|privado\|nao-listado\|publico] [at=…] [meta=… thumb=…]` | longo ou Short: rascunho (padrão), posta ou agenda (YouTube publishAt; TikTok pela agenda local) |
+| `vf agenda [list\|run\|cancel id=\|install]` | posts agendados do TikTok (LaunchAgent a cada 5 min) |
+| `vf meta <ID> platform=yt meta=… [aplicar=1]` | corrige título/descrição/tags de vídeo já enviado (prévia antes × depois) |
+| `vf relatorio [video=ID] [janela=…] [filtros…]` | relatórios estilo Studio (individual e geral) em `.md`/`.json`/`.html` → `out/relatorios/` |
+| `vf analytics platform=yt\|tiktok [video=ID] [dias=28] [comentarios=1] [curva=1]` | canal, uploads, Shorts × longos, retenção, tráfego, curva por idade → `out/analytics/` (skill `metricas`) |
+| `vf studio instalar` · `vf studio metricas video=ID` · `vf studio mapear continuaram=…` | **extensão do Chrome** (`tools/vf-studio-ext`) que captura as métricas que o Studio carrega (ex.: "Continuaram assistindo"), sem tirar cookies do navegador; modo ativo gentil (1 página a cada 35-75 s, até 30 vídeos/dia) |
+| `vf voz <texto.txt> -o public/voice/voice.wav [--ref voz.wav]` | narração **local** com Chatterbox (pt-BR, clona a voz do canal de um WAV de referência, cache por frase, `--refazer N`) |
 | `vf formats` · `vf probe` · `vf doctor` | utilitários |
+
+### Publicar, agendar, corrigir metadata e analisar
+
+O padrão de `vf publish` é **rascunho**. Postar ou agendar só quando você pedir. Credenciais, limites e erros comuns: [plataformas.md](skills/edicao/references/plataformas.md).
+
+**Autorizar contas** (uma vez por conta)
+```bash
+vf auth platform=yt account=meu-canal          # YouTube: upload, analíticos, edição de metadata e comentários
+vf auth platform=tiktok account=meu-perfil     # TikTok: rascunho na caixa de entrada + analíticos
+vf auth platform=tiktok account=meu-perfil direct=1   # + post direto/agendado (o app precisa do Direct Post aprovado)
+vf auth platform=tiktok-biz account=meu-perfil # TikTok Business (experimental): retenção, tempo médio, alcance no vf relatorio
+vf auth status                                 # contas, canal, validade; * = padrão
+```
+Contas autorizadas antes desta versão: rode `vf auth platform=yt account=<apelido>` de novo para ganhar a permissão de edição do `vf meta`.
+
+**`vf publish`: longo ou Short, agora ou agendado**
+```bash
+vf publish out/final_yt-long.mp4  platform=yt meta=out/publicacao_yt-long.json thumb=out/thumb.jpg  # rascunho (privado)
+vf publish out/final_yt-long.mp4  platform=yt mode=publico meta=out/publicacao_yt-long.json          # posta agora
+vf publish out/final_yt-short.mp4 platform=yt at="2026-11-20 18:00" meta=out/publicacao_yt-short.json # agenda (hora local)
+vf publish out/final_yt-short.mp4 platform=yt mode=nao-listado
+vf publish out/final_tiktok.mp4   platform=tiktok                                                   # rascunho na inbox do app
+vf publish out/final_tiktok.mp4   platform=tiktok mode=publico caption="Legenda #tema" capa_ms=800   # post direto
+vf publish out/final_tiktok.mp4   platform=tiktok at=+3h caption="Legenda #tema"                    # agenda local
+vf publish out/final_yt-short.mp4 platform=yt,tiktok account=canal-a,canal-b at="2026-11-21 12:00"   # várias plataformas/contas
+```
+| Opção | Valores |
+|---|---|
+| `mode=` | `rascunho` (padrão) · `privado` · `nao-listado` (só YouTube) · `amigos` (só TikTok) · `publico` |
+| `at=` | `2026-11-20 18:00` (hora local) · `2026-11-20T18:00-03:00` · `+30m` · `+2h` · `+1d`; mínimo 15 min à frente; sem `mode=` vale `publico` |
+| metadata | `meta=<json {title, description, tags, caption}>` ou `title=` `description=` `tags=a,b` `caption=` `category=` `idioma=` |
+| extras | `thumb=` (YouTube) · `formato=yt-long\|yt-short\|tiktok` (padrão: detectado pelo arquivo) · `ia=0` (sem mídia sintética) · `kids=1` |
+| TikTok direto | `comentarios=0` `duet=0` `stitch=0` desligam interações · `capa_ms=` frame da capa |
+
+- **YouTube** agenda pelo `publishAt`: o vídeo sobe na hora como privado e o YouTube publica sozinho, mesmo com o computador desligado. O `vf` checa os limites (título ≤ 100, descrição ≤ 5000 bytes, tags ≤ 500), acrescenta `#Shorts` nos Shorts e avisa quando um vídeo longo não tem capítulos.
+- **Projeto do Google Cloud não verificado**: o YouTube deixa como privado todo upload feito pela API, mesmo com `mode=publico` (o `vf` avisa). Para postar público pela API, peça a verificação do projeto.
+- **TikTok** sem auditoria do app só aceita post direto privado (`mode=privado`).
+
+**`vf agenda`: posts agendados do TikTok**
+
+A API do TikTok não agenda. Com `at=`, o pedido fica em `~/.config/vf/agenda/` e é postado na hora.
+```bash
+vf agenda install                  # uma vez: LaunchAgent roda `vf agenda run` a cada 5 min (Linux: imprime a linha do crontab)
+vf agenda                          # lista pendentes, falhos e os últimos feitos; mostra se o executor está ligado
+vf agenda run                      # posta agora o que já venceu (é o que o LaunchAgent chama)
+vf agenda cancel id=<id>           # cancela um pendente
+vf agenda retry id=<id>            # devolve um que falhou para a fila
+vf agenda uninstall                # desliga o executor (os pendentes ficam guardados)
+```
+O computador precisa estar ligado na hora marcada. Se estiver desligado, o post sai quando ele ligar. Não mova o arquivo de vídeo antes do post.
+
+**`vf meta`: corrigir metadata de vídeo já enviado (YouTube)**
+```bash
+vf meta <ID> platform=yt meta=out/metricas/meta_<ID>.json           # prévia: antes × depois, não grava
+vf meta <ID> platform=yt meta=out/metricas/meta_<ID>.json aplicar=1 # grava; histórico em out/analytics/meta-<ID>-<data>.json
+vf meta <ID> platform=yt title="Novo título" tags=a,b aplicar=1     # campos avulsos; o que não for passado fica igual
+```
+O TikTok não permite editar a legenda pela API: aplique a sugestão no app.
+
+**`vf analytics`: métricas para a skill `metricas`**
+```bash
+vf analytics platform=yt                               # canal + últimos 50 uploads + top do período (28 dias)
+vf analytics platform=yt account=all dias=90           # todas as contas, 90 dias
+vf analytics platform=yt video=ID1,ID2 comentarios=1   # por vídeo: retenção, tráfego, curva por idade, comentários
+vf analytics platform=yt curva=1 max=100               # views acumuladas d1/d3/d7/d28 dos 25 principais
+vf analytics platform=tiktok max=60                    # perfil + posts públicos com engajamento
+```
+| Opção | O que faz |
+|---|---|
+| `dias=` | período da Analytics API (padrão 28) |
+| `max=` | quantos uploads/posts listar (padrão 50) |
+| `video=` | só estes vídeos, com retenção completa, tráfego e curva por idade |
+| `retencao=N` | curva de retenção dos N principais (padrão 5) |
+| `curva=1` | views por dia desde a publicação (para comparar vídeos na mesma idade) |
+| `comentarios=1` | comentários dos principais, sem nome de autor |
+
+Saída: `out/analytics/<plataforma>-<conta>-<data>.json`, com `videos[]` (metadata, Short × longo, views em tempo real, período, retenção, idade), `medianas` do canal, `por_tipo`, `trafego` e `avisos` (que explicam resultado vazio: Analytics atrasa 24-72 h, vídeo privado não soma views, API desligada). No TikTok a API só lista posts públicos e não dá retenção, tráfego nem comentários.
+
+**`vf relatorio`: relatórios estilo Studio, por vídeo e de todos com filtros**
+```bash
+vf relatorio video=ID                                  # um vídeo: d1, d3, d7, d28 e total lado a lado + mediana do canal
+vf relatorio video=ID janela=d7 beats=roteiro/beats.json   # uma janela; quedas de retenção cruzadas com o roteiro
+vf relatorio                                           # todos os vídeos públicos, 7 primeiros dias de cada
+vf relatorio tipo=short desde=2026-10-01 ordenar=retencao limite=20
+vf relatorio busca="império" tag=brasil min_views=100 janela=d28 ordenar=intencionais ordem=asc
+vf relatorio janela=2026-11-01..2026-11-15 account=all # faixa de datas fixa, todas as contas
+vf relatorio platform=tiktok ordenar=engajamento       # TikTok (totais desde a publicação)
+```
+Cada relatório sai em `out/relatorios/` como `.md`, `.json` e `.html` (página com curva de retenção ou barras de retenção por vídeo, tabelas que ordenam com um clique, modo claro e escuro; `html=0` desliga). Linhas como no Studio: visualizações, intencionais, duração média, % visualizada, **retenção média** (média da curva), horas de exibição, gostei, inscritos (ganhos − perdidos), comentários e compartilhamentos, com a mediana do canal (mesmo tipo, mesma janela) e a diferença.
+
+| Opção | Valores |
+|---|---|
+| `janela=` | `d1` · `d3` · `d7` (padrão do geral) · `d28` · `dN` · `total` · `todas` (padrão do individual) · `AAAA-MM-DD..AAAA-MM-DD` |
+| filtros | `tipo=short\|longo` · `privacidade=public\|unlisted\|private` · `desde=`/`ate=` (data de publicação) · `busca=` (título/descrição) · `tag=` · `min_views=` |
+| ordem | `ordenar=views\|intencionais\|retencao\|avd\|pct\|horas\|inscritos\|likes\|comentarios\|shares\|engajamento\|publicado` · `ordem=desc\|asc` · `limite=N` · `max=200` (uploads lidos) |
+
+Limites do que a API entrega, avisados no próprio relatório:
+- **"Continuaram assistindo"** (Shorts: assistiram × deslizaram) não existe na API pública; o Studio calcula com dados internos do feed. Aparece como "—", a não ser com `studio=1` e dados capturados pela extensão do Chrome `vf studio` (não oficial; ver [plataformas.md](skills/edicao/references/plataformas.md#youtube-studio-extensão-do-chrome-vf-studio-não-oficial)).
+- A janela `dN` é por dia (a Analytics não tem hora): `d1` = dia da publicação. Vídeo mais novo que a janela sai "parcial" e fica fora da mediana.
+- A Analytics atrasa 24-72 h. Até lá, visualizações, gostei e comentários vêm em tempo real da Data API e o resto fica "—".
+- **TikTok**: visualizações, curtidas, comentários, compartilhamentos, duração e engajamento pela API normal. Tempo médio, **retenção média**, "assistiram até o fim", alcance e curva de retenção só com uma conta **TikTok Business** (Business ou Creator) autorizada em `vf auth platform=tiktok-biz` (experimental, ver [plataformas.md](skills/edicao/references/plataformas.md#tiktok-business-retenção-experimental)).
+
+**Skill `metricas`** (na sessão do Claude): `/video-factory:metricas relatorio [<ID>] | auditoria | upload <ID> | retencao <ID> | metadata <ID> | comentarios <ID> | pauta`. No fluxo `relatorio`, ela gera o relatório com `vf relatorio`, comenta os números e, se você pedir, publica o HTML como página privada para compartilhar. Ela roda o `vf analytics`, compara cada vídeo com a mediana do próprio canal e cruza as quedas de retenção com o roteiro (`skills/metricas/scripts/cruzar.py`). Também sugere título, descrição, tags e legenda com antes × depois, e só aplica com `vf meta aplicar=1` depois do seu OK.
 
 ### Desempenho (Apple M4, 10 núcleos)
 | Tarefa | Entrada | Tempo |

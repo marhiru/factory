@@ -26,6 +26,18 @@ pub const TT_SCOPES: &[&str] = &["user.info.basic", "user.info.stats", "video.li
 /// post direto (vf publish platform=tiktok mode=publico): só com `vf auth platform=tiktok direct=1`, porque o app
 /// precisa do produto Direct Post aprovado; sem ele o TikTok recusa o login inteiro.
 pub const TT_DIRECT_SCOPE: &str = "video.publish";
+/// TikTok Business (Accounts API, business-api.tiktok.com): retenção, tempo médio, alcance. EXPERIMENTAL:
+/// app no TikTok for Business + conta Business/Creator. Escopos sobrescrevíveis em ttb-client.json > "scopes".
+pub const TTB_SCOPES: &str = "user.info.basic,user.insights,video.list,video.insights";
+pub const TTB_API: &str = "https://business-api.tiktok.com/open_api/v1.3";
+
+/// resposta da Business API: {code: 0, message, data}
+pub fn ttb_data(v: &serde_json::Value) -> Result<serde_json::Value> {
+    match v.get("code").and_then(|c| c.as_i64()) {
+        Some(0) => Ok(v.get("data").cloned().unwrap_or(serde_json::Value::Null)),
+        _ => bail!("TikTok Business: {} (resposta: {})", v.get("message").and_then(|m| m.as_str()).unwrap_or("erro"), v.to_string().chars().take(400).collect::<String>()),
+    }
+}
 
 /// o token foi concedido com este escopo? (o Google devolve URLs separadas por espaço; o TikTok, por vírgula)
 pub fn has_scope(t: &Token, s: &str) -> bool {
@@ -57,6 +69,8 @@ pub struct Client {
     pub id: String,
     pub secret: String,
     pub redirect: Option<String>,
+    /// escopos pedidos no login (só TikTok Business; padrão TTB_SCOPES)
+    pub scopes: Option<String>,
 }
 
 fn now() -> u64 {
@@ -156,21 +170,39 @@ fn project_account(p: &str) -> Option<String> {
 }
 
 fn label(p: &str) -> &'static str {
-    if p == "yt" { "YouTube" } else { "TikTok" }
+    match p {
+        "yt" => "YouTube",
+        "ttb" => "TikTok Business",
+        _ => "TikTok",
+    }
 }
 
 pub fn client(p: &str) -> Result<Client> {
-    let (ki, ks) = if p == "yt" { ("VF_YT_CLIENT_ID", "VF_YT_CLIENT_SECRET") } else { ("VF_TIKTOK_CLIENT_KEY", "VF_TIKTOK_CLIENT_SECRET") };
+    let (ki, ks) = match p {
+        "yt" => ("VF_YT_CLIENT_ID", "VF_YT_CLIENT_SECRET"),
+        "ttb" => ("VF_TTB_CLIENT_KEY", "VF_TTB_CLIENT_SECRET"),
+        _ => ("VF_TIKTOK_CLIENT_KEY", "VF_TIKTOK_CLIENT_SECRET"),
+    };
     if let (Ok(id), Ok(secret)) = (std::env::var(ki), std::env::var(ks)) {
-        let redirect = if p == "tiktok" { std::env::var("VF_TIKTOK_REDIRECT").ok() } else { None };
-        return Ok(Client { id, secret, redirect });
+        let redirect = match p {
+            "tiktok" => std::env::var("VF_TIKTOK_REDIRECT").ok(),
+            "ttb" => std::env::var("VF_TTB_REDIRECT").ok(),
+            _ => None,
+        };
+        return Ok(Client { id, secret, redirect, scopes: None });
     }
     let f = cfg_dir().join(format!("{p}-client.json"));
     let raw = match std::fs::read(&f) {
         Ok(r) => r,
         Err(_) => {
             let doc = crate::init::plugin_root().map(|r| r.join("skills/edicao/references/plataformas.md").display().to_string()).unwrap_or_else(|_| "skills/edicao/references/plataformas.md".into());
-            let how = if p == "yt" {
+            let how = if p == "ttb" {
+                "1. business-api.tiktok.com → My Apps → crie um app com acesso a \"TikTok Accounts\" (dados de conta orgânica)\n  \
+                 2. Permissões: dados do perfil, lista de posts e insights de vídeo (user.insights, video.insights)\n  \
+                 3. Redirect URI: http://localhost:8724/callback/\n  \
+                 4. vf auth platform=tiktok-biz client=<json com client_key (app id) e client_secret>\n  \
+                 A conta TikTok precisa ser Business ou Creator. Recurso EXPERIMENTAL."
+            } else if p == "yt" {
                 "1. console.cloud.google.com → crie um projeto → ative \"YouTube Data API v3\" e \"YouTube Analytics API\"\n  \
                  2. Tela de consentimento OAuth: Externo, adicione seu e-mail como usuário de teste\n  \
                  3. Credenciais → Criar ID do cliente OAuth → tipo \"App para computador\" → baixe o JSON\n  \
@@ -194,6 +226,7 @@ pub fn client(p: &str) -> Result<Client> {
         id: s("client_id").or(s("client_key")).context("client_id/client_key ausente")?,
         secret: s("client_secret").context("client_secret ausente")?,
         redirect: s("redirect_uri"),
+        scopes: s("scopes"),
     })
 }
 
@@ -267,7 +300,13 @@ pub fn token(p: &str, conta: Option<&str>) -> Result<(String, Token)> {
         bail!("token de {}/{conta} expirou e não há refresh_token: rode vf auth platform={p} account={conta}", label(p));
     }
     let c = client(p)?;
-    let r = if p == "yt" {
+    let r = if p == "ttb" {
+        let r = net::request("POST", &format!("{TTB_API}/tt_user/oauth2/refresh_token/"), &[], Body::Json(&serde_json::json!({ "client_id": c.id, "client_secret": c.secret, "grant_type": "refresh_token", "refresh_token": t.refresh_token })))?;
+        let d = ttb_data(&r.json()?).with_context(|| format!("renovar token de {}/{conta}", label(p)))?;
+        let nt = parse_token(p, &d, Some(&t))?;
+        save(p, &conta, &nt)?;
+        return Ok((conta, nt));
+    } else if p == "yt" {
         net::request("POST", "https://oauth2.googleapis.com/token", &[], Body::Form(&[("client_id", &c.id), ("client_secret", &c.secret), ("refresh_token", &t.refresh_token), ("grant_type", "refresh_token")]))?
     } else {
         net::request("POST", "https://open.tiktokapis.com/v2/oauth/token/", &[], Body::Form(&[("client_key", &c.id), ("client_secret", &c.secret), ("refresh_token", &t.refresh_token), ("grant_type", "refresh_token")]))?
@@ -280,6 +319,17 @@ pub fn token(p: &str, conta: Option<&str>) -> Result<(String, Token)> {
 /// Quem é a conta autorizada: (nome, id). YouTube: canal; TikTok: display_name/open_id.
 fn whoami(p: &str, t: &Token) -> (String, String) {
     let b = format!("Bearer {}", t.access_token);
+    if p == "ttb" {
+        let url = format!("{TTB_API}/business/get/?{}", net::query(&[("business_id", &t.open_id), ("fields", "[\"display_name\",\"username\",\"followers_count\"]")]));
+        let nome = match net::get(&url, &[("Access-Token", &t.access_token)]).and_then(|r| r.json()).and_then(|v| ttb_data(&v)) {
+            Ok(d) => d.get("display_name").or(d.get("username")).and_then(|x| x.as_str()).unwrap_or("").to_string(),
+            Err(e) => {
+                eprintln!("aviso: não consegui ler o perfil Business: {e:#}");
+                String::new()
+            }
+        };
+        return (nome, t.open_id.clone());
+    }
     if p == "yt" {
         let v = match net::get("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", &[("Authorization", &b)]).and_then(|r| r.ok()).and_then(|r| r.json()) {
             Ok(v) => Some(v),
@@ -313,7 +363,7 @@ pub fn run(args: &[String]) -> Result<()> {
         if action != "status" {
             bail!("diga a plataforma: vf auth {}platform=\"yt,tiktok\"", if action == "login" { "" } else { "<ação> " });
         }
-        plats = vec!["yt", "tiktok"];
+        plats = vec!["yt", "tiktok", "ttb"];
     }
     for p in plats {
         match action {
@@ -376,7 +426,14 @@ fn login(p: &str, conta: Option<&str>, port: Option<u16>, direct: bool) -> Resul
     let digest = Sha256::digest(verifier.as_bytes());
     let state = net::rand_hex(16);
 
-    let (listener, redirect, url) = if p == "yt" {
+    let (listener, redirect, url) = if p == "ttb" {
+        // Accounts API do TikTok for Business: mesmo authorize do TikTok, troca do código na business-api, sem PKCE
+        let redirect = c.redirect.clone().unwrap_or_else(|| "http://localhost:8724/callback/".into());
+        let rport = redirect.split("://").nth(1).and_then(|h| h.split('/').next()).and_then(|h| h.rsplit(':').next()).and_then(|x| x.parse().ok()).unwrap_or(8724u16);
+        let l = TcpListener::bind(("127.0.0.1", port.unwrap_or(rport))).with_context(|| format!("abrir a porta {rport} do redirect {redirect}"))?;
+        let q = net::query(&[("client_key", &c.id), ("redirect_uri", &redirect), ("response_type", "code"), ("scope", c.scopes.as_deref().unwrap_or(TTB_SCOPES)), ("state", &state)]);
+        (l, redirect, format!("https://www.tiktok.com/v2/auth/authorize/?{q}"))
+    } else if p == "yt" {
         let l = TcpListener::bind(("127.0.0.1", port.unwrap_or(0))).context("abrir porta local para o retorno do OAuth")?;
         let redirect = format!("http://127.0.0.1:{}", l.local_addr()?.port());
         let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(digest);
@@ -414,7 +471,12 @@ fn login(p: &str, conta: Option<&str>, port: Option<u16>, direct: bool) -> Resul
     let _ = std::process::Command::new(if cfg!(target_os = "macos") { "open" } else { "xdg-open" }).arg(&url).status();
     let code = wait_code(&listener, &state, Duration::from_secs(300))?;
 
-    let r = if p == "yt" {
+    let r = if p == "ttb" {
+        let r = net::request("POST", &format!("{TTB_API}/tt_user/oauth2/token/"), &[], Body::Json(&serde_json::json!({ "client_id": c.id, "client_secret": c.secret, "grant_type": "authorization_code", "auth_code": code, "redirect_uri": redirect })))?;
+        let d = ttb_data(&r.json()?).context("trocar o código pelo token")?;
+        // a business-api devolve o token dentro de data; reempacota no formato que parse_token lê
+        net::Resp { status: 200, headers: Default::default(), body: serde_json::to_vec(&d)? }
+    } else if p == "yt" {
         net::request(
             "POST",
             "https://oauth2.googleapis.com/token",
@@ -488,7 +550,7 @@ fn wait_code(l: &TcpListener, state: &str, timeout: Duration) -> Result<String> 
         let get = |k: &str| params.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
         let (msg, out) = if let Some(e) = get("error") {
             ("Autorização recusada. Pode fechar esta aba.", Some(Err(anyhow::anyhow!("autorização recusada: {e} {}", get("error_description").unwrap_or_default()))))
-        } else if let Some(code) = get("code") {
+        } else if let Some(code) = get("code").or_else(|| get("auth_code")) {
             if get("state").as_deref() != Some(state) {
                 ("Resposta inválida (state).", Some(Err(anyhow::anyhow!("state não confere: resposta ignorada"))))
             } else {

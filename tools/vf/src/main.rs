@@ -12,11 +12,14 @@ mod formats;
 mod mix;
 mod frames;
 mod probe;
+mod relatorio;
 mod qa;
 mod sheet;
+mod studio;
 mod tempo;
 mod transcribe;
 mod util;
+mod voz;
 
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
@@ -274,6 +277,22 @@ enum Cmd {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
         args: Vec<String>,
     },
+    /// Relatórios estilo Studio: vf relatorio video=ID [janela=todas|d1|d3|d7|d28|total] | vf relatorio [tipo= desde= ate= busca= tag= min_views= ordenar= limite=] [janela=d7] [platform=yt|tiktok] -> out/relatorios/*.md|json|html
+    #[command(alias = "report")]
+    Relatorio {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "CHAVE=VALOR")]
+        args: Vec<String>,
+    },
+    /// Narração local com Chatterbox (pt-BR, clonagem por --ref): vf voz voice/texto.txt -o public/voice/voice.wav [--ref kit/voz.wav --exaggeration 0.5 --cfg 0.5 --seed 42 --tempo 1.0 --refazer 3,7]
+    Voz {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "TEXTO OPÇÕES")]
+        args: Vec<String>,
+    },
+    /// API interna do YouTube Studio (métricas fora da API pública, ex.: "Continuaram assistindo"): pbpaste | vf studio login account=<apelido> | vf studio buscar video=ID | vf studio mapear continuaram=<METRICA> | vf studio status | vf studio logout
+    Studio {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, value_name = "AÇÃO CHAVE=VALOR")]
+        args: Vec<String>,
+    },
     /// Verifica dependências externas
     Doctor,
 }
@@ -465,6 +484,9 @@ fn real_main() -> Result<()> {
         Cmd::Meta { args } => platform::meta(&args)?,
         Cmd::Agenda { args } => agenda::run(&args)?,
         Cmd::Analytics { args } => platform::analytics(&args)?,
+        Cmd::Relatorio { args } => relatorio::run(&args)?,
+        Cmd::Voz { args } => voz::run(&args)?,
+        Cmd::Studio { args } => studio::run(&args)?,
         Cmd::Doctor => doctor(),
     }
     Ok(())
@@ -478,6 +500,7 @@ fn doctor() {
         ("yt-dlp", "yt-dlp".into(), "analyze de URL (brew install yt-dlp)"),
         ("bun", "bun".into(), "scripts JS/TS, dependências e render (bun.sh)"),
         ("curl", "curl".into(), "vf auth / publish / analytics"),
+        ("uv", "uv".into(), "vf voz: narração local com Chatterbox (brew install uv)"),
         ("git", "git".into(), "vf init (bibliotecas de FX em ref/fx)"),
     ];
     for (label, bin, why) in items {

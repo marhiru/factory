@@ -92,6 +92,11 @@ if [ -n "$CANAL" ]; then
   [ -f "$CANAL/canal.yaml" ] || { echo "$CANAL/canal.yaml não existe (skill canal: novo)" >&2; exit 1; }
   [ -f "$CANAL/style-bible.md" ] && cp "$CANAL/style-bible.md" "$DEST/assets/style-bible.md"
   [ -d "$CANAL/kit/sprites" ] && mkdir -p "$DEST/public/sprites" && put "$CANAL/kit/sprites/." "$DEST/public/sprites/"
+  # contas do canal (vf auth) valem para o vídeo: `contas: { yt: x, tiktok: y }` em uma linha
+  CONTAS="$(grep -E '^contas:[[:space:]]*\{' "$CANAL/canal.yaml" | head -1 | sed -E 's/^contas:[[:space:]]*(\{[^}]*\}).*/\1/')"
+  if [ -n "$CONTAS" ] && [ "$CONTAS" != "{}" ]; then
+    sed -i '' -E "s|^contas: \{\}|contas: $CONTAS|" "$DEST/factory.yaml"
+  fi
 fi
 
 LIST="$(printf '%s' "$FORMATOS" | sed 's/,/, /g')"
