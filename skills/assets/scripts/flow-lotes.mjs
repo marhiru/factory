@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Lotes de geração de imagens no Google Flow (Nano Banana) com a cota diária GLOBAL da fábrica.
 // Regra do usuário: a cota é por PROMPT (20/dia) e cada prompt aceita até 24 imagens, então todo pedido
 // sai com o máximo (24): 480 imagens/dia, nunca 20. Lote = 1 prompt = 1 cenário, com 24 variações

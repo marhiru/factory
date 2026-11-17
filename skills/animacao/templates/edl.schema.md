@@ -66,6 +66,10 @@ Tipos de clipe: **`scene`** (animação cutout: o padrão de um vídeo animado),
 - **`idle`:** `breathe` (padrão: respira escalando a partir dos pés), `bob`, `sway`, `float`, `jitter` (nervoso) ou `none`. A fase muda por ator.
 - **Piscada automática:** usa o frame `blink` do estado, a cada 0,5-2,3 s por 4 frames, e também em toda troca de estado (esconde o corte). `"blink": false` desliga.
 - **Câmera:** cada camada recebe a câmera com parallax `1 + depth × 0.5` (o plate tem depth 0).
+- **Junção sem corte (trechos contínuos no mesmo cenário):** `"camera": {"from": {...}, "via": {"scale": 1.0}, "to": {...}, "via_at": 0.5}`
+  faz from → via (zoom-out) → to (zoom-in), cada perna com o `ease` (padrão `inOut`). Helper: `junta()` no `vfscene.py`.
+  Implementado no mygo (`camAt`) e no Remotion (`Scene.tsx`) com a mesma matemática. O `edl-check` reprova corte seco
+  entre clipes vizinhos com o mesmo plate (use `corte_motivo` para uma exceção justificada).
 - **Estado em ciclo:** com vários frames (marcha, aceno), avança a `fps` do estado em loop.
 
 ## `sprite.json` (um por pack, em `public/sprites/<nome>/`)

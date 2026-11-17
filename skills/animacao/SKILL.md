@@ -1,19 +1,29 @@
 ---
 name: animacao
-description: "Etapa de ANIMAÇÃO da fábrica de vídeo (inclui o motor ESTÁTICO do vídeo longo com tema: zoom leve, cards e acabamento no HyperFrames): animação cutout 2D de verdade (personagens e props como sprites PNG com expressões, piscada, ciclos de caminhada/marcha/aceno, entradas, saídas e ações amarradas às palavras, sobre cenários/plates com câmera e parallax), exportação de sprites de qualquer código Canvas2D, clipes `scene` no data/edl.json renderizados pelo mygo (GPU) ou Remotion, mais motion graphics, clipes de vídeo IA e ponte para 3D (cartoon-3d-short) e mapas 3D. Inclui a trava edl-check: Ken Burns e cartelas NÃO contam como animação. Use na etapa de animação de um projeto video-factory ou para animar personagens/cenas de um vídeo."
+description: "Animação da fábrica: cutout 2D com sprites e plates no mygo/Remotion, desenho e atuação cartoon Canvas2D, personagens 2D iluminados em mundo 3D com three.js (template incluído), câmera, ink, DOF e pós; também motion graphics, vídeo IA, mapas 3D e motor estático para yt-long. Use para animar personagens/cenas ou preparar cenas e EDL de um projeto video-factory. Inclui edl-check e checagem visual; Ken Burns não conta como animação no perfil animado."
 ---
 
 # Animação (etapa 3 da fábrica)
+
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
 
 Entrada: `roteiro/beats.json` com tempos (`vf align`), `data/words.json`, `assets/style-bible.md`. Saída: `data/edl.json` com **cenas animadas**, aprovado pelo `edl-check`, e stills de checagem conferidos.
 
 `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf` · `VFM=${CLAUDE_PLUGIN_ROOT}/bin/vf-mygo` · `B2E=${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/beats2edl.mjs` · `CHK=${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs`
 
+## Cartoon 2D e personagens 2D em mundo 3D
+- Desenho Canvas2D, proporções, expressões, piscadas, atuação e exportação: [cartoon 2D](references/cartoon-2d.md).
+- Timeline, mundo, cards iluminados, câmera, ink, DOF e pós: [2D em mundo 3D](references/2d-in-3d-world.md).
+- Template executável local: `templates/remotion-three/`; origem MIT em `ORIGEM.md`. Use `toon.ts` para sprites mesmo quando o renderer final for mygo.
+- **Luz de cenário, FX e shaders:** [luz-fx-shaders.md](references/luz-fx-shaders.md). Rig por cenário (interno e global) para harmonia, cues dinâmicos (`spot`, `rays`, exposição, temperatura) para destacar personagem e exaltar a cena, régua de qualidade de FX e o motor GLSL em `templates/remotion-three/src/fx/` (`ShaderFx`, `LightCueEffect`, composições `FxSheet`/`FxLab`).
+- FX em sprites para o mygo: `bun scripts/fx-pack.mjs <efeito-pixelfx | sheet.json | pasta de PNGs> public/sprites/fx-<nome>` (pixelfx e pixel-splats ficam em `ref/fx/` depois do `vf init`).
+- Neste perfil, atuação pontual e câmera podem sustentar o plano; não imponha idle em figurantes. O movimento precisa existir na imagem, e não só nas flags do EDL.
+
 ## Regra número 1: animar é obrigatório
 Stills com zoom e pan (Ken Burns) e cartelas de texto **não são animação**. Num vídeo animado, alguém ou algo **faz** alguma coisa em cada plano: entra, anda, marcha, acena, muda de expressão na palavra certa, um prop cai, um balão aparece.
 
 - Ken Burns é só respiro: no máximo 30% do tempo, e nunca mais de 6 s seguidos.
-- **Trava:** `node $CHK data/edl.json` precisa sair com código 0 (pelo menos 70% do tempo com animação real, e nenhum trecho sem animação acima de 6 s) antes de marcar `etapas.animacao: feito`. Se reprovar, a etapa continua `em_andamento`, sem exceção.
+- **Trava:** `bun $CHK data/edl.json` precisa sair com código 0 (pelo menos 70% do tempo com animação real, e nenhum trecho sem animação acima de 6 s) antes de marcar `etapas.animacao: feito`. Se reprovar, a etapa continua `em_andamento`, sem exceção.
 - Erro registrado: num projeto anterior (short de história), a fábrica entregou só stills com Ken Burns e marcou `animacao: feito`. Foi por isso que essa trava foi criada.
 
 ## Contrato: `data/edl.json`
@@ -22,7 +32,7 @@ Uma timeline em segundos com clipes `scene | image | video | text | color`, faix
 ## Pipeline cutout 2D (padrão dos motores `cutout-2d` e `remotion-2d`)
 1. **Elenco (sprites).** Cada personagem e prop vira um *pack* em `public/sprites/<nome>/`: PNGs com transparência e um `sprite.json`. Os estados são as expressões (cada uma com o frame de piscada) e os ciclos (marcha, passeio, aceno, dança e efeitos de 8 frames).
    - Se o projeto desenha personagens em código (Canvas2D), use o exportador `templates/sprites/`. Registre os desenhos em `sprites/registry.ts` (tipo `Pack` de `types.ts`) e rode:
-     `REMOTION_BROWSER=<chrome-headless-shell> node sprites/export-sprites.mjs sprites/index.ts public/sprites`
+     `REMOTION_BROWSER=<chrome-headless-shell> bun sprites/export-sprites.mjs sprites/index.ts public/sprites`
      Referência de tempo: 371 PNGs em ~4 min.
    - Se os personagens vêm de imagem (ilustração, IA, banco), recorte em PNG com alpha, um arquivo por expressão e por frame de ciclo, e escreva o `sprite.json` à mão.
    - O mínimo por personagem principal: 3 expressões com piscada e 1 ciclo. Coadjuvante: neutro, reação e um ciclo de comemoração.
@@ -34,7 +44,7 @@ Uma timeline em segundos com clipes `scene | image | video | text | color`, faix
    - **Toda ação cai numa palavra:** `at_word: N` (o motor adianta 2 frames) ou o tempo calculado de `data/words.json`.
    - Escreva as cenas como script com a biblioteca `vfscene.py` (o `novo.sh` copia para `roteiro/`, com o exemplo em `roteiro/cenas.py`: `init()`, `w(i)`, `find("palavra")`, `scene()`, `A()`, `fx()`, `st()`, `push()`, `pan()`, `save()`), não como JSON à mão: refazer depois de mudar a voz vira um comando.
    - O `beats2edl.mjs` gera só um **animatic** de stills, útil para cronometrar. Ele não substitui as cenas.
-4. **Trava:** `node $CHK data/edl.json` precisa sair com código 0.
+4. **Trava:** `bun $CHK data/edl.json` precisa sair com código 0.
 5. **Checagem visual** (abaixo) e render.
 
 ### Reaproveitar um projeto 3D ou animado que já existe
@@ -50,17 +60,22 @@ Lições do primeiro projeto feito assim (short de 110 s, 33 cenas):
 - Gerar a cena num script (`vfscene.py`) permitiu reajustar 33 cenas em segundos quando os tempos da voz mudaram.
 
 ### FX de exagero (o que faz o short "explodir")
-Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado num short de 6,5M views com o mesmo estilo de bonecos 2D em mundo 3D:
+Catálogo com receitas no [glossário de FX, seção 7](templates/glossario-fx.md) (4 shorts de 6,5-35M views no estilo bonecos 2D em mundo 3D):
 - **Um FX de exagero por ato:**
   - impacto com *hold* no ar: `rot` sobe em 0,15 s, segura ~0,8 s e cai;
   - fúria/hipérbole no clímax: olhos vermelhos, chão rachando, onda de choque com flash;
   - **mudança de clima** na explicação: noite, chuva, POV.
-- **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho) ou whip.
+- **Transição de assinatura** na passagem história → explicação: zoom-through no olho (clipe de 0,3 s com câmera `scale` 1,2 → 6 no olho), whip ou cortina de poeira (`ShaderFx("dust")`).
+- **Props que contam o tempo:** calendário que avança, termômetro, relógio; estados de um mesmo prop trocados na palavra.
 - **Props-piada que contam a história:** placa-contador que vira de 7 para 0 na batida, letreiro com lâmpadas piscando (ciclo de 2 frames).
 - **Termo do fenômeno dentro do mundo:** placa de rodovia ou letreiro, e não cartela.
-- **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,08 s.
+- **Plano longo só com câmera trabalhando:** vários enquadramentos do mesmo cenário costurados por dissolves de 0,2-0,3 s (`fade` 0,2-0,3) com a câmera seguindo no mesmo sentido através do dissolve (medido: 75-100 % das transições das referências).
 
 ### Direção de animação (o que faz parecer vivo)
+Régua medida: vida mediana 0,12-0,15 no `vf frames` (nosso cutout: ~0,035) e 0,05 % de frames parados. Sete regras
+do estilo (contadas por terceiros em 25 vídeos; as 4 primeiras confirmadas pelas nossas medições): câmera nunca
+para; movimentos longos e lentos; quase sem cortes secos; cores suaves; o mundo "brilha" (partículas, glints);
+personagem **entra na pose e congela** (pose-to-pose com hold que respira); **uma ideia por plano**.
 - Personagem parado sempre respira (`idle: breathe`) e pisca sozinho (automático, 0,5-2,3 s). Na troca de expressão o motor fecha os olhos para esconder o corte.
 - **Reação antes da fala:** a expressão muda 0-3 frames antes da palavra (o `at_word` já faz isso).
 - Quem fala do lugar onde está: grupo reagindo em cascata, com 0,06-0,25 s entre cada um.
@@ -68,6 +83,8 @@ Catálogo com receitas em `skills/analise/referencias/rickclips.md`, estudado nu
 - Andar ou marchar = estado em ciclo + `keys` movendo `x`/`y`. Aproximar da câmera = `y` e `scale` crescendo juntos.
 - Balões de pensamento e boato entram em `pop` na palavra e flutuam (`idle: float`).
 - A câmera nunca para: push de 4-15% por plano, ou pan com `scale ≥ 1 + 2|x|`. Plano longo (> 5 s) ou fundo liso pede mais câmera e mais ação.
+- **Trocar de assunto no mesmo lugar:** chicote (pan rápido de 4-6 frames com `scale` subindo), atravessar porta/janela (push até a moldura encher o quadro), rack focus no 3D, ou FX `dust` como cortina. Corte seco ≤ 25 % das transições.
+- **Trechos contínuos com contexto semelhante:** mesmo cenário, sem corte. A câmera faz zoom-out do enquadramento atual e zoom-in no novo ponto de interesse numa `scene` só: `cam=junta(s_a, foco_a, s_b, foco_b)` do `vfscene.py` (câmera `from → via → to`, mygo e Remotion). O `edl-check` reprova corte seco entre clipes vizinhos com o mesmo plate. Corte ou transição só quando muda lugar, tempo ou assunto.
 
 ## Motor `estatico` (yt-long com tema)
 Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py` (cópia de `templates/cenas/estatico.py`) → `data/edl.json` com `perfil: estatico` → `edl-check` no perfil estático → HyperFrames. Regras, cards e técnicas de edição em `templates/estatico.md`.
@@ -86,10 +103,15 @@ Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py
 
 ## Outros motores
 - **`ia-video`:** gere `data/shots.yaml` com `templates/ia-video.md`, produza os clipes (image-to-video a partir do plate e do elenco, para manter consistência) e use clipes `video`. Clipe com defeito (mãos, texto, morph) é cortado, nunca entregue. Clipes de IA contam como animação no `edl-check`.
-- **`remotion-three`:** delegue à skill **`cartoon-3d-short`**. O `beats.json` com tempos substitui a cronometragem manual.
+- **`remotion-three`:** use o template local `templates/remotion-three/` e [2D em mundo 3D](references/2d-in-3d-world.md). O `beats.json` alinhado fornece planos e reações; confira a animação no clipe renderizado antes de registrá-lo como `video` no EDL.
 - **`mapas-3d`:** delegue à skill **`mapas-3d-videos-virais`**.
 - **Motion graphics** (gráfico, mapa 2D, diagrama): componente em `src/components/` + tipo de clipe novo. Cartela parada não conta como animação, o elemento precisa se construir ou se mover.
 - **`kenburns`:** só para trechos de respiro dentro de um vídeo animado, ou quando o usuário pedir explicitamente um vídeo de fotos (documentário de arquivo). Nesse caso, registre o pedido em `factory.yaml > notas` e rode o `edl-check` com `--min 0`.
+
+## Luz e FX (passes 3 e 4 da esteira)
+- Iluminador e artista de FX são agentes próprios (esteira, seção 3b). Nenhum plano fica com luz chapada sem fonte, e nenhum FX entra sem antecipação → pico → dissipação e luz no entorno.
+- Ordem no pós do `remotion-three`: ink → DOF → **LightCue** → bloom → tone mapping → grade. Os FX `ShaderFx` emitem acima de 1 para florescer.
+- Confira no `FxLab` (stills em 3 frames) antes de usar um shader novo; no mygo, confira o pack de FX sobre o plate claro e o escuro do vídeo.
 
 ## Checagem visual (sempre, antes da edição)
 1. Um still por cena, no momento da ação principal (`$VFM ... -still N`, ~3 s por still com sprites), juntado numa folha. Confira posição dos pés no chão do plate, escala coerente com a perspectiva, quem fica atrás de quê (`clip_y`), legibilidade no celular e safe zone.
@@ -103,3 +125,15 @@ Exceção à regra 1, só para vídeo longo: imagens curadas + `roteiro/cenas.py
 - O visual reage 0-3 frames **antes** da palavra.
 - Plano médio nos shorts: 1,5-3 s. No longo: 3-6 s, até 8 s com movimento forte.
 - Texto na tela: no máximo 5 palavras, por no mínimo 1 s, e dentro da safe zone.
+
+## Contato, coesão e câmera
+
+Antes de aceitar cenas compostas, siga as etapas 2, 3 e 5 do [QA visual em cinco etapas](../edicao/references/qa-cinco-etapas.md).
+Defina contatos de assento/colo/mãos/pés e suportes dos props; confira início, extremos e fim
+em vídeo. Billboards sentados não podem girar para dentro do móvel. Efeitos usam o referencial
+e a fase do objeto. Reveja margens e oclusões depois de qualquer mudança de pose ou câmera.
+Asset mal posicionado, que quebre a harmonia do cenário ou tape a cena reprova. Rosto e ação principal ficam fora da faixa da legenda (0,66-0,76 da altura). Props e luz do cenário ficam no mesmo lugar em todos os ângulos.
+Identidade: com o elenco aprovado, `bun scripts/elenco-lock.mjs snapshot`; toda correção roda `elenco-lock.mjs check --pedido <posicao|pose|novo-estado>` (código 0). Emoção e passagem de tempo são estados do mesmo pack. Correção pedida
+pelo usuário mexe só no layout/pose do mesmo asset (mesmo pack), nunca o troca por outro
+parecido (etapa 3b).
+O `edl-check` mede cobertura de animação e não certifica essas propriedades.

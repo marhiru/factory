@@ -5,13 +5,18 @@ description: "Templates de edição, export e QA da fábrica de vídeo: mix de �
 
 # Edição, export e QA (etapa 4 da fábrica)
 
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
+
 `VF=${CLAUDE_PLUGIN_ROOT}/bin/vf`
 
+## Revisão cartoon 2D/3D
+Leia [cartoon-qa.md](references/cartoon-qa.md) para comparação de look, integração de sandboxes, legibilidade, temporários, escala do pós e QA de clipes 3D. Helpers MIT em `templates/cartoon/`: stills Remotion com Bun e folha lado a lado em Python.
+
 ## Pipeline por formato
-Antes de tudo: `node ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` precisa sair com código 0 (o perfil, animado ou `estatico`, vem do próprio edl.json). Se reprovar, volte para a skill `animacao`: não se renderiza nem se entrega vídeo sem animação.
+Antes de tudo: `bun ${CLAUDE_PLUGIN_ROOT}/skills/animacao/scripts/edl-check.mjs data/edl.json` precisa sair com código 0 (o perfil, animado ou `estatico`, vem do próprio edl.json). Se reprovar, volte para a skill `animacao`: não se renderiza nem se entrega vídeo sem animação.
 
 Para cada formato em `factory.yaml > formatos`:
-1. **Mix**: `$VF mix data/edl.json -o public/audio/mix.wav` (voz 0 dB, música com ducking de ~10 dB, SFX conforme `gain_db`). Para motores com som próprio (cartoon-3d-short), use o mix deles.
+1. **Mix**: `$VF mix data/edl.json -o public/audio/mix.wav` (voz 0 dB, música com ducking de ~10 dB, SFX conforme `gain_db`). Para `remotion-three` com áudio procedural, use o mix pronto ou os stems conforme `skills/assets/references/cartoon-assets-som.md`, sem duplicar faixas.
 2. **Render** (pelo `renderer` do `factory.yaml`):
    ```
    # mygo (padrão para remotion-2d / kenburns / ia-video): GPU nativa, ~5x mais rápido
@@ -19,7 +24,7 @@ Para cada formato em `factory.yaml > formatos`:
    # hyperframes (padrão do vídeo longo): compila o edl.json em HTML/GSAP, lint e render (captura segmentada > 2 min)
    ${CLAUDE_PLUGIN_ROOT}/skills/edicao/scripts/render-hf.sh <formato> out/video_<formato>.mp4
    # remotion
-   npx remotion render src/index.ts <formato> out/video_<formato>.mp4 --codec h264 --crf 16 --muted
+   bunx --bun remotion render src/index.ts <formato> out/video_<formato>.mp4 --codec h264 --crf 16 --muted
    ```
    Shorts em 2K: `-scale 1.3333` no mygo ou `--scale 1.3333` no Remotion (1440x2560). O formato aceita e o YouTube comprime melhor a partir de 2K.
 3. **Export** (mux, loudnorm em duas passadas para -14 LUFS / -1 dBTP, AAC 48 kHz, faststart):
@@ -40,6 +45,13 @@ Para cada formato em `factory.yaml > formatos`:
    ```
    O nome em `check` é o da tabela do QA. Exceção sem motivo é ignorada. "Ficou bom assim" não é motivo.
 6. Registre em `entregas` e marque `edicao`, `qa` e `entrega` como `feito`.
+7. **Rascunho na plataforma** (só se `factory.yaml > plataformas` tiver a plataforma, `vf auth status` mostrar autorizado e o usuário der o OK para subir): `$VF publish out/final_<formato>.mp4 platform=yt meta=out/publicacao_<formato>.json` (YouTube privado) ou `platform=tiktok` (caixa de entrada do app). Nunca publica: o usuário posta. Credenciais, limites e analíticos: [plataformas.md](references/plataformas.md). Anote em `publicacao.enviados`.
+
+## Legendas (shorts verticais)
+Medido em 3 shorts de 19-35M de views: **uma palavra por vez**, branca, bold, contorno preto, presa à fala, na
+faixa de **0,69-0,72 da altura** (dentro da safe zone de `yt-short`/`tiktok`). No `edl.json`:
+`"captions": {"enabled": true, "words_per_page": 1, "style": "pop"}`. A faixa de 0,66-0,76 é proibida para rosto e
+ação principal (QA visual etapa 3). Vídeo longo: 2-3 palavras (`karaoke`) no terço inferior.
 
 ## Como ler o QA
 | Item | FAIL quando | Correção típica |
@@ -69,4 +81,12 @@ Limites por formato no bloco `qa:` do `formats.yaml`.
 
 ## Outros templates
 - `templates/recorte.md`: vídeo longo → shorts (seleção por transcrição, reenquadramento, legendas).
-- `templates/publicacao.md`: título, descrição com capítulos e atribuições, tags, thumbnail e checklist por plataforma.
+- `templates/publicacao.md`: título, descrição com capítulos e atribuições, tags, thumbnail e checklist por plataforma. Gere também `out/publicacao_<formato>.json` (`{title, description, tags}`) para o `vf publish meta=`.
+
+## Cinco etapas de revisão visual
+
+Para animação com elenco/props ou composição 3D, execute o [QA visual](references/qa-cinco-etapas.md)
+antes da aprovação de entrega: modelagem, animação/contato, posicionamento (e identidade estável após
+correções, 3b), integridade dos assets, câmera e luz/FX (6). Gere evidência de modelos e trechos em movimento; confira no celular.
+Consolide os estados por etapa junto ao QA técnico. Aprovação técnica e visual são distintas;
+uma não substitui a outra. Reabra apenas a etapa afetada e suas dependências após corrigir.

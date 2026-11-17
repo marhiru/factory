@@ -7,6 +7,10 @@ Plugin do Claude Code para uma fábrica de vídeo com IA: **YouTube longo, YouTu
 - **CLI `vf` em Rust**: análise frame a frame, transcrição, alinhamento, mix, export e QA, todos rápidos.
 - **Renderer `vf-mygo` em Go** ([MyGo render](https://mygo.run/docs/plugins/render)): desenha o `data/edl.json` na GPU (Metal), sem navegador, ~5x mais rápido que o Remotion.
 
+## Ferramental
+
+JavaScript/TypeScript usa **Bun** para execução, dependências e CLIs. TypeScript usa **tsgo ou tsrs**; o template Remotion inclui tsgo (`bun run --bun typecheck`). Instruções: [ferramental](skills/factory/references/ferramental.md).
+
 ## Instalar
 
 `scripts/install.sh` compila (se preciso) e cria links em `~/.local/bin`: `vf`, `vf-mygo`, `vf-novo` (novo projeto) e `vf-render-hf`. Recompilar com `scripts/build.sh` atualiza os links sozinho.
@@ -22,6 +26,14 @@ claude --plugin-dir ~/Projects/video-factory
 # ou instalar a partir de um marketplace/repo git que contenha este diretório
 ```
 Depois, na sessão: `/video-factory:factory novo meu-video --formato yt-short,tiktok --motor kenburns`.
+
+### Fluxo pelo terminal
+```bash
+mkdir meu-video && cd meu-video
+vf init type="short" platform="yt,tiktok"   # short | long | "short,long"
+vf auth platform="yt,tiktok"                # opcional: rascunho + analíticos (credenciais: skills/edicao/references/plataformas.md)
+claude                                      # o plugin já vem habilitado; peça o vídeo
+```
 
 ## Estrutura
 ```
@@ -53,6 +65,10 @@ tests/synthetic.sh               # teste de integração (cortes em frames conhe
 | `vf mix data/edl.json -o public/audio/mix.wav` | voz + música com ducking + SFX numa passada |
 | `vf export <video> -f <formato> -o out.mp4 --audio mix.wav [--fit pad\|crop\|blur] [--fast]` | enquadramento, encode, loudnorm em 2 passadas, mux |
 | `vf qa <final.mp4> -f <formato> -o out/qa [--strict]` | specs, loudness, pretos/brancos/congelados/pops, planos, sheets densas |
+| `vf init type="short,long" platform="yt,tiktok"` | transforma a pasta atual num projeto da fábrica (esqueleto, templates do motor, som procedural, `ref/fx/` com pixelfx e pixel-splats, plugin ligado no `.claude/settings.json`); nunca sobrescreve arquivos |
+| `vf auth platform="yt,tiktok"` · `vf auth status` · `vf auth logout` | OAuth (PKCE, loopback) no YouTube e TikTok; tokens em `~/.config/vf/auth/` |
+| `vf publish <mp4> platform=yt\|tiktok [meta=… thumb=…]` | sobe como **rascunho** (YouTube privado, TikTok caixa de entrada) |
+| `vf analytics platform=yt\|tiktok [video=ID] [dias=28]` | analíticos e retenção → `out/analytics/` |
 | `vf formats` · `vf probe` · `vf doctor` | utilitários |
 
 ### Desempenho (Apple M4, 10 núcleos)
@@ -116,3 +132,11 @@ Imagens caprichadas do **Google Flow (Nano Banana) via MCP**, zoom-in leve, card
 cd tools/vf && cargo test --release     # unitários (cortes, transcrição, align, formats)
 tests/synthetic.sh                       # integração: cortes exatos em 60/150/240, paralelo == serial, qa, export
 ```
+
+## Cartoon 2D em mundo 3D
+
+Os conceitos do [claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) estão distribuídos nas sete skills: desenho/atuação 2D, mundo 3D, luz, materiais, câmera, pós, roteiro, som e QA. Origem fixada e licença MIT em [ORIGEM.md](skills/animacao/templates/remotion-three/ORIGEM.md).
+
+`./scripts/novo.sh <pasta> --motor remotion-three --formato yt-short --install` cria uma demonstração técnica executável com Bun/tsgo, fonte do mundo e composição `CartoonShort`. O desenho Canvas2D também pode ser exportado como sprites para mygo. Crie história, elenco e layout próprios antes de produzir.
+
+Templates incorporados: [mundo e elenco](skills/animacao/templates/remotion-three/), [áudio procedural](skills/assets/templates/audio-procedural/), [stills e comparação](skills/edicao/templates/cartoon/). GLBs Kenney e frames privados de referência não estão incluídos.

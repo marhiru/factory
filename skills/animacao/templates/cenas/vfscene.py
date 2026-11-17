@@ -74,7 +74,17 @@ def pan(dx=0.04, scale=None, dy=0.0, ease="linear"):
     return {"from": {"scale": s, "x": dx, "y": dy}, "to": {"scale": s, "x": -dx, "y": -dy}, "ease": ease}
 
 
-XF = {"kind": "fade", "dur": 0.27}
+def junta(s_a, foco_a, s_b, foco_b, recuo=0.12, via_at=0.5, ease="inOut"):
+    """junção de trechos contínuos no mesmo cenário (QA 5): zoom-out do enquadramento A e zoom-in no assunto B,
+    sem corte. foco_* = (x, y) do deslocamento da câmera; recuo = quanto a câmera abre no meio (escala)."""
+    mid = max(1.0, min(s_a, s_b) - recuo)
+    vx = round((foco_a[0] + foco_b[0]) / 2 * 0.4, 4)
+    vy = round((foco_a[1] + foco_b[1]) / 2 * 0.4, 4)
+    return {"from": {"scale": s_a, "x": foco_a[0], "y": foco_a[1]}, "via": {"scale": mid, "x": vx, "y": vy},
+            "to": {"scale": s_b, "x": foco_b[0], "y": foco_b[1]}, "via_at": via_at, "ease": ease}
+
+
+XF = {"kind": "fade", "dur": 0.25}  # dissolve medido nas referências: 0,2-0,3 s, com a câmera seguindo
 FLASH = {"kind": "flash", "dur": 0.2}
 
 

@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Compila data/edl.json numa composição HyperFrames (HTML + GSAP, sem CDN) em <projeto>/hf/.
 // Renderer dos vídeos longos: stills com zoom/pan (mesma matemática do mygo/Remotion), vídeo, texto,
 // cor, cartelas de interrupção de padrão (`card`) e acabamento de filme (`overlays`: grão, vinheta,
 // light leak, graduação). Sai sem áudio: o som entra no `vf export --audio` (igual ao mygo).
-// uso: node edl2hf.mjs [data/edl.json] [--out hf] [--formato yt-long] [--scale 1]
+// uso: bun edl2hf.mjs [data/edl.json] [--out hf] [--formato yt-long] [--scale 1]
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -39,7 +39,7 @@ let gsapSrc;
 for (const base of [proj, out, path.dirname(new URL(import.meta.url).pathname)]) {
   try { gsapSrc = createRequire(path.join(base, "x.js")).resolve("gsap/dist/gsap.min.js"); break; } catch {}
 }
-if (!gsapSrc) { console.error("edl2hf: gsap não encontrado: `npm i -D gsap hyperframes` no projeto"); process.exit(1); }
+if (!gsapSrc) { console.error("edl2hf: gsap não encontrado: `bun add -d gsap hyperframes` no projeto"); process.exit(1); }
 fs.copyFileSync(gsapSrc, path.join(out, "gsap.min.js"));
 fs.mkdirSync(path.join(out, "fx"), { recursive: true });
 const grain = path.join(out, "fx", "grain.png");

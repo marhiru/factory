@@ -5,7 +5,7 @@ import wordsJson from "../../data/words.json";
 export type Word = { word: string; start: number; end: number };
 export type Pose = { scale?: number; x?: number; y?: number; rotate?: number };
 export type Ease = "linear" | "in" | "out" | "inOut";
-export type Motion = { from?: Pose; to?: Pose; ease?: Ease };
+export type Motion = { from?: Pose; to?: Pose; ease?: Ease; via?: Pose; via_at?: number }; // via: junção zoom-out -> zoom-in
 export type Layer = { src: string; depth: number }; // depth 0 = fundo, 1 = primeiro plano
 export type Transition = { kind: "cut" | "fade" | "flash" | "slide"; dur?: number };
 

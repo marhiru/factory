@@ -6,8 +6,8 @@ A fábrica gera as imagens pelo Google Flow (labs.google/flow) com a conta do us
 
 ## Instalação (uma vez)
 1. Node 20+ e Google Chrome.
-2. Login: `npx -y @park-sang-gwon/google-flow-mcp@0.3.1 doctor`. Abre um Chrome com perfil próprio em `~/.google-flow-chrome`; entre na conta Google com acesso ao Flow. O `doctor` precisa mostrar `flow: logged in`.
-3. Com o plugin carregado, o servidor sobe sozinho. Fora do plugin: `claude mcp add google-flow -- npx -y @park-sang-gwon/google-flow-mcp@0.3.1`.
+2. Login: `bunx --bun @park-sang-gwon/google-flow-mcp@0.3.1 doctor`. Abre um Chrome com perfil próprio em `~/.google-flow-chrome`; entre na conta Google com acesso ao Flow. O `doctor` precisa mostrar `flow: logged in`.
+3. Com o plugin carregado, o servidor sobe sozinho. Fora do plugin: `claude mcp add google-flow -- bunx --bun @park-sang-gwon/google-flow-mcp@0.3.1`.
 4. Confira: a ferramenta `flow_connect` precisa responder `logged_in: true`.
 
 ## Cota (regra da fábrica)
@@ -18,11 +18,11 @@ A fábrica gera as imagens pelo Google Flow (labs.google/flow) com a conta do us
 ## Loop de geração (a skill `assets` segue isto)
 ```
 FL=${CLAUDE_PLUGIN_ROOT}/skills/assets/scripts/flow-lotes.mjs
-node $FL plan                 # beats.json + assets/flow/estilo.json -> assets/flow/lotes.json
-node $FL proximo              # args prontos do próximo lote (sai 3 se a cota do dia acabou)
+bun $FL plan                 # beats.json + assets/flow/estilo.json -> assets/flow/lotes.json
+bun $FL proximo              # args prontos do próximo lote (sai 3 se a cota do dia acabou)
 #  -> chamar o MCP: flow_generate_image(prompt, model, ratio, count, reference_images, output_dir, auto_confirm: true)
 #     se voltar job em andamento: flow_generate_image(resume: true, job_id)
-node $FL registrar <lote> assets/flow/_entrada/<lote>   # conta 1 prompt e move as imagens
+bun $FL registrar <lote> assets/flow/_entrada/<lote>   # conta 1 prompt e move as imagens
 ${CLAUDE_PLUGIN_ROOT}/bin/vf sheet assets/flow/<lote>   # folha de contato para a curadoria
 ```
 Repita até `proximo` responder `fim` ou `cota_esgotada`. Com a cota esgotada, marque `etapas.assets: aguardando_cota` e `notas: retomar em <data>` no `factory.yaml` e pare. O `factory continuar` retoma no dia seguinte.

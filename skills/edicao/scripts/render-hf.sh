@@ -18,12 +18,12 @@ while [ $# -gt 0 ]; do
   esac
 done
 export HYPERFRAMES_NO_TELEMETRY=1 DO_NOT_TRACK=1
-node "$ROOT/skills/animacao/scripts/edl2hf.mjs" data/edl.json --formato "$FMT" --scale "$SCALE"
-DUR=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("data/edl.json","utf8")).duration)')
+bun "$ROOT/skills/animacao/scripts/edl2hf.mjs" data/edl.json --formato "$FMT" --scale "$SCALE"
+DUR=$(bun -e 'console.log(JSON.parse(require("fs").readFileSync("data/edl.json","utf8")).duration)')
 # vídeos longos: captura em segmentos, retomável com --resume se cair no meio
-if node -e "process.exit(Number($DUR) > 120 ? 0 : 1)"; then export HF_SEGMENTED_CAPTURE=true; EXTRA+=(--resume); fi
-npx --no-install hyperframes lint hf >/dev/null || { npx --no-install hyperframes lint hf; exit 1; }
+if bun -e "process.exit(Number($DUR) > 120 ? 0 : 1)"; then export HF_SEGMENTED_CAPTURE=true; EXTRA+=(--resume); fi
+bun run --bun hyperframes lint hf >/dev/null || { bun run --bun hyperframes lint hf; exit 1; }
 mkdir -p "$(dirname "$OUT")"
 T0=$(date +%s)
-npx --no-install hyperframes render hf -o "$OUT" --quality "$Q" --quiet ${EXTRA[@]+"${EXTRA[@]}"}
+bun run --bun hyperframes render hf -o "$OUT" --quality "$Q" --quiet ${EXTRA[@]+"${EXTRA[@]}"}
 echo "hyperframes: $OUT (${DUR}s de vídeo em $(( $(date +%s) - T0 ))s)"

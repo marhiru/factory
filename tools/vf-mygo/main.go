@@ -41,6 +41,9 @@ type Motion struct {
 	From *Pose  `json:"from"`
 	To   *Pose  `json:"to"`
 	Ease string `json:"ease"`
+	// câmera com junção de trechos: from -> via (zoom-out) -> to (zoom-in), cada perna com o ease (padrão inOut)
+	Via   *Pose    `json:"via"`
+	ViaAt *float64 `json:"via_at"` // fração do clipe em que a câmera chega no via (padrão 0.5)
 }
 type LayerSrc struct {
 	Src   string  `json:"src"`

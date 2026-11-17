@@ -5,17 +5,22 @@ description: "Templates e regras para escrever roteiros da fábrica de vídeo: Y
 
 # Roteiro (etapa 1 da fábrica)
 
+Ferramental JS/TS: siga [Bun e tsgo/tsrs](../factory/references/ferramental.md) ao executar ou alterar scripts e templates.
+
 Entrada: tema, formato principal (`factory.yaml`) e, se houver, a análise de referência (`ref/*/analysis.md`).
 Saídas, sempre as três:
 1. `SCRIPT.md`: fatos com fonte, promessa, roteiro e contagem.
 2. `roteiro/roteiro.txt`: só o texto falado, uma frase por linha, exatamente como vai para a voz.
 3. `roteiro/beats.json`: um beat por frase ou ideia, com `texto`, `visual`, `camera`, `assets`, `sfx` e `texto_tela`.
 
+## História cartoon de causa e efeito
+Para um short factual com escalada, ruptura, analogia e callback, use [cartoon-causa-efeito.md](templates/cartoon-causa-efeito.md). Em 3D os mesmos beats alinhados alimentam planos, câmera e tempo físico; mantenha idioma, legendas e voz definidos pelo projeto.
+
 ## Escolha o template
 | Formato | Template | Base |
 |---|---|---|
 | `yt-short` explicativo (história real + causa) | use a skill **`roteiro-short-explicativo`** (fórmula de 9 beats, já validada) | 30-70 s |
-| `yt-short` / `tiktok` história absurda + mecanismo (física, psicologia, história) | `templates/short-historia-mecanismo.md` (fórmula estudada em shorts de 6-34M views) | 45-70 s |
+| `yt-short` / `tiktok` história absurda + mecanismo (física, psicologia, história) | `templates/short-historia-mecanismo.md` (fórmula medida em 4 shorts de 6,5-35M views; formas em 3ª e 2ª pessoa) | 45-70 s |
 | `yt-short` / `tiktok` geral (lista, curiosidade, tutorial, opinião) | `templates/short.md` | 15-60 s |
 | `tiktok` nativo (tendência, POV, loop) | `templates/tiktok.md` | 7-45 s |
 | `yt-long` estático com tema (motor `estatico`) | `templates/yt-long-estatico.md`: esquemática de hook rate | 10-15 min |
@@ -29,7 +34,7 @@ Saídas, sempre as três:
 4. **Cada frase precisa ser ilustrável.** Preencha o `visual` de cada beat com algo concreto que se possa mostrar. A narração nunca descreve o que a tela já mostra: a imagem carrega a piada ou o dado, e a fala acrescenta.
 5. **Conte as palavras** e divida pelo `wpm_alvo` do `factory.yaml` (Shorts/TikTok: 3,7 palavras/s; longo: ~160 wpm). Ajuste até caber na faixa do formato (`$VF formats`).
 6. Escreva números por extenso **só** no `roteiro.txt` que vai para a voz ("mil oitocentos e oitenta e nove"). No `SCRIPT.md` e em `texto_tela`, use algarismos.
-7. **Trava do longo:** `node ${CLAUDE_PLUGIN_ROOT}/skills/roteiro/scripts/roteiro-check.mjs roteiro/beats.json` precisa sair 0 (gancho sem preparação, promessa e loop até 0:40, re-hooks, capítulos fechando com loop, payoff, fecho, densidade de visuais). Para um piloto de 2-4 min, use `--piloto`. Se reprovar, reescreva: o usuário só vê roteiro aprovado na trava.
+7. **Trava do longo:** `bun ${CLAUDE_PLUGIN_ROOT}/skills/roteiro/scripts/roteiro-check.mjs roteiro/beats.json` precisa sair 0 (gancho sem preparação, promessa e loop até 0:40, re-hooks, capítulos fechando com loop, payoff, fecho, densidade de visuais). Para um piloto de 2-4 min, use `--piloto`. Se reprovar, reescreva: o usuário só vê roteiro aprovado na trava.
 8. Mostre ao usuário: promessa, roteiro e duração estimada. **Pare para aprovação.** Ao aprovar, marque `etapas.roteiro: feito` e `aprovacao_roteiro: feito`.
 
 ## Depois da voz

@@ -31,7 +31,7 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **Orbit / arc** | gira em volta do sujeito | só no mundo 3D (Blender/three.js) |
 | **Whip pan / swish pan** | giro rápido com motion blur que vira transição | `transition_in: slide` 0,15 s + whoosh |
 | **Camera shake / trauma** | tremor no impacto, decai rápido | `idle: jitter` no plate por 0,3 s (falta key de shake de câmera: pedir no renderer) |
-| **Rack focus** | foco muda do primeiro plano para o fundo | só no 3D (DOF) ou com blur no plate por key |
+| **Rack focus** | foco muda do primeiro plano para o fundo | 3D: `dofAt` com foco animado; 2D: blur no plate/ator por key. Visto abrindo um short: botão em primeiro plano → personagem atrás |
 | **POV** | o que o personagem vê | plate em primeira pessoa (painel, volante) |
 | **OTS (over the shoulder)** | por cima do ombro | ator de costas recortado com `clip_y` |
 | **Establishing shot** | plano aberto que situa o lugar | primeiro plano de cada cenário |
@@ -46,7 +46,7 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **Match cut** | forma/movimento igual liga dois planos | mesmo `x,y` e tamanho do objeto nos dois clipes |
 | **Zoom-through / portal transition** | entra num objeto (olho, janela, buraco) e sai na cena seguinte | clipe de 0,3 s com `scale` 1,2 → 6 no ponto + `fade` 0,1 s no próximo |
 | **Smash cut** | corte brusco de calma para caos (ou o contrário) | corte seco + SFX alto no frame |
-| **Dissolve / cross-fade** | fusão (a costura padrão no estilo estudado: 2-3 frames) | `transition_in: fade` 0,08-0,1 s |
+| **Dissolve / cross-fade** | fusão (a costura padrão no estilo estudado: 6-10 frames, com a câmera andando no mesmo sentido) | `transition_in: fade` 0,2-0,3 s |
 | **Dip to black/white** | fusão passando por preto/branco | `dip` / `flash` |
 | **J-cut / L-cut** | o som do próximo plano começa antes / o som do anterior continua depois | `sfx` com `start` 0,2-0,3 s antes do corte |
 | **Jump cut** | corte no mesmo enquadramento (pula o tempo) | dois clipes do mesmo plate com atores em posições diferentes |
@@ -64,7 +64,7 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **PBR** | material fisicamente correto (rugosidade, metal) | mundo 3D |
 | **HDRI** | imagem 360° que ilumina a cena | Poly Haven (CC0) |
 | **Key / fill / rim light** | luz principal / preenchimento / contraluz que separa do fundo | rim light nos personagens = legibilidade no celular |
-| **Golden hour** | sol baixo, quente, sombras longas | a luz padrão do estilo estudado |
+| **Golden hour** | sol baixo, quente, sombras longas | um dos climas do arco de luz (pôr do sol = o plano mais quente do vídeo), não o padrão |
 | **Day-for-night / mood shift** | troca de clima para mudar o tom | noite + chuva na parte da explicação |
 | **Aerial perspective / atmospheric haze** | fundo mais claro e menos saturado | neblina/volumétrico; no 2D, overlay de gradiente |
 | **Volumetrics / god rays** | luz visível no ar | volumétrico (3D) ou overlay `leak` |
@@ -83,10 +83,11 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **Debris** | pedaços voando | vários `fx` pequenos com keys de arco |
 | **Cell fracture / Voronoi fracture** | objeto quebra em pedaços | 3D (Blender Cell Fracture) |
 | **Shockwave / ring** | anel que expande no impacto | `fx` anel escalando + flash + shake |
-| **Dust puff / impact dust** | nuvem de poeira no contato | `fx` `burst` marrom |
+| **Dust puff / impact dust** | nuvem de poeira no contato | `fx` `burst` marrom; grande/clímax: `ShaderFx("dust")` |
 | **Speed lines / anime lines** | linhas de velocidade | overlay de 1 ciclo |
 | **Glint / sparkle** | brilho pontual que "acende" o mundo | `fx` `sparkle` em props importantes |
 | **Heat haze / distortion** | ar tremendo | só no 3D/shader |
+| **Material heat / emissive ramp** | o próprio objeto esquenta e passa a emitir luz | `fx/heat.ts` (`heatOn`, rampa roxo → magenta → amarelo-branco) |
 | **Lens flare** | reflexo da lente | 3D ou overlay leve |
 | **Rain / snow overlay** | camada de chuva | `fx` em ciclo cobrindo o quadro |
 | **Diegetic text** | texto que existe no mundo (placa, letreiro, contador) | prop com o texto pintado; preferir a cartela |
@@ -103,3 +104,29 @@ Vocabulário comum para pedir, escrever e checar efeitos. Use os termos em ingl�
 | **Room tone / ambience** | o "ar" do lugar | sob a cena toda (evita ar morto) |
 | **Ducking / sidechain** | música abaixa quando a voz entra | `vf mix` |
 | **Mickey-mousing** | som/música que imita cada movimento | comédia; usar com moderação |
+
+## 7. Catálogo do estilo estudado (com receitas)
+Visto em 4 shorts de 6,5-35M views (bonecos 2D em mundo 3D; evidências em `skills/analise/referencias/rickclips.md`).
+Use pela gramática: o momento do roteiro, por que funciona e como fazer na fábrica.
+
+| Momento | FX | Por que funciona | Receita (cutout `scene`/mygo · `remotion-three`) |
+|---|---|---|---|
+| Abertura | plano longo com vários enquadramentos costurados por movimento | o olho nunca descansa | uma `scene` com `junta()` (from → via → to) ou clipes do mesmo plate com `fade` 0,25 s e a câmera seguindo no mesmo sentido |
+| Gancho com objeto | martelo no botão + estrela de impacto + brilho na chave | o objeto-piada ganha um "ding" na palavra | `ring` curto + `sparkle` no `at_word`; flash de 2 frames |
+| "toda semana" | **placa-contador** "DIAS SEM ACIDENTE 7 → 0" com flip | conta a história sem fala | prop com estados `n7`/`n0` e key `state` no `at_word` |
+| Passagem do tempo | calendário que avança (MON 7 → MON 28), termômetro subindo | o tempo passa sem frase de transição | estados de um mesmo prop; close curto dentro da junção de câmera |
+| Batida | carro sobe na vertical, **fica parado no ar ~0,8 s** e cai; pneu rolando | o exagero mora no *hold* | keys `rot` 0 → 85 (0,15 s, `out`), segura, 85 → 0 (0,2 s, `in`); `burst` + poeira; pneu = ator com `x` + `rot` |
+| Placa gigante | letreiro com lâmpadas piscando | o prop absurdo é a piada da escalada | ciclo de 2 frames a 6 fps; no 3D, emissivo piscando > 1 |
+| Raiva | rosto roxo + nuvens de vapor; olhos vermelhos, chão rachando | raiva como estado do mesmo personagem | estado `raiva` do pack + pack `fx-vapor`; `idle: jitter`; rachadura `drop` |
+| Atrito/velocidade | faíscas sob as rodas | o trem "raspa" no trilho | `ShaderFx("sparkle")` laranja ou pixelfx de impactos recolorido |
+| Calor | o trilho vai de roxo a amarelo-branco no ritmo da fala | o fenômeno é visto no próprio objeto | `heatOn(material, cueHeat(f, de, até))` com bloom |
+| Clímax | raio → **onda de choque**: anel branco, céu abre, god rays, parede de poeira | hipérbole no ponto mais alto | `flash` + `ring` + push rápido + `rays`; o personagem-piada cai da cadeira em seguida |
+| Desabamento | poeira iluminada + destroços em parábola; a poeira enche o quadro | hipérbole e **cortina de transição** | `ShaderFx("dust")` grande; quando cobre o quadro, troca de cenário por baixo |
+| Payoff do absurdo | cogumelo de explosão no horizonte | fecha a escalada | `dust` grande + `glow` laranja no núcleo + cue `flash` |
+| "como isso continua?" | **zoom-through no olho**: a próxima cena está dentro da pupila | vira a chave para a explicação | clipe de 0,3 s: `scale` 1,2 → 6 no olho, `ease: in`, + `fade` 0,2 s no próximo |
+| Explicação | **muda o clima**: noite, chuva, neblina, POV | marca "agora é o mecanismo" | plates noturnos/chuva ou `temp` frio no cue; overlay de chuva |
+| Nome do fenômeno / lugar | texto **no mundo**: placa de rodovia, placa na porta ("CAREER DEVELOPMENT ROOM") | texto sem quebrar a imersão | prop/plate com o termo; a câmera passa por ele no `at_word` |
+| Conceito | olhos hipnóticos (espiral) | traduz a ideia em imagem | estado `hypno` com ciclo de 8 f |
+| O mundo brilha | sol com god rays, bloom de lâmpadas, metal com especular | vida constante no quadro | `beam`, `LightCueEffect.rays`, emissivos > 1 |
+| Fim | plano aberto que repete o cenário do começo com o objeto mudado | callback do gancho | último clipe no plate do primeiro, com o prop no estado final |
+

@@ -359,6 +359,24 @@ func (k *ctx) camAt(m *Motion, frame, dur int) pose {
 		return pose{1, 0, 0, 0}
 	}
 	ease := m.Ease
+	if m.Via != nil {
+		if ease == "" {
+			ease = "inOut"
+		}
+		e, ok := easings[ease]
+		if !ok {
+			e = easings["inOut"]
+		}
+		u := clamp01(float64(frame) / math.Max(1, float64(dur-1)))
+		at := 0.5
+		if m.ViaAt != nil {
+			at = math.Min(0.95, math.Max(0.05, *m.ViaAt))
+		}
+		if u < at {
+			return mix(e(u/at), m.From, m.Via)
+		}
+		return mix(e((u-at)/(1-at)), m.Via, m.To)
+	}
 	if ease == "" {
 		ease = "linear"
 	}

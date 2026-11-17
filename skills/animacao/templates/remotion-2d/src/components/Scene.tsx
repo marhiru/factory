@@ -2,7 +2,17 @@ import React, { useMemo } from "react";
 import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { actorAt, prepare, SPRITES } from "../lib/anim";
 import type { Clip, SceneSpec } from "../lib/edl";
-import { mix, progress } from "../lib/ease";
+import { EASE_FNS, mix, progress } from "../lib/ease";
+import type { Motion } from "../lib/edl";
+
+/** espelho do camAt do vf-mygo: com `via`, from -> via (zoom-out) -> to (zoom-in), cada perna com o ease (padrão inOut) */
+const camAt = (m: Motion, frame: number, dur: number) => {
+  if (!m.via) return mix(progress(frame, dur, m.ease ?? "linear"), m.from, m.to);
+  const e = EASE_FNS[m.ease ?? "inOut"] ?? EASE_FNS.inOut;
+  const u = Math.min(1, Math.max(0, frame / Math.max(1, dur - 1)));
+  const at = Math.min(0.95, Math.max(0.05, m.via_at ?? 0.5));
+  return u < at ? mix(e(u / at), m.from, m.via) : mix(e((u - at) / (1 - at)), m.via, m.to);
+};
 
 /** Cena cutout 2D: plate + câmera com parallax + atores-sprite animados (espelho do scene.go do vf-mygo). */
 export const Scene: React.FC<{ clip: Clip & { type: "scene"; scene: SceneSpec }; dur: number }> = ({ clip, dur }) => {
@@ -12,7 +22,7 @@ export const Scene: React.FC<{ clip: Clip & { type: "scene"; scene: SceneSpec };
   const t = frame / fps;
   const actors = useMemo(() => sc.actors.map((a) => prepare(clip, a)), [clip, sc.actors]);
   const m = sc.camera;
-  const cam = m ? mix(progress(frame, dur, m.ease ?? "linear"), m.from, m.to) : { scale: 1, x: 0, y: 0, rotate: 0 };
+  const cam = m ? camAt(m, frame, dur) : { scale: 1, x: 0, y: 0, rotate: 0 };
   const withCam = (depth: number, body: React.ReactNode, key: string) => {
     const amp = 1 + depth * 0.5;
     const s = 1 + (cam.scale - 1) * amp;
