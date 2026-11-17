@@ -18,12 +18,12 @@
     "views": 0
   },
   "canal_total": {
-    "inscritos": 2.0,
+    "inscritos": 3.0,
     "videos": 1.0,
     "views": 0.0
   },
   "conta": "principal",
-  "gerado": "2026-11-17T19:45:47Z",
+  "gerado": "2026-11-17T19:59:45Z",
   "medianas": {
     "longo": {
       "averageViewDuration": null,
@@ -76,8 +76,8 @@
       "titulo": "Se a Terra parasse de girar...",
       "total": {
         "comentarios": 1.0,
-        "likes": 5.0,
-        "views": 104.0
+        "likes": 8.0,
+        "views": 244.0
       },
       "url": "https://youtu.be/rGHJYQ4cTNs"
     }
