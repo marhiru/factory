@@ -3,9 +3,12 @@
 (() => {
   const MARCA = "vf-studio-captura";
   const MAX = 2 * 1024 * 1024; // respostas maiores que 2 MB são ignoradas
+  // vídeo (/video/<id>/analytics/...) ou canal (/channel/UC.../analytics/...) -> "canal_UC..."
   const videoAtual = () => {
-    const m = location.pathname.match(/\/video\/([A-Za-z0-9_-]{11})\/analytics/);
-    return m ? m[1] : null;
+    const v = location.pathname.match(/\/video\/([A-Za-z0-9_-]{11})\/analytics/);
+    if (v) return v[1];
+    const c = location.pathname.match(/\/channel\/(UC[A-Za-z0-9_-]{10,30})\/analytics/);
+    return c ? `canal_${c[1]}` : null;
   };
   const enviar = (url, texto) => {
     const video = videoAtual();

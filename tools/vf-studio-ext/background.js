@@ -7,9 +7,10 @@ const ESPERA_MIN = 35; // segundos entre páginas (o chrome.alarms não aceita m
 const ESPERA_MAX = 75;
 const TETO_DIA = 30; // vídeos por dia no modo ativo
 const RECENTE_H = 24; // não recoleta vídeo capturado há menos de 24 h
+// o Studio novo usa o "hub" de análises; as abas antigas redirecionam para ele ou para a seção equivalente
 const ABAS = {
-  geral: ["tab-overview/period-default"],
-  completo: ["tab-overview/period-default", "tab-reach_viewers/period-default", "tab-interest_viewers/period-default"],
+  geral: ["hub_overview"],
+  completo: ["hub_overview", "tab-reach_viewers/period-default", "tab-interest_viewers/period-default"],
 };
 
 const hoje = () => new Date().toISOString().slice(0, 10);
@@ -50,11 +51,17 @@ async function iniciar({ ids, max, perfil }) {
   if (!fila.length) return { erro: livres ? "nada a coletar (tudo capturado nas últimas 24 h)" : `teto diário de ${TETO_DIA} vídeos atingido; volte amanhã` };
   const abas = ABAS[perfil] || ABAS.geral;
   const tab = await chrome.tabs.create({ url: url(fila[0], abas[0]), active: false });
+  rolarDepois(tab.id);
   await set({ rodada: { ativo: true, fila, abas, i: 0, j: 0, tabId: tab.id, inicio: Date.now(), motivo: null, proxima: agendar() }, dia: { data: dia.data, n: dia.n + 1 } });
   return { ok: true, total: fila.length };
 }
 
 const url = (id, aba) => `https://studio.youtube.com/video/${id}/analytics/${aba}`;
+
+// os cartões do hub carregam ao aparecer na tela: depois de abrir a página, rola devagar até o fim
+function rolarDepois(tabId) {
+  setTimeout(() => chrome.tabs.sendMessage(tabId, { tipo: "rolar" }).catch(() => {}), 8000);
+}
 
 function agendar() {
   const s = ESPERA_MIN + Math.random() * (ESPERA_MAX - ESPERA_MIN);
@@ -95,6 +102,7 @@ chrome.alarms.onAlarm.addListener(async (a) => {
   }
   if (i >= r.fila.length) return parar("rodada concluída");
   await chrome.tabs.update(r.tabId, { url: url(r.fila[i], r.abas[j]) });
+  rolarDepois(r.tabId);
   await set({ rodada: { ...r, i, j, proxima: agendar() } });
 });
 

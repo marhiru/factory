@@ -16,6 +16,7 @@ mod relatorio;
 mod qa;
 mod sheet;
 mod studio;
+mod studio_dados;
 mod tempo;
 mod transcribe;
 mod util;

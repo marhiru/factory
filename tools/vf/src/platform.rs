@@ -893,6 +893,25 @@ fn yt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
         }
     }
 
+    // 4b. Studio (extensão vf studio, não oficial): continuaram/ignorado, impressões, CTR, tráfego e a curva
+    //     das primeiras horas, quando o vídeo foi aberto no Studio com a extensão
+    let mut com_studio = 0;
+    for v in vids.iter_mut() {
+        if let Some(r) = v["id"].as_str().and_then(crate::studio_dados::resumo) {
+            let pt = v["publicado"].as_str().and_then(tempo::parse_iso).and_then(|r| r.ok()).unwrap_or(now);
+            v["studio"] = json!({
+                "metricas": r["metricas"], "processando": r["processando"], "trafego": r["trafego"], "trafego_48h": r["trafego_48h"],
+                "geografias": r["geografias"], "demografia": r["demografia"], "atualizado": r["atualizado"],
+                "primeiras_horas": crate::studio_dados::primeiras_horas(&r, pt, now)
+            });
+            com_studio += 1;
+        }
+    }
+    if com_studio > 0 {
+        avisos.push(format!("{com_studio} vídeo(s) com dados do Studio em videos[].studio (extensão vf studio, não oficial)"));
+    }
+    let canal_studio = it["id"].as_str().and_then(|c| crate::studio_dados::resumo(&format!("canal_{c}"))).map(|r| json!({ "metricas": r["metricas"], "atualizado": r["atualizado"], "trafego": r["trafego"] }));
+
     // 5. tabela e medianas (a skill compara cada vídeo com a mediana do PRÓPRIO canal)
     println!("{:<12} {:<6} {:<9} {:<10} {:>8} {:>8} {:>6} {:>6}  título", "vídeo", "tipo", "estado", "publicado", "views", "período", "méd s", "% vis");
     for v in &vids {
@@ -915,6 +934,14 @@ fn yt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
     for tipo in ["short", "longo"] {
         medianas[tipo] = json!({ "views": med(tipo, "views"), "averageViewDuration": med(tipo, "averageViewDuration"), "averageViewPercentage": med(tipo, "averageViewPercentage") });
     }
+    for tipo in ["short", "longo"] {
+        let sel = || vids.iter().filter(|v| v["tipo"].as_str().unwrap_or("").starts_with(tipo));
+        medianas[tipo]["continuaram"] = json!(median(sel().filter_map(|v| v.pointer("/studio/metricas/continuaram/valor").and_then(|x| x.as_f64())).collect()));
+        medianas[tipo]["ctr"] = json!(median(sel().filter_map(|v| v.pointer("/studio/metricas/ctr/valor").and_then(|x| x.as_f64())).collect()));
+        for h in ["h1", "h3", "h24"] {
+            medianas[tipo][format!("views_{h}")] = json!(median(sel().filter_map(|v| v.pointer(&format!("/studio/primeiras_horas/{h}")).and_then(|x| x.as_f64())).collect()));
+        }
+    }
     for d in ["d1", "d3", "d7", "d28"] {
         for tipo in ["short", "longo"] {
             medianas[tipo][format!("views_{d}")] = json!(median(vids.iter().filter(|v| v["tipo"].as_str().unwrap_or("").starts_with(tipo)).filter_map(|v| v["idade"].get(d).and_then(|x| x.as_f64())).collect()));
@@ -932,7 +959,7 @@ fn yt_analytics(acct: Option<&str>, o: &AOpts) -> Result<Value> {
         "plataforma": "yt", "conta": conta, "canal": canal_nome, "canal_id": it.get("id"), "gerado": tempo::rfc3339(now),
         "periodo": { "inicio": start, "fim": end, "dias": o.dias },
         "canal_total": { "inscritos": num(&st, "subscriberCount"), "views": num(&st, "viewCount"), "videos": num(&st, "videoCount") },
-        "canal_periodo": canal_periodo, "por_tipo": por_tipo, "trafego": trafego, "medianas": medianas,
+        "canal_periodo": canal_periodo, "por_tipo": por_tipo, "trafego": trafego, "medianas": medianas, "canal_studio": canal_studio,
         "videos": vids, "avisos": avisos
     }))
 }

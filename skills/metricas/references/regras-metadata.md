@@ -60,6 +60,8 @@ vence sempre** (`medianas` no JSON do `vf analytics`).
 | Retenção nos primeiros 3 s / 30 s | queda forte em 0-3 s = gancho | queda > 30 % em 30 s = abertura lenta | — |
 | `relativeRetentionPerformance` | < 0,4 no trecho = pior que vídeos de mesma duração | idem | — |
 | Engajamento (likes+coment+shares)/views | — | — | compare com a mediana; shares por mil é o sinal mais forte |
+| Continuaram assistindo (Studio) | sem benchmark público confiável: compare com a mediana dos Shorts do canal; abaixo de 50 % = mais da metade deslizou antes de assistir | — | — |
+| CTR das impressões (Studio) | — | a Ajuda do YouTube: metade dos canais/vídeos fica entre 2 % e 10 %; compare na mesma fonte de tráfego | — |
 
 Sinais de diagnóstico rápido:
 - views baixas + % visto ≥ mediana → **embalagem** (título/thumb/primeiro segundo);

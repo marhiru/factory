@@ -1,0 +1,181 @@
+{
+  "arquivo": "yt-principal-rGHJYQ4cTNs-d1_d3_d7_d28_total-2026-11-17",
+  "avisos": [
+    "studio=1: linhas mapeadas vêm da API INTERNA do Studio (não oficial), na janela da consulta capturada.",
+    "Analytics ainda sem dados para este vídeo (atraso de 24-72 h): visualizações, gostei e comentários vêm da Data API em tempo real; as demais linhas ficam \"—\" até a Analytics processar.",
+    "vídeo com menos de 3 dias: a Analytics atrasa 24-72 h, números ainda parciais"
+  ],
+  "beats": null,
+  "canal": "Freakyy",
+  "conta": "principal",
+  "gerado": "2026-11-17T23:19:00Z",
+  "janelas": [
+    {
+      "continuaram": null,
+      "fim": "2026-11-17",
+      "inicio": "2026-11-17",
+      "janela": "d1",
+      "janela_nome": "primeiro dia",
+      "sem_analytics": true
+    },
+    {
+      "comentarios": 3.0,
+      "continuaram": null,
+      "fim": "2026-11-17",
+      "inicio": "2026-11-17",
+      "janela": "d3",
+      "janela_nome": "3 primeiros dias",
+      "likes": 30.0,
+      "parcial": "1 de 3 dias",
+      "sem_analytics": true,
+      "tempo_real": true,
+      "views": 794.0
+    },
+    {
+      "comentarios": 3.0,
+      "continuaram": null,
+      "fim": "2026-11-17",
+      "inicio": "2026-11-17",
+      "janela": "d7",
+      "janela_nome": "7 primeiros dias",
+      "likes": 30.0,
+      "parcial": "1 de 7 dias",
+      "sem_analytics": true,
+      "tempo_real": true,
+      "views": 794.0
+    },
+    {
+      "comentarios": 3.0,
+      "continuaram": null,
+      "fim": "2026-11-17",
+      "inicio": "2026-11-17",
+      "janela": "d28",
+      "janela_nome": "28 primeiros dias",
+      "likes": 30.0,
+      "parcial": "1 de 28 dias",
+      "sem_analytics": true,
+      "tempo_real": true,
+      "views": 794.0
+    },
+    {
+      "comentarios": 3.0,
+      "continuaram": 53.06999999999999,
+      "fim": "2026-11-17",
+      "fonte_studio": true,
+      "inicio": "2026-11-17",
+      "janela": "total",
+      "janela_nome": "desde a publicação",
+      "likes": 30.0,
+      "sem_analytics": true,
+      "tempo_real": true,
+      "views": 794.0
+    }
+  ],
+  "medianas": {
+    "d1": {
+      "avd": null,
+      "comentarios": null,
+      "continuaram": null,
+      "horas": null,
+      "inscritos": null,
+      "intencionais": null,
+      "likes": null,
+      "n": 0,
+      "pct": null,
+      "retencao_media": null,
+      "shares": null,
+      "views": null
+    },
+    "d28": {
+      "avd": null,
+      "comentarios": null,
+      "continuaram": null,
+      "horas": null,
+      "inscritos": null,
+      "intencionais": null,
+      "likes": null,
+      "n": 0,
+      "pct": null,
+      "retencao_media": null,
+      "shares": null,
+      "views": null
+    },
+    "d3": {
+      "avd": null,
+      "comentarios": null,
+      "continuaram": null,
+      "horas": null,
+      "inscritos": null,
+      "intencionais": null,
+      "likes": null,
+      "n": 0,
+      "pct": null,
+      "retencao_media": null,
+      "shares": null,
+      "views": null
+    },
+    "d7": {
+      "avd": null,
+      "comentarios": null,
+      "continuaram": null,
+      "horas": null,
+      "inscritos": null,
+      "intencionais": null,
+      "likes": null,
+      "n": 0,
+      "pct": null,
+      "retencao_media": null,
+      "shares": null,
+      "views": null
+    },
+    "total": {
+      "avd": null,
+      "comentarios": null,
+      "continuaram": null,
+      "horas": null,
+      "inscritos": null,
+      "intencionais": null,
+      "likes": null,
+      "n": 0,
+      "pct": null,
+      "retencao_media": null,
+      "shares": null,
+      "views": null
+    }
+  },
+  "pares": 0,
+  "plataforma": "yt",
+  "principal": "total",
+  "publicado": "2026-11-17T19:13:31Z",
+  "tipo_pares": "short",
+  "tipo_relatorio": "video",
+  "trafego": [],
+  "video": {
+    "agendado_para": null,
+    "categoria": "22",
+    "descricao": "O chão para. Você, o café e o gato continuam indo. \n\nDescubra o que aconteceria se a Terra parasse de girar — e por que uma freada de ônibus explica tudo.\n\n#shorts #ciencia  #terra  #física  #curiosidades #shortsfeed",
+    "duracao_s": 100.0,
+    "id": "rGHJYQ4cTNs",
+    "idioma": "pt-PT",
+    "idioma_audio": "pt-PT",
+    "privacidade": "public",
+    "publicado": "2026-11-17T19:13:31Z",
+    "publicado_ts": 1794942811,
+    "tags": [
+      "shorts",
+      "historia",
+      "foryou",
+      "ciencia",
+      "curiosidades"
+    ],
+    "thumb": "https://i.ytimg.com/vi/rGHJYQ4cTNs/maxresdefault.jpg",
+    "tipo": "short?",
+    "titulo": "Se a Terra parasse de girar...",
+    "total": {
+      "comentarios": 3.0,
+      "likes": 30.0,
+      "views": 794.0
+    },
+    "url": "https://youtu.be/rGHJYQ4cTNs"
+  }
+}

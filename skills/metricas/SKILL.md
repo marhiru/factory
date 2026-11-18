@@ -1,7 +1,7 @@
 ---
 name: metricas
-description: "Agente analista de métricas do YouTube (longo e Shorts) e do TikTok: gera relatórios estilo Studio por vídeo e de todos com filtros (vf relatorio, MD/HTML), puxa os analíticos com vf analytics, diagnostica canal e vídeos (auditoria, upload novo × mesma idade, retenção cruzada com o roteiro, comentários) e sugere correções de metadata (título, descrição, tags, hashtags, capítulos, thumbnail) com antes × depois, aplicando no YouTube com vf meta só depois do OK. Use quando o usuário pedir analytics, métricas, desempenho, por que um vídeo não performou, auditoria de canal, melhorar título/descrição/tags/legenda, ou revisar um vídeo recém-postado."
-argument-hint: "relatorio [<ID>] | auditoria | upload <ID> | retencao <ID> | metadata <ID|arquivo> | comentarios <ID> | pauta"
+description: "Agente analista de métricas do YouTube (longo e Shorts) e do TikTok: gera relatórios estilo Studio por vídeo e de todos com filtros (vf relatorio, MD/HTML), puxa os analíticos com vf analytics, diagnostica canal e vídeos (auditoria, upload novo × mesma idade, retenção cruzada com o roteiro, comentários) e sugere correções de metadata (título, descrição, tags, hashtags, capítulos, thumbnail) com antes × depois, aplicando no YouTube com vf meta só depois do OK. Usa também os sinais do Studio capturados pela extensão vf studio (continuaram assistindo dos Shorts, impressões e CTR, views nas primeiras horas). Use quando o usuário pedir analytics, métricas, desempenho, por que um vídeo não performou, auditoria de canal, melhorar título/descrição/tags/legenda, ou revisar um vídeo recém-postado."
+argument-hint: "relatorio [<ID>] | primeiras-horas <ID> | auditoria | upload <ID> | retencao <ID> | metadata <ID|arquivo> | comentarios <ID> | pauta"
 ---
 
 # Métricas: analista e corretor de metadata
@@ -14,7 +14,7 @@ Você é o **analista de métricas** da fábrica. Tem um dono por responsabilida
 | Agente | Responsabilidade | Entrega |
 |---|---|---|
 | **coletor** | rodar `vf analytics` certo e checar se os dados são confiáveis (avisos, atraso, privados) | `out/analytics/*.json` + lista de limitações |
-| **diagnosticador** | comparar cada vídeo com a mediana do PRÓPRIO canal, separando Short × longo × TikTok | achados com número e evidência |
+| **diagnosticador** | comparar cada vídeo com a mediana do PRÓPRIO canal, separando Short × longo × TikTok, e achar o **primeiro elo fraco do funil** ([sinais-studio.md](references/sinais-studio.md)) | achados com número e evidência |
 | **editor de metadata** | reescrever título/descrição/tags/legenda/capítulos segundo [regras-metadata.md](references/regras-metadata.md) | `out/metricas/meta_<ID>.json` + antes × depois |
 | **revisor** (independente, subagente sem o contexto da análise) | conferir se cada recomendação segue dos números e se a metadata nova respeita as regras e não promete o que o vídeo não entrega | aprovado / lista de correções |
 
@@ -38,7 +38,13 @@ Saída: `out/analytics/<plataforma>-<conta>-<data>.json`. Campos que importam:
   averageViewDuration, averageViewPercentage, likes, comments, shares, subscribersGained), `retencao`
   (`marcos`, `maiores_quedas` em segundos, `curva`), `idade` (views acumuladas d1/d2/d3/d7/d14/d28),
   `trafego`, `comentarios`.
-- `medianas.short` / `medianas.longo` (YouTube) e `medianas` (TikTok): a base de comparação.
+- `videos[].studio` (quando o vídeo foi aberto no Studio com a extensão `vf studio`): `metricas`
+  (`continuaram`, `ignorado`, `impressoes`, `ctr`, `gostei`... cada uma com `valor`, `periodo`, `quando`),
+  `processando` (o Studio ainda mostra 0), `trafego`/`trafego_48h`, `geografias`, `demografia` e
+  `primeiras_horas` (`h1`, `h3`, `h6`, `h12`, `h24`, `h48`, `pico_hora`, `serie`, `cobre`).
+  No terminal: `$VF studio resumo video=<ID>`.
+- `medianas.short` / `medianas.longo` (YouTube) e `medianas` (TikTok): a base de comparação, inclusive
+  `continuaram`, `ctr` e `views_h1/h3/h24` do Studio.
 - `por_tipo` (Shorts × longos × lives), `trafego` do canal, `avisos`.
 
 **Antes de concluir qualquer coisa, leia `avisos`.** Regras de confiabilidade:
@@ -46,6 +52,8 @@ Saída: `out/analytics/<plataforma>-<conta>-<data>.json`. Campos que importam:
 - Vídeo privado/rascunho não soma views: não é "flop", é não publicado.
 - Amostra pequena (< 5 vídeos do mesmo tipo, ou < ~1.000 views no vídeo): fale em hipótese, não em conclusão.
 - TikTok via API não tem retenção, tráfego nem comentários: peça o print/export do TikTok Studio se precisar.
+- Dado do Studio é não oficial: cite a fonte ("Studio, capturado <hora>") e o `periodo` do cartão; `processando`
+  não é zero; sem captura do vídeo, diga como obter (abrir as análises no Studio com a extensão) em vez de supor.
 - Erro "API DESATIVADA" / "sem todas as permissões": é configuração, não dado; siga a mensagem do `vf`
   ([plataformas.md](../edicao/references/plataformas.md#erros-comuns)) e pare a análise.
 
@@ -65,9 +73,20 @@ entrega; "parcial" = vídeo mais novo que a janela. **Página para compartilhar*
 o `.html` como artifact privado (ferramenta de artifacts, arquivo do disco) e devolva o link. TikTok sem
 conta `tiktok-biz`: diga que retenção/tempo médio exigem conta Business/Creator (`vf auth platform=tiktok-biz`).
 
+### `primeiras-horas <ID>` (checagem 1 h, 3 h e 24 h depois de publicar)
+1. Peça ao usuário para abrir as análises do vídeo no Studio (a extensão captura); depois
+   `$VF relatorio video=<ID> janela=total` (ou `$VF studio resumo video=<ID>`).
+2. Compare `primeiras_horas.h1/h3/h24` com a mediana dos Shorts do canal na mesma hora e leia a forma da curva
+   ([sinais-studio.md](references/sinais-studio.md#primeiras-horas-curva-por-hora)).
+3. Cruze com **continuaram assistindo**: curva caindo cedo + continuaram abaixo da mediana = gancho; curva
+   baixa e plana + continuaram normal = exposição (horário, tema, título no feed).
+4. Veredito curto: **deixar rodar** | **observar até 24 h** | **lição para o próximo** (o vídeo publicado não
+   se reedita; título só muda no longo, e só se o CTR for o elo fraco). Registre em `factory.yaml > analiticos`.
+
 ### `auditoria` (30-90 dias)
 1. `vf analytics dias=90 curva=1` (e `platform=tiktok` se houver).
-2. Saúde em 5 linhas: views e inscritos no período; Shorts × longos (`por_tipo`); de onde vem o tráfego
+2. Saúde em 5 linhas (funil de [sinais-studio.md](references/sinais-studio.md)): continuaram assistindo dos
+   Shorts e CTR dos longos (Studio, se houver), views e inscritos no período; Shorts × longos (`por_tipo`); de onde vem o tráfego
    (`trafego`: busca, sugeridos, feed de Shorts, externo); mediana de % visto por tipo; tendência (os 5 mais
    recentes contra a mediana).
 3. **No máximo 3 melhorias**, cada uma com: evidência (números), ação concreta, medida de sucesso e prazo
@@ -77,18 +96,22 @@ conta `tiktok-biz`: diga que retenção/tempo médio exigem conta Business/Creat
 
 ### `upload <ID>` (vídeo novo × mesma idade)
 1. `vf analytics video=<ID>` e `vf analytics curva=1 dias=120` (para as idades dos outros).
-2. Compare `idade.dN` do vídeo com `medianas.<tipo>.views_dN` na MESMA idade (d1 com d1, d3 com d3).
+2. Compare `idade.dN` do vídeo com `medianas.<tipo>.views_dN` na MESMA idade (d1 com d1, d3 com d3). Nas
+   primeiras 48 h, use as horas do Studio (`studio.primeiras_horas.hN` × `medianas.<tipo>.views_hN`), que chegam
+   antes da Analytics.
 3. Veredito, um de três:
    - **esperar**: dentro de ±30 % da mediana, ou menos de 48 h de dados;
    - **embalagem**: views baixas mas % visto ≥ mediana → as pessoas gostam de quem assiste, faltam cliques →
-     fluxo `metadata` (título/thumb no longo; título + primeiro segundo no Short);
+     fluxo `metadata` (título/thumb no longo, confirmado por CTR abaixo da mediana; no Short o "clique" é o
+     primeiro segundo: confirme com **continuaram assistindo** abaixo da mediana e corrija no próximo roteiro);
    - **conteúdo**: views ok mas % visto bem abaixo da mediana → fluxo `retencao`; metadata nova não resolve.
 
 ### `retencao <ID>`
 1. `vf analytics video=<ID>`; no projeto do vídeo:
    `python3 -I ${CLAUDE_PLUGIN_ROOT}/skills/metricas/scripts/cruzar.py out/analytics/yt-<conta>-<data>.json <ID>`
    (usa `roteiro/beats.json` alinhado e `data/words.json`; sem eles, só tempos).
-2. Leia nesta ordem: 0-3 s (gancho), 10 % e 25 %, as `maiores_quedas`, o final (>100 % em Shorts = replay/loop).
+2. Leia nesta ordem: **continuaram assistindo** (Shorts, Studio: a queda antes do 1º segundo, que a curva não
+   mostra), 0-3 s (gancho), 10 % e 25 %, as `maiores_quedas`, o final (>100 % em Shorts = replay/loop).
 3. Para cada queda: o que estava na tela e na fala (abra a keyframe do trecho:
    `$VF keyframes out/final_<formato>.mp4 -o out/metricas/kf --every 1`), causa provável **com evidência**, e a
    correção para o PRÓXIMO roteiro (padrão de `roteiro/templates/ganchos.md`, corte de explicação, virada mais cedo).

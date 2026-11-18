@@ -1,5 +1,5 @@
 //! `vf init type="short,long" platform="yt,tiktok"`: transforma a pasta atual num projeto da fábrica
-//! (esqueleto, templates do motor, áudio procedural, bibliotecas de FX de referência e o plugin ligado
+//! (esqueleto, templates do motor, áudio procedural, bibliotecas de FX de referência e as skills da fábrica em .claude/skills
 //! ao Claude Code). Nunca sobrescreve arquivos do usuário.
 use crate::kv::{self, Kv};
 use anyhow::{bail, Context, Result};
@@ -12,7 +12,7 @@ const FX_REFS: &[(&str, &str, &str)] = &[
     ("pixel-splats", "https://github.com/patch-gg/pixel-splats", "Apache-2.0"),
 ];
 
-pub const KNOWN: &[&str] = &["type", "types", "platform", "platforms", "motor", "idioma", "lang", "duracao", "canal", "dir", "install", "offline"];
+pub const KNOWN: &[&str] = &["type", "types", "platform", "platforms", "motor", "idioma", "lang", "duracao", "canal", "dir", "install", "offline", "plugin"];
 
 /// Raiz do plugin: $VF_ROOT, $CLAUDE_PLUGIN_ROOT ou <bin/vf>/.. (o link em ~/.local/bin é resolvido).
 pub fn plugin_root() -> Result<PathBuf> {
@@ -34,7 +34,15 @@ pub fn plugin_root() -> Result<PathBuf> {
 }
 
 pub fn run(args: &[String]) -> Result<()> {
-    let kv = Kv::parse(args, &["install", "offline"])?;
+    // `vf init skills`: (re)copia as skills da fábrica para o projeto atual (depois de atualizar o plugin)
+    if args.first().map(|a| a == "skills").unwrap_or(false) {
+        let root = plugin_root()?;
+        let dir = std::env::current_dir()?;
+        let n = instalar_skills(&root, &dir, true)?;
+        println!("{n} skill(s) atualizadas em {}", dir.join(".claude/skills").display());
+        return Ok(());
+    }
+    let kv = Kv::parse(args, &["install", "offline", "plugin"])?;
     kv.check_known(KNOWN)?;
     let root = plugin_root()?;
 
@@ -111,7 +119,7 @@ pub fn run(args: &[String]) -> Result<()> {
 
     // sons prontos: o kit de áudio procedural (MIT) vai para o projeto
     copy_missing(&root.join("skills/assets/templates/audio-procedural"), &dir.join("audio/procedural"))?;
-    claude_wiring(&root, &dir)?;
+    claude_wiring(&root, &dir, kv.flag("plugin"))?;
     if !kv.flag("offline") {
         fx_refs(&dir);
     }
@@ -124,8 +132,77 @@ pub fn run(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-/// Liga o plugin ao Claude Code desta pasta e deixa um CLAUDE.md curto (só se ainda não existirem).
-fn claude_wiring(root: &Path, dir: &Path) -> Result<()> {
+/// Skills da fábrica dentro do projeto (.claude/skills/<nome>/), que o Claude Code carrega sempre, sem
+/// depender de instalar o plugin. Nas cópias, ${CLAUDE_PLUGIN_ROOT} vira o caminho real da fábrica e
+/// "video-factory:<skill>" vira "<skill>" (skill de projeto não tem prefixo). `forcar` substitui as cópias.
+pub fn instalar_skills(root: &Path, dir: &Path, forcar: bool) -> Result<usize> {
+    let dst = dir.join(".claude/skills");
+    std::fs::create_dir_all(&dst)?;
+    let nomes: Vec<String> = std::fs::read_dir(root.join("skills"))?.flatten().filter(|e| e.path().join("SKILL.md").is_file()).map(|e| e.file_name().to_string_lossy().into_owned()).collect();
+    let raiz = root.display().to_string();
+    let mut n = 0;
+    for nome in &nomes {
+        let alvo = dst.join(nome);
+        if alvo.exists() {
+            if !forcar {
+                eprintln!("skill {nome} já existe em .claude/skills (mantida; atualize com vf init skills)");
+                continue;
+            }
+            std::fs::remove_dir_all(&alvo)?;
+        }
+        copiar_skill(&root.join("skills").join(nome), &alvo, &raiz, &nomes)?;
+        n += 1;
+    }
+    Ok(n)
+}
+
+fn copiar_skill(src: &Path, dst: &Path, raiz: &str, nomes: &[String]) -> Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for e in std::fs::read_dir(src)?.flatten() {
+        let (p, q) = (e.path(), dst.join(e.file_name()));
+        let nome = e.file_name().to_string_lossy().into_owned();
+        if nome == "node_modules" || nome == ".DS_Store" {
+            continue;
+        }
+        if p.is_dir() {
+            copiar_skill(&p, &q, raiz, nomes)?;
+            continue;
+        }
+        let texto = matches!(p.extension().and_then(|x| x.to_str()), Some("md" | "yaml" | "yml" | "mjs" | "js" | "ts" | "tsx" | "py" | "json" | "sh" | "txt" | "toml"));
+        match (texto, std::fs::read_to_string(&p)) {
+            (true, Ok(mut s)) => {
+                s = s.replace("${CLAUDE_PLUGIN_ROOT}", raiz).replace("$CLAUDE_PLUGIN_ROOT", raiz);
+                for n in nomes {
+                    s = s.replace(&format!("video-factory:{n}"), n);
+                }
+                std::fs::write(&q, s)?;
+            }
+            _ => {
+                std::fs::copy(&p, &q)?;
+            }
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            if let Ok(m) = std::fs::metadata(&p) {
+                let _ = std::fs::set_permissions(&q, std::fs::Permissions::from_mode(m.permissions().mode()));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Skills da fábrica no projeto (padrão) ou o plugin ligado (--plugin), e um CLAUDE.md curto.
+fn claude_wiring(root: &Path, dir: &Path, como_plugin: bool) -> Result<()> {
+    if !como_plugin {
+        let n = instalar_skills(root, dir, false)?;
+        eprintln!("{n} skill(s) da fábrica em {} (atualize depois com: vf init skills)", dir.join(".claude/skills").display());
+        let md = dir.join("CLAUDE.md");
+        if !md.exists() {
+            std::fs::write(&md, CLAUDE_MD.replace("__ROOT__", &root.display().to_string()))?;
+        }
+        return Ok(());
+    }
     let settings = dir.join(".claude/settings.json");
     if !settings.exists() {
         std::fs::create_dir_all(settings.parent().unwrap())?;
@@ -148,7 +225,9 @@ fn claude_wiring(root: &Path, dir: &Path) -> Result<()> {
 
 const CLAUDE_MD: &str = r#"# Projeto video-factory
 
-Este vídeo é gerenciado pela video-factory (plugin em `__ROOT__`). Estado em `factory.yaml`.
+Este vídeo é gerenciado pela video-factory (fábrica em `__ROOT__`). Estado em `factory.yaml`.
+Skills da fábrica em `.claude/skills/` (factory, roteiro, assets, animacao, edicao, analise, canal, metricas);
+para atualizar depois de atualizar a fábrica: `vf init skills`.
 
 - Comece e continue sempre pela skill `factory`: ela lê `factory.yaml` e conduz as etapas com a esteira de agentes.
 - Plataformas e formatos estão em `factory.yaml > plataformas/formatos`. Publicação: rascunho por padrão
@@ -156,6 +235,28 @@ Este vídeo é gerenciado pela video-factory (plugin em `__ROOT__`). Estado em `
 - Analíticos: `vf analytics platform=<p>` grava em `out/analytics/`; a skill `metricas` analisa e sugere metadata.
 - Bibliotecas de FX de referência em `ref/fx/` (pixelfx MIT, pixel-splats Apache-2.0); som procedural em `audio/procedural/`.
 "#;
+
+#[cfg(test)]
+mod skills_tests {
+    #[test]
+    fn copia_skills_com_caminho_real() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap();
+        let dir = std::env::temp_dir().join(format!("vf-init-skills-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let n = super::instalar_skills(&root, &dir, false).unwrap();
+        assert!(n >= 7, "{n}");
+        let f = std::fs::read_to_string(dir.join(".claude/skills/factory/SKILL.md")).unwrap();
+        assert!(!f.contains("CLAUDE_PLUGIN_ROOT") && f.contains(&root.display().to_string()));
+        assert!(!f.contains("video-factory:roteiro"));
+        assert!(dir.join(".claude/skills/assets/scripts/voz-chatterbox.py").is_file());
+        // sem forçar, não sobrescreve edição do usuário
+        std::fs::write(dir.join(".claude/skills/factory/SKILL.md"), "editado").unwrap();
+        assert_eq!(super::instalar_skills(&root, &dir, false).unwrap(), 0);
+        assert_eq!(std::fs::read_to_string(dir.join(".claude/skills/factory/SKILL.md")).unwrap(), "editado");
+        assert!(super::instalar_skills(&root, &dir, true).unwrap() >= 7);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
 
 fn copy_missing(src: &Path, dst: &Path) -> Result<()> {
     if !src.is_dir() {

@@ -33,7 +33,8 @@ Depois, na sessão: `/video-factory:factory novo meu-video --formato yt-short,ti
 mkdir meu-video && cd meu-video
 vf init type="short" platform="yt,tiktok"   # short | long | "short,long"
 vf auth platform="yt,tiktok"                # opcional: rascunho/postagem/agenda + analíticos (credenciais: skills/edicao/references/plataformas.md)
-claude                                      # o plugin já vem habilitado; peça o vídeo
+claude                                      # as skills já estão em .claude/skills; peça o vídeo
+vf init skills                              # depois de atualizar a fábrica: recopia as skills no projeto
 ```
 
 ## Estrutura
@@ -68,14 +69,14 @@ tests/synthetic.sh               # teste de integração (cortes em frames conhe
 | `vf mix data/edl.json -o public/audio/mix.wav` | voz + música com ducking + SFX numa passada |
 | `vf export <video> -f <formato> -o out.mp4 --audio mix.wav [--fit pad\|crop\|blur] [--fast]` | enquadramento, encode, loudnorm em 2 passadas, mux |
 | `vf qa <final.mp4> -f <formato> -o out/qa [--strict]` | specs, loudness, pretos/brancos/congelados/pops, planos, sheets densas |
-| `vf init type="short,long" platform="yt,tiktok"` | transforma a pasta atual num projeto da fábrica (esqueleto, templates do motor, som procedural, `ref/fx/` com pixelfx e pixel-splats, plugin ligado no `.claude/settings.json`); nunca sobrescreve arquivos |
+| `vf init type="short,long" platform="yt,tiktok"` | transforma a pasta atual num projeto da fábrica (esqueleto, templates do motor, som procedural, `ref/fx/` com pixelfx e pixel-splats, skills da fábrica em `.claude/skills/`; `vf init skills` recopia, `--plugin` liga o plugin em vez de copiar); nunca sobrescreve arquivos |
 | `vf auth platform="yt,tiktok" [account=…] [direct=1]` · `vf auth status` · `vf auth use` · `vf auth logout` | OAuth (PKCE, loopback) no YouTube e TikTok; tokens em `~/.config/vf/auth/` |
 | `vf publish <mp4> platform=yt\|tiktok [mode=rascunho\|privado\|nao-listado\|publico] [at=…] [meta=… thumb=…]` | longo ou Short: rascunho (padrão), posta ou agenda (YouTube publishAt; TikTok pela agenda local) |
 | `vf agenda [list\|run\|cancel id=\|install]` | posts agendados do TikTok (LaunchAgent a cada 5 min) |
 | `vf meta <ID> platform=yt meta=… [aplicar=1]` | corrige título/descrição/tags de vídeo já enviado (prévia antes × depois) |
 | `vf relatorio [video=ID] [janela=…] [filtros…]` | relatórios estilo Studio (individual e geral) em `.md`/`.json`/`.html` → `out/relatorios/` |
 | `vf analytics platform=yt\|tiktok [video=ID] [dias=28] [comentarios=1] [curva=1]` | canal, uploads, Shorts × longos, retenção, tráfego, curva por idade → `out/analytics/` (skill `metricas`) |
-| `vf studio instalar` · `vf studio metricas video=ID` · `vf studio mapear continuaram=…` | **extensão do Chrome** (`tools/vf-studio-ext`) que captura as métricas que o Studio carrega (ex.: "Continuaram assistindo"), sem tirar cookies do navegador; modo ativo gentil (1 página a cada 35-75 s, até 30 vídeos/dia) |
+| `vf studio instalar` · `vf studio resumo video=ID` · `vf studio metricas video=ID` | **extensão do Chrome** (`tools/vf-studio-ext`) que captura as métricas que o Studio carrega (ex.: "Continuaram assistindo"), sem tirar cookies do navegador; modo ativo gentil (1 página a cada 35-75 s, até 30 vídeos/dia) |
 | `vf voz <texto.txt> -o public/voice/voice.wav [--ref voz.wav]` | narração **local** com Chatterbox (pt-BR, clona a voz do canal de um WAV de referência, cache por frase, `--refazer N`) |
 | `vf formats` · `vf probe` · `vf doctor` | utilitários |
 
@@ -175,7 +176,7 @@ Cada relatório sai em `out/relatorios/` como `.md`, `.json` e `.html` (página 
 | ordem | `ordenar=views\|intencionais\|retencao\|avd\|pct\|horas\|inscritos\|likes\|comentarios\|shares\|engajamento\|publicado` · `ordem=desc\|asc` · `limite=N` · `max=200` (uploads lidos) |
 
 Limites do que a API entrega, avisados no próprio relatório:
-- **"Continuaram assistindo"** (Shorts: assistiram × deslizaram) não existe na API pública; o Studio calcula com dados internos do feed. Aparece como "—", a não ser com `studio=1` e dados capturados pela extensão do Chrome `vf studio` (não oficial; ver [plataformas.md](skills/edicao/references/plataformas.md#youtube-studio-extensão-do-chrome-vf-studio-não-oficial)).
+- **"Continuaram assistindo"** (Shorts: assistiram × deslizaram) não existe na API pública; o Studio calcula com dados internos do feed. Aparece como "—", a não ser quando há dados capturados pela extensão do Chrome `vf studio` (entram sozinhos, junto com impressões, CTR e a curva das primeiras horas; `studio=0` desliga) (não oficial; ver [plataformas.md](skills/edicao/references/plataformas.md#youtube-studio-extensão-do-chrome-vf-studio-não-oficial)).
 - A janela `dN` é por dia (a Analytics não tem hora): `d1` = dia da publicação. Vídeo mais novo que a janela sai "parcial" e fica fora da mediana.
 - A Analytics atrasa 24-72 h. Até lá, visualizações, gostei e comentários vêm em tempo real da Data API e o resto fica "—".
 - **TikTok**: visualizações, curtidas, comentários, compartilhamentos, duração e engajamento pela API normal. Tempo médio, **retenção média**, "assistiram até o fim", alcance e curva de retenção só com uma conta **TikTok Business** (Business ou Creator) autorizada em `vf auth platform=tiktok-biz` (experimental, ver [plataformas.md](skills/edicao/references/plataformas.md#tiktok-business-retenção-experimental)).

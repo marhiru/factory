@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Se a Terra parasse de girar...</title>
+<style>
+.viz-root{color-scheme:light;--surface-1:#fcfcfb;--surface-2:#f3f2ef;--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#76756f;--grid:#e4e3de;--series-1:#2a78d6;--series-1-soft:#cde2fb}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root{color-scheme:dark;--surface-1:#1a1a19;--surface-2:#242423;--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#9a998f;--grid:#33332f;--series-1:#3987e5;--series-1-soft:#1c3556}}
+:root[data-theme="dark"] .viz-root{color-scheme:dark;--surface-1:#1a1a19;--surface-2:#242423;--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#9a998f;--grid:#33332f;--series-1:#3987e5;--series-1-soft:#1c3556}
+html,body{margin:0}
+.viz-root{background:var(--surface-1);color:var(--text-primary);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{max-width:1180px;margin:0 auto;padding:32px 24px 64px}
+h1{font-size:24px;margin:0 0 8px} h2{font-size:18px;margin:32px 0 12px}
+p{color:var(--text-secondary);margin:8px 0} a{color:var(--series-1)}
+.tw{overflow-x:auto} table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{color:var(--text-secondary);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface-1)}
+td:not(:first-child),th:not(:first-child){text-align:right}
+.lista td:nth-child(2),.lista th:nth-child(2){text-align:left;white-space:normal;min-width:220px}
+tbody tr:hover{background:var(--surface-2)}
+.chart{position:relative;margin:8px 0 24px} .chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--text-muted);font-size:12px} .axis line,.grid line{stroke:var(--grid)}
+.tip{position:absolute;pointer-events:none;background:var(--surface-2);color:var(--text-primary);border:1px solid var(--grid);border-radius:6px;padding:6px 9px;font-size:13px;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.tip b{font-weight:650} .tip span{color:var(--text-secondary)}
+ul{color:var(--text-secondary)} code{font-size:13px}
+</style></head>
+<body><div class="viz-root"><main>
+<h1>Se a Terra parasse de girar...</h1>
+<p>YouTube · https://youtu.be/rGHJYQ4cTNs · short? · publicado 2026-11-17 · duração 1:40 · principal (Freakyy)</p>
+<div id="graf"></div>
+
+<h2>Desempenho por janela</h2>
+<div class="tw"><table><thead><tr><th>Métrica</th><th>primeiro dia</th><th>3 primeiros dias (parcial)</th><th>7 primeiros dias (parcial)</th><th>28 primeiros dias (parcial)</th><th>desde a publicação</th><th>Mediana short (total)</th></tr></thead><tbody>
+<tr><td>Visualizações</td><td>—</td><td>794</td><td>794</td><td>794</td><td>794</td><td>—</td></tr>
+<tr><td>Visualizações intencionais</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Continuaram assistindo</td><td>—</td><td>—</td><td>—</td><td>—</td><td>53,07%</td><td>só no Studio</td></tr>
+<tr><td>Duração média da visualização</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Porcentagem visualizada média</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Retenção média (curva)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Tempo de exibição (horas)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Marcações com &quot;Gostei&quot;</td><td>—</td><td>30</td><td>30</td><td>30</td><td>30</td><td>—</td></tr>
+<tr><td>Inscritos gerados</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Comentários adicionados</td><td>—</td><td>3</td><td>3</td><td>3</td><td>3</td><td>—</td></tr>
+<tr><td>Compartilhamentos</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody></table></div>
+<p>Medianas por janela (vídeos do mesmo tipo, completos):</p>
+<div class="tw"><table><thead><tr><th>Janela</th><th>n</th><th>Views</th><th>Intencionais</th><th>% vista</th><th>Retenção média</th></tr></thead><tbody>
+<tr><td>primeiro dia</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>3 primeiros dias</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>7 primeiros dias</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>28 primeiros dias</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>desde a publicação</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody></table></div>
+<h2>Retenção</h2>
+<p>Sem curva de retenção (vídeo sem views na janela, ou a Analytics ainda não tem dados).</p>
+<h2>Notas</h2>
+<ul><li>studio=1: linhas mapeadas vêm da API INTERNA do Studio (não oficial), na janela da consulta capturada.</li><li>Analytics ainda sem dados para este vídeo (atraso de 24-72 h): visualizações, gostei e comentários vêm da Data API em tempo real; as demais linhas ficam &quot;—&quot; até a Analytics processar.</li><li>vídeo com menos de 3 dias: a Analytics atrasa 24-72 h, números ainda parciais</li></ul>
+
+</main></div>
+<script type="application/json" id="dados">{"arquivo":"yt-principal-rGHJYQ4cTNs-d1_d3_d7_d28_total-2026-11-17","avisos":["studio=1: linhas mapeadas vêm da API INTERNA do Studio (não oficial), na janela da consulta capturada.","Analytics ainda sem dados para este vídeo (atraso de 24-72 h): visualizações, gostei e comentários vêm da Data API em tempo real; as demais linhas ficam \"—\" até a Analytics processar.","vídeo com menos de 3 dias: a Analytics atrasa 24-72 h, números ainda parciais"],"beats":null,"canal":"Freakyy","conta":"principal","gerado":"2026-11-17T23:19:00Z","janelas":[{"continuaram":null,"fim":"2026-11-17","inicio":"2026-11-17","janela":"d1","janela_nome":"primeiro dia","sem_analytics":true},{"comentarios":3.0,"continuaram":null,"fim":"2026-11-17","inicio":"2026-11-17","janela":"d3","janela_nome":"3 primeiros dias","likes":30.0,"parcial":"1 de 3 dias","sem_analytics":true,"tempo_real":true,"views":794.0},{"comentarios":3.0,"continuaram":null,"fim":"2026-11-17","inicio":"2026-11-17","janela":"d7","janela_nome":"7 primeiros dias","likes":30.0,"parcial":"1 de 7 dias","sem_analytics":true,"tempo_real":true,"views":794.0},{"comentarios":3.0,"continuaram":null,"fim":"2026-11-17","inicio":"2026-11-17","janela":"d28","janela_nome":"28 primeiros dias","likes":30.0,"parcial":"1 de 28 dias","sem_analytics":true,"tempo_real":true,"views":794.0},{"comentarios":3.0,"continuaram":53.06999999999999,"fim":"2026-11-17","fonte_studio":true,"inicio":"2026-11-17","janela":"total","janela_nome":"desde a publicação","likes":30.0,"sem_analytics":true,"tempo_real":true,"views":794.0}],"medianas":{"d1":{"avd":null,"comentarios":null,"continuaram":null,"horas":null,"inscritos":null,"intencionais":null,"likes":null,"n":0,"pct":null,"retencao_media":null,"shares":null,"views":null},"d28":{"avd":null,"comentarios":null,"continuaram":null,"horas":null,"inscritos":null,"intencionais":null,"likes":null,"n":0,"pct":null,"retencao_media":null,"shares":null,"views":null},"d3":{"avd":null,"comentarios":null,"continuaram":null,"horas":null,"inscritos":null,"intencionais":null,"likes":null,"n":0,"pct":null,"retencao_media":null,"shares":null,"views":null},"d7":{"avd":null,"comentarios":null,"continuaram":null,"horas":null,"inscritos":null,"intencionais":null,"likes":null,"n":0,"pct":null,"retencao_media":null,"shares":null,"views":null},"total":{"avd":null,"comentarios":null,"continuaram":null,"horas":null,"inscritos":null,"intencionais":null,"likes":null,"n":0,"pct":null,"retencao_media":null,"shares":null,"views":null}},"pares":0,"plataforma":"yt","principal":"total","publicado":"2026-11-17T19:13:31Z","tipo_pares":"short","tipo_relatorio":"video","trafego":[],"video":{"agendado_para":null,"categoria":"22","descricao":"O chão para. Você, o café e o gato continuam indo. \n\nDescubra o que aconteceria se a Terra parasse de girar — e por que uma freada de ônibus explica tudo.\n\n#shorts #ciencia  #terra  #física  #curiosidades #shortsfeed","duracao_s":100.0,"id":"rGHJYQ4cTNs","idioma":"pt-PT","idioma_audio":"pt-PT","privacidade":"public","publicado":"2026-11-17T19:13:31Z","publicado_ts":1794942811,"tags":["shorts","historia","foryou","ciencia","curiosidades"],"thumb":"https://i.ytimg.com/vi/rGHJYQ4cTNs/maxresdefault.jpg","tipo":"short?","titulo":"Se a Terra parasse de girar...","total":{"comentarios":3.0,"likes":30.0,"views":794.0},"url":"https://youtu.be/rGHJYQ4cTNs"}}</script>
+<script>
+(function(){
+const R=JSON.parse(document.getElementById('dados').textContent);
+const NS='http://www.w3.org/2000/svg';
+const pct=v=>(v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+const seg=s=>{s=Math.round(s);return s<60?s+' s':Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function tipBox(wrap){const t=document.createElement('div');t.className='tip';wrap.appendChild(t);return t}
+function fill(t,valor,rotulo){t.textContent='';const b=document.createElement('b');b.textContent=valor;const s=document.createElement('span');s.textContent=' '+rotulo;t.append(b,s)}
+const g=document.getElementById('graf');
+// curva de retenção (individual)
+let ret=null;
+if(R.tipo_relatorio==='video'){const c=(R.janelas||[]).find(j=>j.janela===R.principal)||{};ret=c.retencao||(c.m&&c.m.retencao)||null}
+if(ret&&ret.curva&&ret.curva.length>1){
+  const h=document.createElement('h2');h.textContent='Curva de retenção';g.appendChild(h);
+  const wrap=document.createElement('div');wrap.className='chart';g.appendChild(wrap);
+  const W=900,H=300,L=48,B=28,T=10,Rr=12,pts=ret.curva;
+  const maxY=Math.max(1,...pts.map(p=>p.assistindo))*1.05,maxX=pts[pts.length-1].s||1;
+  const x=s=>L+(W-L-Rr)*s/maxX,y=v=>T+(H-T-B)*(1-v/maxY);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Curva de retenção: fração da audiência ainda assistindo em cada ponto do vídeo'},wrap);
+  const gr=el('g',{class:'grid'},svg);
+  for(let k=0;k<=4;k++){const v=maxY*k/4;el('line',{x1:L,x2:W-Rr,y1:y(v),y2:y(v)},gr);const tx=el('text',{x:L-8,y:y(v)+4,'text-anchor':'end'},svg);tx.textContent=pct(v)}
+  for(let k=0;k<=5;k++){const s=maxX*k/5;const tx=el('text',{x:x(s),y:H-8,'text-anchor':'middle'},svg);tx.textContent=seg(s)}
+  const d=pts.map((p,i)=>(i?'L':'M')+x(p.s).toFixed(1)+' '+y(p.assistindo).toFixed(1)).join(' ');
+  el('path',{d:d+` L${x(maxX)} ${y(0)} L${x(0)} ${y(0)} Z`,fill:'var(--series-1-soft)',opacity:.6},svg);
+  el('path',{d,fill:'none',stroke:'var(--series-1)','stroke-width':2,'stroke-linejoin':'round'},svg);
+  const hair=el('line',{y1:T,y2:H-B,stroke:'var(--text-muted)','stroke-width':1,visibility:'hidden'},svg);
+  const dot=el('circle',{r:5,fill:'var(--series-1)',stroke:'var(--surface-1)','stroke-width':2,visibility:'hidden'},svg);
+  const tip=tipBox(wrap);
+  const hit=el('rect',{x:L,y:T,width:W-L-Rr,height:H-T-B,fill:'transparent'},svg);
+  hit.addEventListener('pointermove',ev=>{const r=svg.getBoundingClientRect();const sx=(ev.clientX-r.left)*W/r.width;const s=(sx-L)/(W-L-Rr)*maxX;
+    let best=pts[0];for(const p of pts)if(Math.abs(p.s-s)<Math.abs(best.s-s))best=p;
+    hair.setAttribute('x1',x(best.s));hair.setAttribute('x2',x(best.s));dot.setAttribute('cx',x(best.s));dot.setAttribute('cy',y(best.assistindo));
+    hair.setAttribute('visibility','visible');dot.setAttribute('visibility','visible');
+    fill(tip,pct(best.assistindo),'ainda assistindo em '+seg(best.s)+(best.relativa!=null?' · relativa '+best.relativa.toLocaleString('pt-BR',{maximumFractionDigits:2}):''));
+    tip.style.display='block';const px=x(best.s)*r.width/W,py=y(best.assistindo)*r.height/H;tip.style.left=Math.min(px+12,r.width-tip.offsetWidth)+'px';tip.style.top=Math.max(0,py-40)+'px'});
+  hit.addEventListener('pointerleave',()=>{tip.style.display='none';hair.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden')});
+}
+// barras de retenção média por vídeo (geral)
+if(R.tipo_relatorio==='geral'){
+  const its=(R.itens||[]).filter(i=>i.m&&i.m.retencao_media!=null).sort((a,b)=>b.m.retencao_media-a.m.retencao_media).slice(0,30);
+  if(its.length){
+    const h=document.createElement('h2');h.textContent='Retenção média por vídeo'+(its.length===30?' (30 primeiros)':'');g.appendChild(h);
+    const wrap=document.createElement('div');wrap.className='chart';g.appendChild(wrap);
+    const W=900,row=24,L=300,Rr=70,H=its.length*row+8,maxV=Math.max(...its.map(i=>i.m.retencao_media),0.01);
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Retenção média de cada vídeo, do maior para o menor'},wrap);
+    const tip=tipBox(wrap);
+    its.forEach((it,k)=>{const yy=k*row+4,w=Math.max(2,(W-L-Rr)*it.m.retencao_media/maxV);
+      const lb=el('text',{x:L-10,y:yy+15,'text-anchor':'end'},svg);const tt=(it.titulo||it.id||'');lb.textContent=tt.length>42?tt.slice(0,41)+'…':tt;
+      const bar=el('rect',{x:L,y:yy+2,width:w,height:row-8,rx:4,fill:'var(--series-1)'},svg);
+      const v=el('text',{x:L+w+6,y:yy+15},svg);v.textContent=pct(it.m.retencao_media);
+      const hit=el('rect',{x:0,y:yy,width:W,height:row,fill:'transparent'},svg);
+      hit.addEventListener('pointermove',ev=>{const r=wrap.getBoundingClientRect();fill(tip,pct(it.m.retencao_media),'retenção média · '+(it.m.views||0).toLocaleString('pt-BR')+' views · '+tt);
+        tip.style.display='block';tip.style.left=Math.min(ev.clientX-r.left+12,r.width-tip.offsetWidth)+'px';tip.style.top=(ev.clientY-r.top-36)+'px'});
+      hit.addEventListener('pointerleave',()=>{tip.style.display='none'});
+    });
+  }
+}
+// tabelas ordenáveis (clique no cabeçalho)
+const num=s=>{const t=s.replace(/[^0-9,−+\-:]/g,'');if(t.includes(':')){return t.split(':').reduce((a,b)=>a*60+(+b||0),0)}const n=parseFloat(t.replace(/\./g,'').replace(',','.').replace('−','-'));return isNaN(n)?null:n};
+document.querySelectorAll('table').forEach(tb=>{const ths=tb.querySelectorAll('th');ths.forEach((th,ci)=>{let asc=false;th.title='ordenar';th.addEventListener('click',()=>{
+  const body=tb.tBodies[0];const rows=[...body.rows];const fixos=rows.filter(r=>/Total|Mediana/.test(r.cells[1]?r.cells[1].textContent:''));const mov=rows.filter(r=>!fixos.includes(r));
+  asc=!asc;mov.sort((a,b)=>{const x=a.cells[ci].textContent,y=b.cells[ci].textContent,nx=num(x),ny=num(y);const c=(nx!=null&&ny!=null)?nx-ny:x.localeCompare(y,'pt-BR');return asc?c:-c});
+  [...mov,...fixos].forEach(r=>body.appendChild(r))})})});
+})();
+</script></body></html>

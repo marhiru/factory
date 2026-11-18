@@ -175,6 +175,8 @@ fn esc_html(s: &str) -> String {
 /// linhas da tabela "Desempenho" (chave no JSON, rótulo como no Studio, formato)
 const YT_LINHAS: &[(&str, &str, Fmt)] = &[
     ("views", "Visualizações", Fmt::Int),
+    ("impressoes", "Impressões", Fmt::Int),
+    ("ctr", "Taxa de cliques das impressões", Fmt::Pct),
     ("intencionais", "Visualizações intencionais", Fmt::Int),
     ("continuaram", "Continuaram assistindo", Fmt::Pct),
     ("avd", "Duração média da visualização", Fmt::Dur),
@@ -511,13 +513,15 @@ fn slug(s: &str) -> String {
 fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Filtros, max: usize) -> Result<Vec<Value>> {
     let (conta, t) = auth::token("yt", acct)?;
     // studio=1: completa com a API interna do Studio (vf studio), sessão do mesmo apelido
-    let studio = kv.flag("studio");
+    // dados do Studio (extensão vf studio) entram sozinhos quando existem; studio=0 desliga
+    let studio = !matches!(kv.get("studio"), Some("0" | "false" | "nao" | "não"));
     let b = pf::bearer(&t);
     let agora = tempo::now();
     let mut avisos = vec!["\"Continuaram assistindo\" (assistiram × deslizaram) só existe no YouTube Studio: a API pública não fornece.".to_string()];
     let ch = pf::yt_get(&b, "channels", &[("part", "snippet,contentDetails"), ("mine", "true")]).context("YouTube Data API: ler o canal")?;
     let it = ch.pointer("/items/0").cloned().context("essa conta Google não tem canal do YouTube")?;
     let canal = it.pointer("/snippet/title").and_then(|x| x.as_str()).unwrap_or("").to_string();
+    let canal_id = it["id"].as_str().unwrap_or("").to_string();
     let uploads = it.pointer("/contentDetails/relatedPlaylists/uploads").and_then(|x| x.as_str()).unwrap_or("").to_string();
 
     // uploads (base dos filtros e das medianas)
@@ -568,22 +572,42 @@ fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Fi
                 m["janela_nome"] = json!(j.nome());
                 m
             }).collect();
-            if studio {
-                // a consulta capturada no Studio tem o período dela: entra na janela principal
-                let extra = crate::studio::linhas_mapeadas(&conta, id);
-                if extra.is_empty() {
-                    avisos.push(format!("studio=1: nada mapeado para {id} (vf studio status; vf studio buscar video={id}; vf studio mapear continuaram=<MÉTRICA>)"));
-                }
+            let pub_ts = v["publicado_ts"].as_i64().unwrap_or(agora);
+            let res = if studio { crate::studio_dados::resumo(id) } else { None };
+            let mut horas_iniciais = Value::Null;
+            if let Some(r) = &res {
+                // Studio completa a janela principal: o que a API não tem (impressões, CTR, continuaram) e o que
+                // ela ainda não processou (gostei, inscritos, horas, duração média)
+                let mut usados = Vec::new();
                 if let Some(c) = colunas.iter_mut().find(|c| c["janela"] == principal.chave().as_str()) {
-                    for (k, val) in extra {
-                        // taxas que o Studio entrega como fração viram %
-                        let x = val.as_f64().unwrap_or(0.0);
-                        c[k.as_str()] = json!(if k == "continuaram" && x <= 1.0 { x * 100.0 } else { x });
+                    for (de, para, sempre) in [("continuaram", "continuaram", true), ("impressoes", "impressoes", true), ("ctr", "ctr", true), ("gostei", "likes", false), ("inscritos", "inscritos", false), ("horas", "horas", false), ("avd", "avd", false)] {
+                        if let Some(x) = r["metricas"][de]["valor"].as_f64() {
+                            if sempre || get(c, para).is_none() {
+                                c[para] = json!(x);
+                                usados.push(para);
+                            }
+                        }
                     }
-                    c["fonte_studio"] = json!(true);
+                    for (k, val) in crate::studio::linhas_mapeadas(&conta, id) {
+                        if get(c, &k).is_none() {
+                            c[k.as_str()] = val;
+                        }
+                    }
                 }
                 avisos.retain(|a| !a.starts_with("\"Continuaram assistindo\""));
-                avisos.push("studio=1: linhas mapeadas vêm da API INTERNA do Studio (não oficial), na janela da consulta capturada.".into());
+                avisos.push(format!(
+                    "Studio (extensão vf studio, não oficial; capturado {}): {} na coluna \"{}\".{}",
+                    r["atualizado"].as_str().unwrap_or("").get(..16).unwrap_or("").replace('T', " "),
+                    if usados.is_empty() { "nenhuma linha".to_string() } else { usados.join(", ") },
+                    principal.nome(),
+                    r["processando"].as_array().filter(|a| !a.is_empty()).map(|a| format!(" Ainda processando no Studio: {}.", a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join(", "))).unwrap_or_default()
+                ));
+                horas_iniciais = crate::studio_dados::primeiras_horas(r, pub_ts, agora);
+                if horas_iniciais["cobre"] == false {
+                    avisos.push(format!("primeiras horas: {}", horas_iniciais["motivo"].as_str().unwrap_or("")));
+                }
+            } else if studio {
+                avisos.push(format!("sem dados do Studio para {id}: com a extensão vf studio, abra as análises do vídeo no Studio (de preferência nas primeiras 48 h, para ter a curva por hora)"));
             }
             // pares: mesmo tipo, públicos, os 30 mais recentes
             let pares: Vec<Value> = todos.iter().filter(|x| x["id"] != id.as_str() && publico(x) && x["tipo"].as_str().unwrap_or("").trim_end_matches('?') == tipo).take(30).cloned().collect();
@@ -593,7 +617,18 @@ fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Fi
                 meds.insert(j.chave(), medianas(&itens.iter().collect::<Vec<_>>(), YT_LINHAS));
             }
             let pid = v["publicado"].as_str().unwrap_or("");
-            let pub_ts = v["publicado_ts"].as_i64().unwrap_or(agora);
+            // primeiras horas dos pares (mesmo tipo) com captura do Studio: mediana para comparar
+            let mut horas_med = serde_json::Map::new();
+            if studio && horas_iniciais.is_object() {
+                let ph: Vec<Value> = pares.iter().filter_map(|x| {
+                    let r = crate::studio_dados::resumo(x["id"].as_str()?)?;
+                    Some(crate::studio_dados::primeiras_horas(&r, x["publicado_ts"].as_i64()?, agora))
+                }).filter(|p| p["cobre"] == true).collect();
+                for k in ["h1", "h3", "h6", "h12", "h24", "h48"] {
+                    horas_med.insert(k.into(), json!(median(ph.iter().filter_map(|p| p[k].as_f64()).collect())));
+                }
+                horas_med.insert("n".into(), json!(ph.len()));
+            }
             let (ini, fim, _) = principal.faixa(pub_ts, agora);
             let trafego = yt_trafego(&b, id, &ini, &fim);
             let beats = kv.get("beats").and_then(|p| std::fs::read(p).ok()).and_then(|r| serde_json::from_slice::<Value>(&r).ok());
@@ -610,7 +645,8 @@ fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Fi
                 "tipo_relatorio": "video", "plataforma": "yt", "conta": conta, "canal": canal, "gerado": tempo::rfc3339(agora),
                 "arquivo": format!("yt-{}-{}-{}-{}", slug(&conta), slug(id), janelas.iter().map(|j| j.chave()).collect::<Vec<_>>().join("_").replace("..", "-"), today()),
                 "video": v, "publicado": pid, "janelas": colunas, "principal": principal.chave(), "medianas": meds,
-                "pares": pares.len(), "tipo_pares": tipo, "trafego": trafego, "beats": beats, "avisos": avisos.clone()
+                "pares": pares.len(), "tipo_pares": tipo, "trafego": trafego, "beats": beats, "avisos": avisos.clone(),
+                "studio": res.as_ref().map(enxuto), "primeiras_horas": horas_iniciais, "primeiras_horas_mediana": Value::Object(horas_med)
             }));
         }
         return Ok(rels);
@@ -624,7 +660,22 @@ fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Fi
         avisos.push("nenhum vídeo público passou nos filtros".into());
     }
     let mut itens: Vec<Value> = base.par_iter().map(|v| {
-        let m = yt_linha(&b, v, &j, agora, true);
+        let mut m = yt_linha(&b, v, &j, agora, true);
+        // Studio: continuaram, impressões, CTR e views nas primeiras 24 h (quando houver captura)
+        if studio {
+            if let Some(r) = v["id"].as_str().and_then(crate::studio_dados::resumo) {
+                for k in ["continuaram", "impressoes", "ctr"] {
+                    if let Some(x) = r["metricas"][k]["valor"].as_f64() {
+                        m[k] = json!(x);
+                    }
+                }
+                if let Some(pt) = v["publicado_ts"].as_i64() {
+                    let ph = crate::studio_dados::primeiras_horas(&r, pt, agora);
+                    m["h1"] = ph["h1"].clone();
+                    m["h24"] = ph["h24"].clone();
+                }
+            }
+        }
         json!({ "id": v["id"], "titulo": v["titulo"], "tipo": v["tipo"], "publicado": v["publicado"], "publicado_ts": v["publicado_ts"], "duracao_s": v["duracao_s"], "url": v["url"], "m": m })
     }).collect();
     for x in &itens {
@@ -645,18 +696,45 @@ fn yt(kv: &Kv, acct: Option<&str>, videos: &[String], janelas: &[Janela], f: &Fi
     }
     let totais = {
         let mut t = serde_json::Map::new();
-        for k in ["views", "intencionais", "horas", "likes", "inscritos", "comentarios", "shares"] {
-            t.insert(k.into(), json!(itens.iter().map(|x| num(&x["m"], k)).sum::<f64>()));
+        for k in ["views", "intencionais", "horas", "likes", "inscritos", "comentarios", "shares", "impressoes", "h1", "h24"] {
+            // só soma colunas que algum vídeo tem (vazio continua "—", não 0)
+            if itens.iter().any(|x| get(&x["m"], k).is_some()) {
+                t.insert(k.into(), json!(itens.iter().filter_map(|x| get(&x["m"], k)).sum::<f64>()));
+            }
         }
         Value::Object(t)
     };
-    let por_tipo = |tp: &str| medianas(&itens.iter().filter(|x| x["tipo"].as_str().unwrap_or("").starts_with(tp)).collect::<Vec<_>>(), YT_LINHAS);
+    let por_tipo = |tp: &str| {
+        let sel: Vec<&Value> = itens.iter().filter(|x| x["tipo"].as_str().unwrap_or("").starts_with(tp)).collect();
+        let mut m = medianas(&sel, YT_LINHAS);
+        for k in ["h1", "h24"] {
+            m[k] = json!(median(sel.iter().filter_map(|x| get(&x["m"], k)).collect()));
+        }
+        m
+    };
+    let canal_studio = if studio && !canal_id.is_empty() { crate::studio_dados::resumo(&format!("canal_{canal_id}")).map(|r| enxuto(&r)) } else { None };
+    if studio && itens.iter().any(|x| get(&x["m"], "continuaram").is_some() || get(&x["m"], "h24").is_some()) {
+        avisos.retain(|a| !a.starts_with("\"Continuaram assistindo\""));
+        avisos.push("colunas Continuaram, Impressões, CTR, 1ª hora e 24 h vêm do Studio (extensão vf studio, não oficial) quando há captura do vídeo.".into());
+    }
     Ok(vec![json!({
         "tipo_relatorio": "geral", "plataforma": "yt", "conta": conta, "canal": canal, "gerado": tempo::rfc3339(agora),
         "arquivo": format!("yt-{}-geral-{}-{}", slug(&conta), j.chave().replace("..", "-"), today()),
         "janela": j.chave(), "janela_nome": j.nome(), "filtros": f.descricao(), "itens": itens, "totais": totais,
-        "medianas": { "short": por_tipo("short"), "longo": por_tipo("longo") }, "avisos": avisos
+        "medianas": { "short": por_tipo("short"), "longo": por_tipo("longo") }, "avisos": avisos,
+        "studio_canal": canal_studio, "colunas_extra": [["h1", "Views 1ª h"], ["h24", "Views 24 h"]]
     })])
+}
+
+/// resumo do Studio sem o que pesa (cartões crus e série por minuto)
+fn enxuto(r: &Value) -> Value {
+    let mut r = r.clone();
+    if let Some(o) = r.as_object_mut() {
+        let cartoes: Vec<Value> = o.get("cartoes").and_then(|c| c.as_object()).map(|c| c.iter().filter(|(_, x)| !x["sem_dados"].as_bool().unwrap_or(false)).map(|(k, x)| json!({ "chave": k, "titulo": x["titulo"], "texto": x["texto"], "periodo": x["periodo"], "pares": x["pares"], "barras": x["barras"] })).collect()).unwrap_or_default();
+        o.insert("cartoes".into(), json!(cartoes));
+        o.remove("por_minuto");
+    }
+    r
 }
 
 fn today() -> String {
@@ -911,7 +989,32 @@ pub fn markdown(rel: &Value) -> String {
         } else {
             o += "Sem curva de retenção (vídeo sem views na janela, ou a Analytics ainda não tem dados).\n";
         }
+        // primeiras horas (série por hora do Studio)
+        let ph = &rel["primeiras_horas"];
+        if ph["cobre"] == true {
+            let med = &rel["primeiras_horas_mediana"];
+            let n = med["n"].as_u64().unwrap_or(0);
+            o += &format!("\n## Primeiras horas (Studio)\n\nVisualizações acumuladas desde a publicação{}.\n\n| Desde a publicação | Views | Mediana {} (n={n}) | Δ |\n|---|---|---|---|\n",
+                ph["pico_hora"].as_i64().map(|h| format!("; pico na {h}ª hora ({} views)", fmt_n(num(ph, "pico_views")))).unwrap_or_default(), rel["tipo_pares"].as_str().unwrap_or(""));
+            for (k, nome) in [("h1", "1ª hora"), ("h3", "3 horas"), ("h6", "6 horas"), ("h12", "12 horas"), ("h24", "24 horas"), ("h48", "48 horas")] {
+                let v = get(ph, k);
+                if v.is_none() && get(med, k).is_none() {
+                    continue;
+                }
+                o += &format!("| {nome} | {} | {} | {} |\n", fmtv(v, Fmt::Int), fmtv(get(med, k), Fmt::Int), v.map(|x| delta(x, get(med, k))).unwrap_or("—".into()));
+            }
+        }
         // tráfego
+        let tr_studio = rel["studio"]["trafego"].as_array().filter(|a| !a.is_empty()).or(rel["studio"]["trafego_48h"].as_array().filter(|a| !a.is_empty()));
+        if rel["trafego"].as_array().map(|a| a.is_empty()).unwrap_or(true) {
+            if let Some(tr) = tr_studio {
+                let per = if rel["studio"]["trafego"].as_array().is_some_and(|a| !a.is_empty()) { "desde a publicação" } else { "últimas 48 h" };
+                o += &format!("\n## Fontes de tráfego (Studio, {per})\n\n| Fonte | % |\n|---|---|\n");
+                for x in tr {
+                    o += &format!("| {} | {} |\n", esc_md(x[0].as_str().unwrap_or("")), fmtv(x[1].as_f64(), Fmt::Pct));
+                }
+            }
+        }
         if let Some(tr) = rel["trafego"].as_array().filter(|a| !a.is_empty()) {
             o += "\n## Fontes de tráfego\n\n| Fonte | Views | % |\n|---|---|---|\n";
             if tr[0].get("insightTrafficSourceType").is_some() {
@@ -929,11 +1032,27 @@ pub fn markdown(rel: &Value) -> String {
                 }
             }
         }
+        for (k, nome) in [("geografias", "Principais geografias"), ("demografia", "Principal grupo demográfico")] {
+            if let Some(l) = rel["studio"][k].as_array().filter(|a| !a.is_empty()) {
+                o += &format!("\n## {nome} (Studio)\n\n| | % |\n|---|---|\n");
+                for x in l.iter().take(10) {
+                    o += &format!("| {} | {} |\n", esc_md(x[0].as_str().unwrap_or("")), fmtv(x[1].as_f64(), Fmt::Pct));
+                }
+            }
+        }
     } else {
         let titulo = format!("Relatório geral — {} · {}", rel["canal"].as_str().or(rel["conta"].as_str()).unwrap_or(""), plat);
         o += &format!("# {titulo}\n\nJanela: **{}** · gerado {} · {} · filtros: {}\n\n", rel["janela_nome"].as_str().unwrap_or(""), rel["gerado"].as_str().unwrap_or("").get(..10).unwrap_or(""), rel["conta"].as_str().unwrap_or(""), rel["filtros"].as_str().unwrap_or(""));
         let itens = rel["itens"].as_array().cloned().unwrap_or_default();
-        let cols: Vec<&(&str, &str, Fmt)> = linhas.iter().filter(|l| l.0 != "continuaram").collect();
+        // colunas que só existem com Studio aparecem só se algum vídeo tiver o dado
+        let tem = |k: &str| itens.iter().any(|x| get(&x["m"], k).is_some());
+        let mut cols: Vec<(String, String, Fmt)> = linhas.iter().filter(|l| !matches!(l.0, "continuaram" | "impressoes" | "ctr" | "alcance" | "ate_o_fim") || tem(l.0)).map(|l| (l.0.to_string(), l.1.to_string(), l.2)).collect();
+        for e in rel["colunas_extra"].as_array().into_iter().flatten() {
+            let k = e[0].as_str().unwrap_or("");
+            if tem(k) {
+                cols.push((k.to_string(), e[1].as_str().unwrap_or(k).to_string(), Fmt::Int));
+            }
+        }
         o += &format!("{} vídeo(s)\n\n| # | Vídeo | Tipo | Publicado |", itens.len());
         for (_, l, _) in &cols {
             o += &format!(" {} |", curto(l));
@@ -963,6 +1082,28 @@ pub fn markdown(rel: &Value) -> String {
                 o += &format!(" {} |", fmtv(get(&m, k), *f));
             }
             o += "\n";
+        }
+        // canal no Studio (páginas de análise do canal capturadas pela extensão)
+        if let Some(c) = rel["studio_canal"].as_object() {
+            o += &format!("\n## Canal no Studio (capturado {})\n\n", c.get("atualizado").and_then(|x| x.as_str()).unwrap_or("").get(..16).unwrap_or("").replace('T', " "));
+            for (k, nome, f) in [("continuaram", "Continuaram assistindo (Shorts)", Fmt::Pct), ("ignorado", "Ignorado (Shorts)", Fmt::Pct), ("impressoes", "Impressões", Fmt::Int), ("ctr", "CTR", Fmt::Pct)] {
+                if let Some(x) = c.get("metricas").and_then(|m| m[k]["valor"].as_f64()) {
+                    o += &format!("- **{nome}:** {}{}\n", fmtv(Some(x), f), c["metricas"][k]["periodo"].as_str().map(|p| format!(" ({p})")).unwrap_or_default());
+                }
+            }
+            for card in c.get("cartoes").and_then(|x| x.as_array()).into_iter().flatten() {
+                let titulo = card["titulo"].as_str().unwrap_or("");
+                if titulo.is_empty() {
+                    continue;
+                }
+                let lista: Vec<String> = card["barras"].as_array().filter(|b| b.iter().any(|x| x[0].as_str().is_some_and(|s| !s.is_empty()))).or(card["pares"].as_array()).into_iter().flatten().take(6)
+                    .map(|x| format!("{} {}", x[0].as_str().unwrap_or(""), x[1].as_f64().map(|v| fmt_dec(v, 1)).unwrap_or_default())).collect();
+                let valor = card["texto"].as_str().unwrap_or("");
+                if lista.is_empty() && valor.is_empty() {
+                    continue;
+                }
+                o += &format!("- **{}**{}: {}{}\n", esc_md(titulo), card["periodo"].as_str().map(|p| format!(" ({p})")).unwrap_or_default(), esc_md(valor), if lista.is_empty() { String::new() } else { format!(" — {}", esc_md(&lista.join(" · "))) });
+            }
         }
         // melhores e piores em retenção
         let mut com_ret: Vec<&Value> = itens.iter().filter(|x| get(&x["m"], "retencao_media").is_some()).collect();
@@ -1001,6 +1142,8 @@ fn curto(l: &str) -> &str {
         "Duração média da visualização" | "Tempo médio assistido" => "Duração média",
         "Porcentagem visualizada média" => "% vista",
         "Retenção média (curva)" | "Retenção média (tempo médio ÷ duração)" => "Retenção média",
+        "Taxa de cliques das impressões" => "CTR",
+        "Continuaram assistindo" => "Continuaram",
         "Tempo de exibição (horas)" | "Tempo total assistido (horas)" => "Horas",
         "Marcações com \"Gostei\"" => "Gostei",
         "Inscritos gerados" => "Inscritos",
@@ -1120,6 +1263,27 @@ if(ret&&ret.curva&&ret.curva.length>1){{
     fill(tip,pct(best.assistindo),'ainda assistindo em '+seg(best.s)+(best.relativa!=null?' · relativa '+best.relativa.toLocaleString('pt-BR',{{maximumFractionDigits:2}}):''));
     tip.style.display='block';const px=x(best.s)*r.width/W,py=y(best.assistindo)*r.height/H;tip.style.left=Math.min(px+12,r.width-tip.offsetWidth)+'px';tip.style.top=Math.max(0,py-40)+'px'}});
   hit.addEventListener('pointerleave',()=>{{tip.style.display='none';hair.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden')}});
+}}
+// visualizações por hora desde a publicação (Studio, individual)
+const ph=R.primeiras_horas&&R.primeiras_horas.serie;
+if(ph&&ph.length>1){{
+  const h=document.createElement('h2');h.textContent='Visualizações por hora desde a publicação (Studio)';g.appendChild(h);
+  const wrap=document.createElement('div');wrap.className='chart';g.appendChild(wrap);
+  const W=900,H=220,L=48,B=28,T=10,Rr=12,n=ph.length,maxV=Math.max(1,...ph.map(p=>p[1]));
+  // escala fixa de no mínimo 24 h: vídeos diferentes ficam comparáveis a olho
+  const bw=(W-L-Rr)/Math.max(n,24),y=v=>T+(H-T-B)*(1-v/maxV);
+  const svg=el('svg',{{viewBox:`0 0 ${{W}} ${{H}}`,role:'img','aria-label':'Visualizações em cada hora desde a publicação'}},wrap);
+  const gr=el('g',{{class:'grid'}},svg);
+  for(let k=0;k<=3;k++){{const v=maxV*k/3;el('line',{{x1:L,x2:W-Rr,y1:y(v),y2:y(v)}},gr);const tx=el('text',{{x:L-8,y:y(v)+4,'text-anchor':'end'}},svg);tx.textContent=Math.round(v).toLocaleString('pt-BR')}}
+  const tip=tipBox(wrap);
+  ph.forEach((p,k)=>{{const x=L+k*bw,hgt=Math.max(1,y(0)-y(p[1]));
+    el('rect',{{x:x+1,y:y(0)-hgt,width:Math.max(1,bw-2),height:hgt,rx:Math.min(4,bw/3),fill:'var(--series-1)'}},svg);
+    if(n<=24||k%Math.ceil(n/12)===0){{const t=el('text',{{x:x+bw/2,y:H-8,'text-anchor':'middle'}},svg);t.textContent=p[0]+'h'}}
+    const hit=el('rect',{{x,y:T,width:bw,height:H-T-B,fill:'transparent'}},svg);
+    hit.addEventListener('pointermove',ev=>{{const r=wrap.getBoundingClientRect();fill(tip,p[1].toLocaleString('pt-BR')+' views',p[0]+'ª hora desde a publicação');
+      tip.style.display='block';tip.style.left=Math.min(ev.clientX-r.left+12,r.width-tip.offsetWidth)+'px';tip.style.top=(ev.clientY-r.top-36)+'px'}});
+    hit.addEventListener('pointerleave',()=>{{tip.style.display='none'}});
+  }});
 }}
 // barras de retenção média por vídeo (geral)
 if(R.tipo_relatorio==='geral'){{

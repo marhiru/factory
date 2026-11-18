@@ -45,7 +45,9 @@ claude                                         # e pede o vídeo; esta skill ass
   Opções: `motor=`, `idioma=`, `duracao=`, `canal=`, `dir=`, `--install`, `--offline`.
 - O `vf init` roda o `novo.sh --existente` (nunca sobrescreve arquivos do usuário), grava `plataformas` no
   `factory.yaml`, copia o som procedural para `audio/procedural/`, liga `ref/fx/pixelfx` e `ref/fx/pixel-splats`
-  e cria `.claude/settings.json` (plugin habilitado) e um `CLAUDE.md` curto.
+  copia as skills da fábrica para `.claude/skills/` do projeto (com o caminho real no lugar de
+  `${CLAUDE_PLUGIN_ROOT}`; `vf init skills` recopia depois de atualizar a fábrica; `--plugin` liga o plugin em vez
+  de copiar) e cria um `CLAUDE.md` curto.
 - Se o projeto já tem `factory.yaml`, siga direto para `continuar`. Plataforma sem `vf auth` não bloqueia
   nada: só o rascunho e os analíticos ficam indisponíveis (`vf auth status`).
 

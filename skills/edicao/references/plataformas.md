@@ -75,10 +75,17 @@ seu Chrome logado**: os cookies nunca saem do navegador e ela não fabrica requi
   por rodada e por dia; pula o que foi capturado nas últimas 24 h; para sozinho se a sessão cair, se o Studio
   pedir verificação ou se você fechar a aba. Só roda quando você clica; botão **Parar** a qualquer momento.
 
-**Usar no relatório:**
-1. `vf studio metricas video=<ID>`: lista as métricas achadas nas capturas (nomes em MAIÚSCULAS + valor).
-2. `vf studio mapear continuaram=<NOME_DA_MÉTRICA>` (fração 0-1 vira %; `continuaram=` vazio desmapeia).
-3. `vf relatorio video=<ID> studio=1`: preenche a linha na janela principal.
+**Usar:**
+- `vf studio resumo video=<ID>` (ou `canal=UC...`): um valor atual por cartão do Studio (continuaram/ignorado,
+  impressões, CTR, gostei, inscritos, tráfego, geografia, demografia), com período e hora da captura, e a série
+  de views por hora. Zero que o Studio ainda não calculou sai em `processando`, não como 0.
+- `vf relatorio` e `vf analytics` usam essas capturas sozinhos (`studio=0` desliga no relatório): linhas de
+  impressões, CTR e continuaram, seção "Primeiras horas" (views em 1/3/6/12/24/48 h com a mediana dos Shorts
+  do canal) e, no geral, colunas Continuaram / Views 1ª h / 24 h e a seção "Canal no Studio".
+- A curva por hora só cobre a publicação se o vídeo for aberto no Studio nas primeiras ~48 h (cada captura
+  traz as últimas 48 h): abra em 1 h, 3 h e 24 h depois de publicar.
+- `vf studio metricas video=<ID>` lista tudo o que foi achado (depuração); `vf studio mapear <linha>=<NOME>`
+  liga uma métrica extra a uma linha do relatório.
 - `vf studio status` mostra host, capturas e mapa; `vf studio desinstalar` remove o host.
 
 **Riscos (aceitos pelo usuário):** é coleta fora da API oficial (os termos do YouTube restringem acesso

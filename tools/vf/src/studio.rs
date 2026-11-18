@@ -283,6 +283,16 @@ pub fn metricas(v: &Value) -> Vec<(String, f64, String)> {
     fn andar(v: &Value, caminho: &str, out: &mut Vec<(String, f64, String)>) {
         match v {
             Value::Object(m) => {
+                // formato do yta_web/join: {"metric": {"type": "VIEWS"}, "counts": {"values": [...]}, "total": ...}
+                if let Some(n) = m.get("metric").and_then(|x| x.get("type")).and_then(|x| x.as_str()).filter(|s| maiusc(s)) {
+                    let cumul = m.get("metric").and_then(|x| x.get("cumulative")).and_then(|x| x.as_bool()).unwrap_or(false);
+                    let vals: Vec<f64> = m.get("counts").or(m.get("values")).and_then(|c| c.get("values").or(Some(c))).and_then(|v| v.as_array()).map(|a| a.iter().filter_map(num).collect()).unwrap_or_default();
+                    let valor = ["total", "value", "lifetimeTotal"].iter().find_map(|k| m.get(*k).and_then(num))
+                        .or_else(|| if vals.is_empty() { None } else if cumul { vals.last().copied() } else { Some(vals.iter().sum()) });
+                    if let Some(x) = valor {
+                        out.push((n.to_string(), x, caminho.to_string()));
+                    }
+                }
                 let nome = ["metric", "metricId", "metricType", "type", "key", "name", "id"].iter().find_map(|k| m.get(*k).and_then(|x| x.as_str()).filter(|s| maiusc(s)));
                 if let Some(n) = nome {
                     let valor = ["value", "total", "doubleValue", "int64Value", "metricValue", "count"].iter().find_map(|k| m.get(*k).and_then(num))
@@ -309,6 +319,138 @@ pub fn metricas(v: &Value) -> Vec<(String, f64, String)> {
         }
     }
     andar(v, "$", &mut out);
+    out.retain(|x| !x.0.starts_with("USER_INTERFACE_THEME") && !x.0.starts_with("YT_SYS_"));
+    out.extend(pares_texto(v));
+    out
+}
+
+/// número como o Studio escreve em pt-BR/en: "49,6%", "1,2 mil", "2,3 mi", "1.234", "0:42", "+5"
+pub fn numero_tela(s: &str) -> Option<f64> {
+    let t = s.replace(['\u{2009}', '\u{a0}', '\u{202f}', '\u{200e}', '\u{2068}', '\u{2069}'], " ").trim().to_lowercase();
+    if t.is_empty() || !t.chars().next()?.is_ascii_digit() && !t.starts_with(['+', '-', '−']) {
+        return None;
+    }
+    if let Some((a, b)) = t.split_once(':') {
+        if a.chars().all(|c| c.is_ascii_digit()) && b.len() == 2 && b.chars().all(|c| c.is_ascii_digit()) {
+            return Some(a.parse::<f64>().ok()? * 60.0 + b.parse::<f64>().ok()?);
+        }
+    }
+    let (mult, base) = [(" mil", 1e3), (" mi", 1e6), (" bi", 1e9), ("k", 1e3), ("m", 1e6)]
+        .iter()
+        .find_map(|(suf, m)| t.strip_suffix(suf).map(|b| (*m, b.to_string())))
+        .unwrap_or((1.0, t.clone()));
+    let base = base.trim_end_matches('%').trim().replace('−', "-").replace('+', "");
+    // pt-BR: "1.234,5" ; en: "1,234.5"
+    let n = if base.contains(',') && base.contains('.') {
+        if base.rfind(',') > base.rfind('.') { base.replace('.', "").replace(',', ".") } else { base.replace(',', "") }
+    } else if base.contains(',') {
+        base.replace(',', ".")
+    } else if base.matches('.').count() == 1 && base.split('.').nth(1).map(|d| d.len() == 3).unwrap_or(false) && mult == 1.0 {
+        base.replace('.', "")
+    } else {
+        base
+    };
+    if !n.chars().all(|c| c.is_ascii_digit() || c == '.' || c == '-') {
+        return None;
+    }
+    n.parse::<f64>().ok().map(|x| x * mult)
+}
+
+/// cartões do hub de análises (view models da tela): pares rótulo → valor e barras com porcentagem.
+/// Nome devolvido: "TEXTO:<rótulo>"; porcentagens ficam em % (0-100).
+pub fn pares_texto(v: &Value) -> Vec<(String, f64, String)> {
+    // sequência de folhas em ordem de documento, separada por cartão
+    #[derive(Debug)]
+    enum F {
+        Rotulo(String),
+        Valor(String),
+        Fim,
+    }
+    fn andar(v: &Value, seq: &mut Vec<F>, out: &mut Vec<(String, f64, String)>) {
+        match v {
+            Value::Object(m) => {
+                if let Some(b) = m.get("horizontalBarViewModel") {
+                    if let (Some(l), Some(p)) = (b.get("accessibilityLabel").and_then(|x| x.as_str()), b.pointer("/segments/0/percentage").and_then(|x| x.as_f64())) {
+                        out.push((format!("TEXTO:{l}"), p * 100.0, "barra".into()));
+                    }
+                    return;
+                }
+                if let Some(sm) = m.get("simpleMetricViewModel") {
+                    if let Some(c) = sm.pointer("/value/content").and_then(|x| x.as_str()) {
+                        // rótulo do próprio cartão (subtitle/title), quando vem junto do valor
+                        let proprio = ["/subtitle/content", "/title/content", "/label/content"].iter().find_map(|k| sm.pointer(k).and_then(|x| x.as_str())).map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
+                        match (proprio, numero_tela(c)) {
+                            (Some(r), Some(x)) => out.push((format!("TEXTO:{r}"), x, format!("\"{c}\""))),
+                            _ => seq.push(F::Valor(c.to_string())),
+                        }
+                    }
+                    return;
+                }
+                // cartão "como os espectadores interagiram" dos Shorts: a barra traz o valor exato (0,5307)
+                if let (Some(id), Some(Value::Object(_))) = (m.get("accessibilityId").and_then(|x| x.as_str()), m.get("bodyContent")) {
+                    if id.ends_with("shorts_how_viewers_engaged") {
+                        let mut ps = Vec::new();
+                        fn barras(v: &Value, ps: &mut Vec<f64>) {
+                            match v {
+                                Value::Object(m) => {
+                                    if let Some(p) = m.get("horizontalBarViewModel").and_then(|b| b.pointer("/segments/0/percentage")).and_then(|x| x.as_f64()) {
+                                        ps.push(p);
+                                    }
+                                    m.values().for_each(|x| barras(x, ps));
+                                }
+                                Value::Array(a) => a.iter().for_each(|x| barras(x, ps)),
+                                _ => {}
+                            }
+                        }
+                        barras(&m["bodyContent"], &mut ps);
+                        if let Some(p) = ps.first() {
+                            out.push(("STUDIO:SHORTS_CONTINUARAM".into(), p * 100.0, id.to_string()));
+                        }
+                    }
+                }
+                let card = m.contains_key("cardViewModel") || m.contains_key("hoverCardViewModel");
+                for (k, x) in m {
+                    if matches!(k.as_str(), "content" | "simpleText" | "headline" | "title") {
+                        if let Some(t) = x.as_str().or_else(|| x.get("content").and_then(|c| c.as_str())) {
+                            let t = t.trim();
+                            if !t.is_empty() && numero_tela(t).is_none() && t.len() < 120 {
+                                seq.push(F::Rotulo(t.to_string()));
+                            } else if numero_tela(t).is_some() && k == "content" {
+                                seq.push(F::Valor(t.to_string()));
+                            }
+                        }
+                        if x.is_string() {
+                            continue;
+                        }
+                    }
+                    if !matches!(k.as_str(), "accessibility" | "accessibilityLabel" | "loggingDirectives" | "trackingParams" | "styleRuns" | "commandRuns") {
+                        andar(x, seq, out);
+                    }
+                }
+                if card {
+                    seq.push(F::Fim);
+                }
+            }
+            Value::Array(a) => a.iter().for_each(|x| andar(x, seq, out)),
+            _ => {}
+        }
+    }
+    let mut seq = Vec::new();
+    let mut out = Vec::new();
+    andar(v, &mut seq, &mut out);
+    // cada valor fica com o rótulo mais próximo antes dele no mesmo cartão
+    let mut rotulo: Option<String> = None;
+    for f in seq {
+        match f {
+            F::Rotulo(r) => rotulo = Some(r),
+            F::Valor(t) => {
+                if let (Some(r), Some(x)) = (&rotulo, numero_tela(&t)) {
+                    out.push((format!("TEXTO:{r}"), x, format!("\"{t}\"")));
+                }
+            }
+            F::Fim => rotulo = None,
+        }
+    }
     out
 }
 
@@ -316,13 +458,29 @@ pub fn metricas(v: &Value) -> Vec<(String, f64, String)> {
 
 pub fn run(args: &[String]) -> Result<()> {
     let (acao, rest) = match args.first().map(|s| s.as_str()) {
-        Some(a @ ("login" | "buscar" | "status" | "logout" | "mapear" | "host" | "instalar" | "desinstalar" | "metricas")) => (a, &args[1..]),
+        Some(a @ ("login" | "buscar" | "status" | "logout" | "mapear" | "host" | "instalar" | "desinstalar" | "metricas" | "resumo")) => (a, &args[1..]),
         // o Chrome chama o host com a origem da extensão como argumento
         Some(x) if x.starts_with("chrome-extension://") => ("host", &args[1..]),
-        _ => bail!("uso: vf studio instalar | metricas video=ID | mapear linha=METRICA | status | desinstalar  (legado: login | buscar | logout)"),
+        _ => bail!("uso: vf studio instalar | resumo video=ID | metricas video=ID | mapear linha=METRICA | status | desinstalar  (legado: login | buscar | logout)"),
     };
     match acao {
         "mapear" => return mapear(rest),
+        "resumo" => {
+            // resumo limpo (um valor atual por cartão + primeiras horas): vf studio resumo video=ID|canal=UC...
+            let kv = Kv::parse(rest, &[])?;
+            let id = match (kv.get("video"), kv.get("canal")) {
+                (Some(v), _) => v.to_string(),
+                (None, Some(c)) => format!("canal_{}", c.trim_start_matches("canal_")),
+                _ => bail!("vf studio resumo video=ID (ou canal=UC...)"),
+            };
+            let mut r = crate::studio_dados::resumo(&id).with_context(|| format!("nada capturado para {id}: abra as análises no Studio com a extensão"))?;
+            if let Some(o) = r.as_object_mut() {
+                o.remove("cartoes");
+                o.remove("por_minuto");
+            }
+            println!("{}", serde_json::to_string_pretty(&r)?);
+            return Ok(());
+        }
         "host" => return host(),
         "instalar" => return instalar(),
         "desinstalar" => return desinstalar(),
@@ -425,7 +583,19 @@ fn mapa_path() -> PathBuf {
 }
 
 pub fn mapa() -> Map<String, Value> {
-    std::fs::read(mapa_path()).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default()
+    let mut m: Map<String, Value> = std::fs::read(mapa_path()).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+    // padrão: o rótulo do cartão do Studio (pt-BR e en)
+    m.entry("continuaram").or_insert(json!("STUDIO:SHORTS_CONTINUARAM|TEXTO:Continuaram assistindo|TEXTO:Stayed to watch"));
+    m
+}
+
+/// a métrica casa com o mapa? (nome exato, ou "TEXTO:<rótulo>" contido no rótulo, sem diferenciar maiúsculas;
+/// várias opções separadas por |)
+fn casa(nome: &str, alvo: &str) -> bool {
+    alvo.split('|').any(|a| {
+        let a = a.trim();
+        nome == a || (a.starts_with("TEXTO:") && nome.starts_with("TEXTO:") && nome[6..].to_lowercase().contains(&a[6..].to_lowercase()))
+    })
 }
 
 fn mapear(args: &[String]) -> Result<()> {
@@ -484,7 +654,9 @@ pub fn linhas_mapeadas(conta: &str, video: &str) -> Map<String, Value> {
     // 1º: o que a extensão capturou (sem rede, sem cookie)
     let caps = metricas_capturadas(video);
     for (linha, metrica) in &m {
-        if let Some(v) = metrica.as_str().and_then(|mm| caps.iter().find(|x| x.0 == mm)) {
+        // a primeira alternativa do mapa que existir vence (ex.: o valor exato da barra antes do texto arredondado)
+        let achado = metrica.as_str().and_then(|mm| mm.split('|').find_map(|alt| caps.iter().find(|x| casa(&x.0, alt))));
+        if let Some(v) = achado {
             out.insert(linha.clone(), json!(v.1));
         }
     }
@@ -497,7 +669,7 @@ pub fn linhas_mapeadas(conta: &str, video: &str) -> Map<String, Value> {
         if let Ok(r) = buscar(conta, &n, video) {
             let ms = metricas(&r);
             for (linha, metrica) in &m {
-                if let Some(v) = metrica.as_str().and_then(|mm| ms.iter().find(|x| x.0 == mm)) {
+                if let Some(v) = metrica.as_str().and_then(|mm| ms.iter().find(|x| casa(&x.0, mm))) {
                     out.insert(linha.clone(), json!(v.1));
                 }
             }
@@ -589,8 +761,10 @@ fn escrever_msg(w: &mut impl std::io::Write, v: &Value) -> Result<()> {
     Ok(())
 }
 
+/// id de vídeo (11) ou "canal_UC..." (páginas de análise do canal)
 fn id_ok(s: &str) -> bool {
-    s.len() == 11 && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    let ok = |t: &str| t.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    (s.len() == 11 && ok(s)) || (s.starts_with("canal_UC") && s.len() <= 40 && ok(s))
 }
 
 /// grava uma captura: dados/<vídeo>/<endpoint>.json (a mais recente de cada endpoint)
@@ -602,8 +776,19 @@ pub fn salvar_captura(m: &Value) -> Result<PathBuf> {
     let ep: String = m["endpoint"].as_str().unwrap_or("x").chars().map(|c| if c.is_ascii_alphanumeric() || c == '_' || c == '-' { c } else { '_' }).take(80).collect();
     let d = dados_dir().join(video);
     std::fs::create_dir_all(&d)?;
-    let p = d.join(format!("{}.json", if ep.is_empty() { "x".to_string() } else { ep }));
+    // uma resposta por arquivo (o Studio chama o mesmo endpoint várias vezes, um cartão por vez)
+    let corpo = serde_json::to_vec(&m["dados"])?;
+    let h: String = Sha1::digest(&corpo).iter().take(4).map(|b| format!("{b:02x}")).collect();
+    let p = d.join(format!("{}-{h}.json", if ep.is_empty() { "x".to_string() } else { ep }));
     crate::util::write_json(&p, &json!({ "video": video, "endpoint": m["endpoint"], "pagina": m["pagina"], "quando": m["quando"], "dados": m["dados"] }))?;
+    // teto por vídeo: as 80 mais recentes
+    let mut fs: Vec<(std::time::SystemTime, PathBuf)> = std::fs::read_dir(&d)?.flatten().filter_map(|e| Some((e.metadata().ok()?.modified().ok()?, e.path()))).collect();
+    if fs.len() > 80 {
+        fs.sort();
+        for (_, f) in &fs[..fs.len() - 80] {
+            let _ = std::fs::remove_file(f);
+        }
+    }
     Ok(p)
 }
 
@@ -613,7 +798,10 @@ pub fn metricas_capturadas(video: &str) -> Vec<(String, f64, String)> {
         return Vec::new();
     }
     let mut out = Vec::new();
-    for e in std::fs::read_dir(dados_dir().join(video)).into_iter().flatten().flatten() {
+    // mais recente primeiro: no mapeamento vale o valor mais novo
+    let mut arqs: Vec<(std::time::SystemTime, std::fs::DirEntry)> = std::fs::read_dir(dados_dir().join(video)).into_iter().flatten().flatten().filter_map(|e| Some((e.metadata().ok()?.modified().ok()?, e))).collect();
+    arqs.sort_by(|a, b| b.0.cmp(&a.0));
+    for (_, e) in arqs {
         if let Some(v) = std::fs::read(e.path()).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok()) {
             let nome = e.file_name().to_string_lossy().trim_end_matches(".json").to_string();
             for (n, x, c) in metricas(&v["dados"]) {
@@ -715,12 +903,59 @@ mod tests {
         std::env::set_var("XDG_CONFIG_HOME", &tmp);
         let m = json!({ "video": "wuXBs0A6-14", "endpoint": "yta_web/get_screen", "dados": { "cards": [{ "metric": "SHORTS_VIEWED_RATE", "value": 0.4955 }] } });
         let p = salvar_captura(&m).unwrap();
-        assert!(p.ends_with("wuXBs0A6-14/yta_web_get_screen.json"));
+        let nome = p.file_name().unwrap().to_string_lossy().to_string();
+        assert!(p.parent().unwrap().ends_with("wuXBs0A6-14") && nome.starts_with("yta_web_get_screen-") && nome.ends_with(".json"), "{nome}");
+        // a mesma resposta não duplica; outra resposta do mesmo endpoint vira outro arquivo
+        assert_eq!(salvar_captura(&m).unwrap(), p);
+        let mut m2 = m.clone();
+        m2["dados"]["cards"][0]["value"] = json!(0.5);
+        assert_ne!(salvar_captura(&m2).unwrap(), p);
         let ms = metricas_capturadas("wuXBs0A6-14");
         assert!(ms.iter().any(|x| x.0 == "SHORTS_VIEWED_RATE"));
         assert!(salvar_captura(&json!({ "video": "../../etc/x", "dados": {} })).is_err(), "id inválido não escreve fora da pasta");
         assert!(metricas_capturadas("../x").is_empty());
         let _ = std::fs::remove_dir_all(&tmp);
+    }
+    #[test]
+    fn numeros_da_tela() {
+        assert_eq!(numero_tela("49,55%"), Some(49.55));
+        assert_eq!(numero_tela("1,2 mil"), Some(1200.0));
+        assert_eq!(numero_tela("2,3 mi"), Some(2_300_000.0));
+        assert_eq!(numero_tela("1.234"), Some(1234.0));
+        assert_eq!(numero_tela("0:42"), Some(42.0));
+        assert_eq!(numero_tela("359"), Some(359.0));
+        assert_eq!(numero_tela("12.5K"), Some(12500.0));
+        assert_eq!(numero_tela("Hoje, 18:49"), None);
+        assert_eq!(numero_tela("Feed dos Shorts"), None);
+    }
+    #[test]
+    fn hub_e_join() {
+        let hub = json!({ "cardViewModel": { "items": [
+            { "listItemViewModel": { "title": { "content": "Continuaram assistindo" } } },
+            { "simpleMetricViewModel": { "value": { "content": "49,6%" } } },
+            { "listItemViewModel": { "title": { "content": "Deslizaram" } } },
+            { "simpleMetricViewModel": { "value": { "content": "50,4%" } } } ] },
+            "outros": [{ "horizontalBarViewModel": { "accessibilityLabel": "Feed dos Shorts", "segments": [{ "percentage": 0.98 }] } }] });
+        let real = json!({ "cardViewModel": { "accessibilityId": "analytics_hub.video_overview_shorts_how_viewers_engaged", "bodyContent": { "linearLayoutViewModel": { "items": [
+            { "horizontalBarViewModel": { "segments": [{ "percentage": 0.5307 }, { "percentage": 0.4693 }] } },
+            { "linearLayoutViewModel": { "items": [
+                { "simpleMetricViewModel": { "subtitle": { "content": "Continuaram assistindo" }, "value": { "content": "53,1%" } } },
+                { "simpleMetricViewModel": { "subtitle": { "content": "Ignorado" }, "value": { "content": "46,9%" } } } ] } } ] } } } });
+        let pr = pares_texto(&real);
+        assert!(pr.iter().any(|x| x.0 == "TEXTO:Continuaram assistindo" && (x.1 - 53.1).abs() < 1e-9), "{pr:?}");
+        assert!(pr.iter().any(|x| x.0 == "TEXTO:Ignorado" && (x.1 - 46.9).abs() < 1e-9));
+        assert!(pr.iter().any(|x| x.0 == "STUDIO:SHORTS_CONTINUARAM" && (x.1 - 53.07).abs() < 1e-9));
+        let p = pares_texto(&hub);
+        assert!(p.iter().any(|x| x.0 == "TEXTO:Continuaram assistindo" && (x.1 - 49.6).abs() < 1e-9), "{p:?}");
+        assert!(p.iter().any(|x| x.0 == "TEXTO:Deslizaram" && (x.1 - 50.4).abs() < 1e-9));
+        assert!(p.iter().any(|x| x.0 == "TEXTO:Feed dos Shorts" && (x.1 - 98.0).abs() < 1e-9));
+        assert!(casa("TEXTO:Continuaram assistindo", "TEXTO:Continuaram assistindo|TEXTO:Stayed to watch"));
+        assert!(casa("TEXTO:Stayed to watch", "TEXTO:continuaram assistindo|TEXTO:stayed to watch"));
+        let join = json!({ "metricColumns": [{ "counts": { "values": [0, 2, 3] }, "metric": { "type": "SUBSCRIBERS_NET_CHANGE", "cumulative": true } },
+                                              { "counts": { "values": [10, 20] }, "metric": { "type": "VIEWS" } }] });
+        let m = metricas(&join);
+        assert!(m.iter().any(|x| x.0 == "SUBSCRIBERS_NET_CHANGE" && x.1 == 3.0));
+        assert!(m.iter().any(|x| x.0 == "VIEWS" && x.1 == 30.0));
     }
     #[test]
     fn acha_metricas() {
