@@ -4,7 +4,7 @@ Plugin do Claude Code para uma fábrica de vídeo com IA: **YouTube longo, YouTu
 
 - **Skill principal** `factory`: cria o projeto e conduz as etapas (referência → roteiro → assets/voz → animação → edição/QA → entrega), com estado em `factory.yaml`.
 - **Skills de etapa** com templates: `roteiro`, `assets`, `animacao`, `edicao`, `analise`, `canal` e `metricas` (analista de métricas e metadata YouTube/TikTok).
-- **CLI `vf` em Rust**: análise frame a frame, transcrição, alinhamento, mix, export e QA, todos rápidos.
+- **CLI `vf` em Rust**: análise frame a frame, transcrição, voz local, alinhamento, mix, export, QA, publicação, agenda e métricas ([referência completa dos comandos](COMANDOS.md)).
 - **Renderer `vf-mygo` em Go** ([MyGo render](https://mygo.run/docs/plugins/render)): desenha o `data/edl.json` na GPU (Metal), sem navegador, ~5x mais rápido que o Remotion.
 
 ## Ferramental
@@ -59,6 +59,8 @@ tests/synthetic.sh               # teste de integração (cortes em frames conhe
 ```
 
 ## `vf`
+
+**Referência completa, com todas as opções, exemplos, saídas e receitas: [COMANDOS.md](COMANDOS.md).** Abaixo, o resumo.
 | Comando | O que faz |
 |---|---|
 | `vf analyze <arquivo\|url> -o ref/x --lang pt` | download, cortes e crossfades, keyframes, contact sheets, transcrição e ritmo → `analysis.md`/`.json` |
